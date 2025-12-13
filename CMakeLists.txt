@@ -1,15 +1,9 @@
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.19)
 
 #initialise cmake environment
-foreach(hwpolicy CMP0003 CMP0012 CMP0017 CMP0018 CMP0048)
+foreach(hwpolicy CMP0003 CMP0012 CMP0017 CMP0018 CMP0048 CMP0177)
     if(POLICY ${hwpolicy})
         cmake_policy(SET ${hwpolicy} NEW)
-    endif()
-endforeach()
-
-foreach(hwpolicy  CMP0068)
-    if(POLICY ${hwpolicy})
-        cmake_policy(SET ${hwpolicy} OLD)
     endif()
 endforeach()
 

@@ -14,6 +14,7 @@ if(NOT CMAKE_Pascal_COMPILER_WORKS)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/CMakeTmp/CMakeLists.txt
          "set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules)
           set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL \"\" FORCE)
+          cmake_minimum_required(VERSION 3.19)
           project(test Pascal)
           add_executable(testpascalcompiler testpascalcompiler.pas)
          ")
