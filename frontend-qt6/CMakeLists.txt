@@ -6,11 +6,12 @@ set(CMAKE_AUTORCC ON)
 
 project(hedgewars LANGUAGES CXX)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SDL2_MIXER REQUIRED IMPORTED_TARGET SDL2_mixer)
+#find_package(PkgConfig REQUIRED)
+#pkg_check_modules(SDL2_MIXER REQUIRED IMPORTED_TARGET SDL2_mixer)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network LinguistTools)
 find_package(SDL2 REQUIRED CONFIG)
+find_package(SDL2_mixer REQUIRED)
 
 # --- Workaround Qt + CMake OpenGL::GL issue -------------------------------
 # Qt's WrapOpenGL target exists, but OpenGL::GL imported target may not.
@@ -328,7 +329,6 @@ target_link_libraries(hedgewars
         Qt::Network
         SDL2::SDL2
         SDL2_mixer
-        PkgConfig::SDL2_MIXER
         physlayer
 )
 

@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
+
+cmake_policy(SET CMP0177 NEW)
+
 project(hedgewars-server)
 
 find_program(CABAL_EXECUTABLE cabal REQUIRED)
@@ -10,10 +13,10 @@ set(SERVER_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${SERVER_EXECUTABLE_NAME}")
 set(CABAL_DIST_DIR "${CMAKE_CURRENT_BINARY_DIR}/cabal-dist")
 set(CABAL_STORE_DIR "${CMAKE_CURRENT_BINARY_DIR}/cabal-store")
 
-if(${OFFLINE})
+if(${BUILD_OFFLINE})
     set(CABAL_FLAGS "--offline")
 else()
-    set(CABAL_FLAGS "--offline")
+    set(CABAL_FLAGS "")
 endif()
 
 if(BUILD_OFFICIAL_SERVER)
