@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.22)
 
 #initialise cmake environment
 foreach(hwpolicy CMP0003 CMP0012 CMP0017 CMP0018 CMP0048 CMP0177)
