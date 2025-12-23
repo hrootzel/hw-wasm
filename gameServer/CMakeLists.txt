@@ -27,17 +27,14 @@ endif()
 
 message(STATUS "Checking Haskell dependencies with Cabal...")
 
-set(OFFLINE_SWITCH "--offline") 
-
 execute_process(
     COMMAND ${CABAL_EXECUTABLE}
-            --store-dir=${CABAL_STORE_DIR}
             v2-build
             exe:hedgewars-server
-            --dry-run 
+            --only-configure
+            --dry-run
             --builddir=${CABAL_DIST_DIR}
             ${CABAL_FLAGS}
-            ${OFFLINE_SWITCH}
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     RESULT_VARIABLE CABAL_CHECK_EXIT_CODE
     OUTPUT_VARIABLE CABAL_CHECK_OUTPUT
@@ -52,16 +49,24 @@ else()
     message(STATUS "Haskell dependencies are valid.")
 endif()
 
+set(CABAL_BIN_OUTPUT "${CABAL_DIST_DIR}/build/hedgewars-server${CMAKE_EXECUTABLE_SUFFIX}")
+
 add_custom_target(hedgewars-server ALL
-    COMMAND ${CABAL_EXECUTABLE}
-            --store-dir=${CABAL_STORE_DIR}
-            v2-install
+    COMMAND ${CABAL_EXECUTABLE} 
+            v2-build
             exe:hedgewars-server
-            --overwrite-policy=always
-            --install-method=copy
-            --installdir=${CMAKE_CURRENT_BINARY_DIR}
             --builddir=${CABAL_DIST_DIR}
             ${CABAL_FLAGS}
+
+    COMMAND ${CABAL_EXECUTABLE} 
+            v2-install
+            exe:hedgewars-server
+            --builddir=${CABAL_DIST_DIR}
+            --installdir=${CMAKE_CURRENT_BINARY_DIR}
+            --install-method=copy
+            --overwrite-policy=always
+            ${CABAL_FLAGS}
+    
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Building hedgewars-server with Cabal..."
     VERBATIM
