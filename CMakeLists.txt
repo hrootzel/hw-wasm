@@ -268,7 +268,7 @@ else()
     set(CARGO_FLAGS "")
 endif()
 add_subdirectory(tools/corrosion)
-corrosion_import_crate(MANIFEST_PATH rust/lib-hwengine-future/Cargo.toml FLAGS ${CARGO_FLAGS})
+corrosion_import_crate(MANIFEST_PATH rust/lib-hwengine-future/Cargo.toml NO_LINKER_OVERRIDE FLAGS ${CARGO_FLAGS})
 corrosion_install(TARGETS hwengine_future EXPORT hwengine_future_install_target)
 install(EXPORT hwengine_future_install_target DESTINATION ${target_library_install_dir})
 
