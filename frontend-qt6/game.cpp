@@ -584,7 +584,7 @@ QStringList HWGame::getArguments() {
   arguments << QStringLiteral("%1").arg(ipc_port);
 #ifdef _WIN32
   {
-    QString path = datadir->absolutePath();
+    QString path = datadir.absolutePath();
     if (path == QLatin1String(path.toLatin1())) {
       arguments << "--prefix";
       arguments << path;
@@ -592,7 +592,7 @@ QStringList HWGame::getArguments() {
       arguments << "--prefix64";
       arguments << path.toUtf8().toBase64();
     }
-    path = cfgdir->absolutePath();
+    path = cfgdir.absolutePath();
     if (path == QLatin1String(path.toLatin1())) {
       arguments << "--user-prefix";
       arguments << path;

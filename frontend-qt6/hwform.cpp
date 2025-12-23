@@ -2426,15 +2426,15 @@ void HWForm::AssociateFiles() {
                          tr("Hedgewars Save File", "File Types"));
   registry_hkcr.setValue(
       "Hedgewars.Demo/DefaultIcon/Default",
-      "\"" + bindir->absolutePath().replace("/", "\\") + "\\hwdfile.ico\",0");
+      "\"" + bindir.absolutePath().replace("/", "\\") + "\\hwdfile.ico\",0");
   registry_hkcr.setValue(
       "Hedgewars.Save/DefaultIcon/Default",
-      "\"" + bindir->absolutePath().replace("/", "\\") + "\\hwsfile.ico\",0");
+      "\"" + bindir.absolutePath().replace("/", "\\") + "\\hwsfile.ico\",0");
   registry_hkcr.setValue("Hedgewars.Demo/Shell/Open/Command/Default",
-                         "\"" + bindir->absolutePath().replace("/", "\\") +
+                         "\"" + bindir.absolutePath().replace("/", "\\") +
                              "\\hwengine.exe\" " + arguments + " %1");
   registry_hkcr.setValue("Hedgewars.Save/Shell/Open/Command/Default",
-                         "\"" + bindir->absolutePath().replace("/", "\\") +
+                         "\"" + bindir.absolutePath().replace("/", "\\") +
                              "\\hwengine.exe\" " + arguments + " %1");
 
   // custom url scheme(s)
@@ -2443,9 +2443,9 @@ void HWForm::AssociateFiles() {
   registry_hkcr.setValue("hwplay/URL Protocol", "");
   registry_hkcr.setValue(
       "hwplay/DefaultIcon/Default",
-      "\"" + bindir->absolutePath().replace("/", "\\") + "\\hedgewars.exe\",0");
+      "\"" + bindir.absolutePath().replace("/", "\\") + "\\hedgewars.exe\",0");
   registry_hkcr.setValue("hwplay/Shell/Open/Command/Default",
-                         "\"" + bindir->absolutePath().replace("/", "\\") +
+                         "\"" + bindir.absolutePath().replace("/", "\\") +
                              "\\hedgewars.exe\"  %1");
 #elif defined __APPLE__
   // only useful when other apps have taken precedence over our file extensions

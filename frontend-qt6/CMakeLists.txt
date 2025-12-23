@@ -320,6 +320,9 @@ target_include_directories(hedgewars PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/util/platform
     ${CMAKE_CURRENT_SOURCE_DIR}/../misc/libphyslayer
     ${CMAKE_CURRENT_BINARY_DIR}
+    ${PHYSFS_INCLUDE_DIR}
+    ${SDL2_INCLUDE_DIRS}
+    ${SDL2_MIXER_INCLUDE_DIRS}
 )
 
 target_link_libraries(hedgewars
@@ -329,6 +332,7 @@ target_link_libraries(hedgewars
         Qt::Network
         SDL2::SDL2
         SDL2_mixer
+        physfs
         physlayer
 )
 
