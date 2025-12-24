@@ -1,0 +1,64 @@
+@echo on
+
+set ROOTPATH=H:
+
+set BUILDDIR=%ROOTPATH%/build-Hedgewars
+set HWREPO=Z:/MainRepo
+
+set CMAKE=%ROOTPATH%/cmake-4.2.1-windows-x86_64/bin/cmake.exe
+set CPACK=%ROOTPATH%/cmake-4.2.1-windows-x86_64/bin/cpack.exe
+
+set PATH=%ROOTPATH%/FPC/3.2.2/bin/i386-win32;%PATH%
+set PATH=%ROOTPATH%/w64devkit/bin;%PATH%
+set PATH=%ROOTPATH%/ninja;%PATH%
+set PATH=%USERPROFILE%/.cargo/bin;%PATH%
+rem set PATH=%USERPROFILE%/.rustup/toolchains/stable-x86_64-pc-windows-gnu/lib/rustlib/x86_64-pc-windows-gnu/bin;%PATH%
+
+set SDL2_DIR=%ROOTPATH%/SDL2-2.30.8/x86_64-w64-mingw32
+set SDL2IMAGEDIR=%ROOTPATH%/SDL2_image-2.8.8/x86_64-w64-mingw32
+set SDL2NETDIR=%ROOTPATH%/SDL2_net-2.2.0/x86_64-w64-mingw32
+set SDL2TTFDIR=%ROOTPATH%/SDL2_ttf-2.24.0/x86_64-w64-mingw32
+set SDL2MIXERDIR=%ROOTPATH%/SDL2_mixer-2.8.1/x86_64-w64-mingw32
+
+set Qt6_DIR=%ROOTPATH%/Qt/6.10.1
+set OPENSSL_ROOT_DIR=%ROOTPATH%/openssl-static
+
+set CMAKE_PREFIX_PATH=%ROOTPATH%/ffmpeg;%ROOTPATH%/zlib1211;%ROOTPATH%/libpng16;%ROOTPATH%/physfs-3.2.0
+
+echo Removing old build dir...
+del /s /q "%BUILDDIR%"
+mkdir "%BUILDDIR%"
+xcopy /S /Y %ROOTPATH%/install_libs/* %ROOTPATH%/hgrepo/bin
+
+echo Configuring...
+cd %BUILDDIR%
+%CMAKE% -G Ninja -DCMAKE_BUILD_TYPE="Release" -DWIN32_WIN64_CROSS_COMPILE=on %HWREPO%
+
+if %errorlevel% neq 0 (
+    echo Configure failed!
+    cmd
+    exit /b 1
+)
+
+
+echo Building...
+xcopy /Y %ROOTPATH%/FPC264/units/i386-win32/opengl/* %BUILDDIR%/hedgewars
+xcopy /Y %ROOTPATH%/FPC264/units/i386-win32/libpng/* %BUILDDIR%/hedgewars
+xcopy /Y %ROOTPATH%/FPC264/units/i386-win32/zlib/* %BUILDDIR%/hedgewars
+xcopy /Y %ROOTPATH%/FPC264/units/i386-win32/rtl-objpas/strutils* %BUILDDIR%/hedgewars
+
+%CMAKE% --build . --verbose
+
+if %errorlevel% neq 0 (
+    echo Build failed!
+    cmd
+    exit /b 1
+)
+
+echo Creating package...
+%CPACK% -G ZIP
+move /Y %ROOTPATH%/Hedgewars/hedgewars*.zip %ROOTPATH%
+%CPACK% -G NSIS
+move /Y %ROOTPATH%/Hedgewars/hedgewars*.exe %ROOTPATH%
+
+cmd
