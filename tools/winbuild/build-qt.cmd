@@ -59,8 +59,6 @@ call "%QT_SRC%\configure.bat" ^
     -no-icu ^
     -no-dbus ^
     -no-glib ^
-    -feature-linguist ^
-    -no-feature-qtdiag ^
     -no-feature-sql ^
     -no-feature-testlib ^
     -nomake examples ^
@@ -82,7 +80,9 @@ call "%QT_SRC%\configure.bat" ^
     -prefix %QT_INSTALL_DIR% ^
     -- ^
     -DOPENSSL_ROOT_DIR=%OPENSSL_DIR% ^
-    -DOPENSSL_USE_STATIC_LIBS=ON
+    -DOPENSSL_USE_STATIC_LIBS=ON ^
+    -DQT_FEATURE_designer=off ^
+    -DQT_FEATURE_qtdiag=off
 
 if %errorlevel% neq 0 (
     echo Configure failed!
@@ -114,4 +114,3 @@ echo ============================================
 echo Install Complete.
 echo ============================================
 
-pause
