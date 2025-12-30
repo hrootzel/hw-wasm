@@ -253,34 +253,9 @@ void FeedbackDialog::GenerateSpecs() {
   GlobalMemoryStatusEx(&status);
   total_ram += QString::number(status.ullTotalPhys / 1024 / 1024) + " MB\n";
 
-  switch (QSysInfo::windowsVersion()) {
-    case QSysInfo::WV_NT:
-      os_version += "Windows NT\n";
-      break;
-    case QSysInfo::WV_2000:
-      os_version += "Windows 2000\n";
-      break;
-    case QSysInfo::WV_XP:
-      os_version += "Windows XP\n";
-      break;
-    case QSysInfo::WV_2003:
-      os_version += "Windows Server 2003\n";
-      break;
-    case QSysInfo::WV_VISTA:
-      os_version += "Windows Vista\n";
-      break;
-    case QSysInfo::WV_WINDOWS7:
-      os_version += "Windows 7\n";
-      break;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    case QSysInfo::WV_WINDOWS8:
-      os_version += "Windows 8\n";
-      break;
-#endif
-    default:
-      os_version += "Windows (Unknown version)\n";
-      break;
-  }
+  os_version += QStringLiteral("%1 %2").arg(QSysInfo::productType(),
+                                            QSysInfo::productVersion());
+
   kernel_line += "Windows kernel\n";
 #endif
 #ifdef Q_OS_LINUX

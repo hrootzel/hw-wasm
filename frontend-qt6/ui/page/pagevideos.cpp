@@ -428,7 +428,7 @@ void PageVideos::cellChanged(int row, int column) {
 #ifdef Q_OS_WIN
   // there is a bug in qt, QDir::rename() doesn't fail on such names but damages
   // files
-  if (newName.contains(QRegExp("[\"*:<>?\\/|]"))) {
+  if (newName.contains(QRegularExpression("[\"*:<>?\\/|]"))) {
     setName(item, oldName);
     return;
   }

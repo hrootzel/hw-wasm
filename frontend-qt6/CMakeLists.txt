@@ -331,7 +331,7 @@ target_link_libraries(hedgewars
         Qt::Widgets
         Qt::Network
         SDL2::SDL2
-        SDL2_mixer
+        ${SDL2_MIXER_LIBRARIES}
         physfs
         physlayer
 )

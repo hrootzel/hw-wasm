@@ -409,20 +409,20 @@ int main(int argc, char *argv[]) {
 
   if (custom_config == false) {
 #ifdef __APPLE__
-    checkForDir(cfgdir->absolutePath() +
+    checkForDir(cfgdir.absolutePath() +
                 "/Library/Application Support/Hedgewars");
-    cfgdir->cd("Library/Application Support/Hedgewars");
+    cfgdir.cd("Library/Application Support/Hedgewars");
 #elif defined _WIN32
     wchar_t path[MAX_PATH];
     if (SHGetFolderPathW(0, CSIDL_PERSONAL, NULL, 0, path) == S_OK) {
-      cfgdir->cd(QString::fromWCharArray(path));
-      checkForDir(cfgdir->absolutePath() + "/Hedgewars");
-      cfgdir->cd("Hedgewars");
+      cfgdir.cd(QString::fromWCharArray(path));
+      checkForDir(cfgdir.absolutePath() + "/Hedgewars");
+      cfgdir.cd("Hedgewars");
     } else  // couldn't retrieve documents folder? almost impossible, but in
             // case fall back to classic path
     {
-      checkForDir(cfgdir->absolutePath() + "/.hedgewars");
-      cfgdir->cd(".hedgewars");
+      checkForDir(cfgdir.absolutePath() + "/.hedgewars");
+      cfgdir.cd(".hedgewars");
     }
 #else
     checkForDir(cfgdir.absolutePath() + QStringLiteral("/.hedgewars"));
@@ -565,9 +565,9 @@ int main(int argc, char *argv[]) {
     QSettings registry_hklm("HKEY_LOCAL_MACHINE", QSettings::NativeFormat);
     registry_hklm.setValue(
         "Software/Hedgewars/Frontend",
-        bindir->absolutePath().replace("/", "\\") + "\\hedgewars.exe");
+        bindir.absolutePath().replace("/", "\\") + "\\hedgewars.exe");
     registry_hklm.setValue("Software/Hedgewars/Path",
-                           bindir->absolutePath().replace("/", "\\"));
+                           bindir.absolutePath().replace("/", "\\"));
   }
 #endif
 

@@ -34,8 +34,6 @@ class FrameTeams;
 class QFrame;
 class QPushButton;
 
-using namespace std;
-
 class TeamSelWidget : public QGroupBox {
   Q_OBJECT
 
