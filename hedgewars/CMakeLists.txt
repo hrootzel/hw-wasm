@@ -51,6 +51,7 @@ set(engine_sources
     uFloat.pas
     uConsts.pas
     LuaPas.pas
+    uRust.pas
     uTypes.pas
     uVariables.pas
     uUtils.pas

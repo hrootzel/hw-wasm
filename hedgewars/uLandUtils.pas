@@ -22,27 +22,7 @@ function  LandPixelRow(row: LongInt): PLongwordArray;
 var gameField: pointer;
 
 implementation
-uses uUtils, uConsts, uVariables, uTypes;
-
-{$linklib hwengine_future}
-
-function  create_empty_game_field(width, height: Longword): pointer; cdecl; external;
-procedure get_game_field_parameters(game_field: pointer; var width: LongInt; var height: LongInt; var play_width: LongInt; var play_height: LongInt); cdecl; external;
-procedure dispose_game_field(game_field: pointer); cdecl; external;
-
-function  land_get(game_field: pointer; x, y: LongInt): Word; cdecl; external;
-procedure land_set(game_field: pointer; x, y: LongInt; value: Word); cdecl; external;
-function  land_row(game_field: pointer; row: LongInt): PWordArray; cdecl; external;
-procedure land_fill(game_field: pointer; x, y: LongInt; border, fill: Word); cdecl; external;
-
-function  land_pixel_get(game_field: pointer; x, y: LongInt): Longword; cdecl; external;
-procedure land_pixel_set(game_field: pointer; x, y: LongInt; value: Longword); cdecl; external;
-function  land_pixel_row(game_field: pointer; row: LongInt): PLongwordArray; cdecl; external;
-
-function  generate_outline_templated_game_field(feature_size: Longword; seed, template_type, data_path: PChar): pointer; cdecl; external;
-function  generate_wfc_templated_game_field(feature_size: Longword; seed, template_type, data_path: PChar): pointer; cdecl; external;
-function  generate_maze_game_field(feature_size: Longword; seed, template_type, data_path: PChar): pointer; cdecl; external;
-procedure apply_theme(game_field: pointer; data_path, theme_name: PChar); cdecl; external;
+uses uUtils, uConsts, uVariables, uTypes, uRust;
 
 function  LandGet(y, x: LongInt): Word;
 begin

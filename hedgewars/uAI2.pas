@@ -9,27 +9,7 @@ implementation
 uses uLandUtils, uFloat, uVariables, uAmmos, uConsts, 
      uTypes,
     uCommands, uUtils, uDebug, uAILandMarks,
-    uGearsUtils;
-
-
-{$linklib hwengine_future}
-
-type TAmmoCounts = array[TAmmoType] of Longword;
-     PAmmoCounts = ^TAmmoCounts;
-     HedgehogState = record
-        x, y: real;
-        angle: Longword;
-        looking_to_the_right,
-        is_moving: boolean;
-        end;
-
-function create_ai(game_field: pointer): pointer; cdecl; external;
-procedure ai_clear_team(ai: pointer); cdecl; external;
-procedure ai_add_team_hedgehog(ai: pointer; x, y: real; ammo_counts: PAmmoCounts); cdecl; external;
-procedure ai_think(ai: pointer); cdecl; external;
-function ai_have_plan(): boolean; cdecl; external;
-procedure ai_get_action(ai: pointer; var current_hedgehog_state: HedgehogState; var action: shortstring); cdecl; external;
-procedure dispose_ai(ai: pointer); cdecl; external;
+    uGearsUtils, uRust;
 
 var ai: pointer;
 
