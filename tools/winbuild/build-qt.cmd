@@ -1,6 +1,7 @@
-@echo off
+@echo on
 setlocal
 
+mkdir Build
 cd Build
 
 :: ============================================================
@@ -8,10 +9,11 @@ cd Build
 :: ============================================================
 
 :: Path to the unpacked Qt Source Code (e.g., qt-everywhere-src-6.10.1)
-set "QT_SRC=Z:/Qt/qt-everywhere-src-6.10.1"
+set "QT_BASE_SRC=Z:/Qt/qtbase-everywhere-src-6.10.1"
+set "QT_TOOLS_SRC=Z:/Qt/qttools-everywhere-src-6.10.1"
 
 :: Path to Qt installation folder
-set "QT_INSTALL_DIR=Z:/Qt/6.10.1"
+set "QT_INSTALL_DIR=Z:/Qt/Qt6"
 
 :: Path to your MinGW OpenSSL installation (Must contain include\ and lib\)
 set "OPENSSL_DIR=Z:/openssl-master"
@@ -37,23 +39,16 @@ echo Setting up environment...
 set "PATH=%MINGW_BIN%;%CMAKE_ROOT%/bin;%NINJA_ROOT%;%PATH%"
 
 :: ============================================================
-:: 3. CONFIGURE QT
+:: 3. CONFIGURE QT base
 :: ============================================================
 
 echo Starting Configure...
 
-:: NOTE: 
-:: -platform win32-g++   : Targets MinGW
-:: -static-runtime       : Statically links libgcc/libstdc++ (No MinGW DLLs needed)
-:: -openssl-linked       : Links OpenSSL inside the executable
-
-call "%QT_SRC%\configure.bat" ^
-    -static ^
+call "%QT_BASE_SRC%\configure.bat" ^
     -release ^
     -platform win32-g++ ^
-    -static-runtime ^
+    -shared ^
     -opensource -confirm-license ^
-    -optimize-size ^
     -opengl desktop ^
     -no-pch ^
     -no-icu ^
@@ -63,24 +58,8 @@ call "%QT_SRC%\configure.bat" ^
     -no-feature-testlib ^
     -nomake examples ^
     -nomake tests ^
-    -skip qt3d -skip qt5compat -skip qtactiveqt -skip qtandroidextras -skip qtcharts -skip qtcoap -skip qtgraphs ^
-    -skip qtconnectivity -skip qtdatavis3d -skip qtdeclarative -skip qtdoc ^
-    -skip qtgamepad -skip qtgrpc -skip qtgraphicaleffects -skip qthttpserver -skip qtimageformats ^
-    -skip qtlanguageserver ^
-    -skip qtlocation -skip qtlottie -skip qtmacextras -skip qtmqtt -skip qtmultimedia ^
-    -skip qtnetworkauth -skip qtopcua -skip qtpositioning -skip qtpurchasing -skip qtquick3d -skip qtquick3dphysics ^
-    -skip qtquickcontrols -skip qtquickcontrols2 -skip qtquickeffectmaker -skip qtquicktimeline ^
-    -skip qtremoteobjects -skip qtscript -skip qtscxml -skip qtsensors ^
-    -skip qtserialbus -skip qtserialport -skip qtshadertools -skip qtspeech -skip qtsvg ^
-    -skip qttranslations -skip qtvirtualkeyboard ^
-    -skip qtwayland -skip qtwebchannel -skip qtwebengine -skip qtwebglplugin ^
-    -skip qtwebsockets -skip qtwebview -skip qtwinextras -skip qtxmlpatterns ^
-    -openssl-linked ^
-    OPENSSL_LIBS="-L H:/openssl-static/lib -lssl -lcrypto -lws2_32 -lgdi32 -ladvapi32 -lcrypt32 -luser32" ^
     -prefix %QT_INSTALL_DIR% ^
     -- ^
-    -DOPENSSL_ROOT_DIR=%OPENSSL_DIR% ^
-    -DOPENSSL_USE_STATIC_LIBS=ON ^
     -DQT_FEATURE_designer=off ^
     -DQT_FEATURE_qtdiag=off
 
@@ -113,4 +92,51 @@ cmake --install .
 echo ============================================
 echo Install Complete.
 echo ============================================
+
+:: ============================================================
+:: 5. CONFIGURE QT tools
+:: ============================================================
+
+cd ..
+del /s /q Build
+mkdir Build
+cd Build
+
+echo Starting Configure...
+
+call "%QT_INSTALL_DIR%\bin\qt-configure-module.bat" ^
+    "%QT_TOOLS_SRC%"
+
+if %errorlevel% neq 0 (
+    echo Configure failed!
+    pause
+    exit /b 1
+)
+
+:: ============================================================
+:: 6. BUILD
+:: ============================================================
+
+echo Configure successful. Starting Build...
+:: -j uses all available CPU cores
+cmake --build . --parallel
+
+if %errorlevel% neq 0 (
+    echo Build failed!
+    pause
+    exit /b 1
+)
+
+echo ============================================
+echo Build Complete.
+echo ============================================
+
+cmake --install .
+
+echo ============================================
+echo Install Complete.
+echo ============================================
+
+cd ..
+del /s /q Build
 

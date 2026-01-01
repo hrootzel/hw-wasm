@@ -13,7 +13,6 @@ option(BUILD_OFFICIAL_SERVER "Build with official server features" OFF)
 set(SERVER_EXECUTABLE_NAME "hedgewars-server${CMAKE_EXECUTABLE_SUFFIX}")
 set(SERVER_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${SERVER_EXECUTABLE_NAME}")
 set(CABAL_DIST_DIR "${CMAKE_CURRENT_BINARY_DIR}/cabal-dist")
-set(CABAL_STORE_DIR "${CMAKE_CURRENT_BINARY_DIR}/cabal-store")
 
 if(${BUILD_OFFLINE})
     set(CABAL_FLAGS "--offline")
@@ -23,6 +22,8 @@ endif()
 
 if(BUILD_OFFICIAL_SERVER)
     list(APPEND CABAL_FLAGS "--flags=officialServer")
+else()
+    list(APPEND CABAL_FLAGS "--flags=-officialServer")
 endif()
 
 message(STATUS "Checking Haskell dependencies with Cabal...")

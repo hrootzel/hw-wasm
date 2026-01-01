@@ -12,17 +12,18 @@ set PATH=%ROOTPATH%/FPC/bin/i386-win32;%PATH%
 set PATH=%ROOTPATH%/w64devkit/bin;%PATH%
 set PATH=%ROOTPATH%/ninja;%PATH%
 set PATH=%ROOTPATH%/RUST/bin;%PATH%
+set PATH=%ROOTPATH%/ghc-9.12.3-x86_64-unknown-mingw32/bin;%PATH%
 
-set SDL2_DIR=%ROOTPATH%/SDL2-2.30.8/x86_64-w64-mingw32
-set SDL2IMAGEDIR=%ROOTPATH%/SDL2_image-2.8.8/x86_64-w64-mingw32
+set SDL2_DIR=%ROOTPATH%/SDL2-2.32.8/x86_64-w64-mingw32
+set SDL2IMAGEDIR=%ROOTPATH%/SDL2_image-2.8.6/x86_64-w64-mingw32
 set SDL2NETDIR=%ROOTPATH%/SDL2_net-2.2.0/x86_64-w64-mingw32
 set SDL2TTFDIR=%ROOTPATH%/SDL2_ttf-2.24.0/x86_64-w64-mingw32
 set SDL2MIXERDIR=%ROOTPATH%/SDL2_mixer-2.8.1/x86_64-w64-mingw32
 
-set Qt6_DIR=%ROOTPATH%/Qt/6.10.1
-set OPENSSL_ROOT_DIR=%ROOTPATH%/openssl-static
+set Qt6_DIR=%ROOTPATH%/Qt/Qt6
+set OPENSSL_ROOT_DIR=%ROOTPATH%/openssl-master
 
-set CMAKE_PREFIX_PATH=%ROOTPATH%/ffmpeg;%ROOTPATH%/zlib1211;%ROOTPATH%/libpng16;%ROOTPATH%/physfs-3.2.0
+set CMAKE_PREFIX_PATH=%ROOTPATH%/ffmpeg;%ROOTPATH%/zlib1211;%ROOTPATH%/libpng16;%ROOTPATH%/physfs
 
 echo Removing old build dir...
 del /s /q "%BUILDDIR%"
