@@ -33,19 +33,26 @@
 #include "physfsrwops.h"
 #include "sdlkeys.h"
 
+struct SDLInteractionPrivate {
+  bool m_audioInitialized{false};  ///< true if audio is initialized already
+  Mix_Music* m_music{nullptr};  ///< pointer to the music channel of the mixer
+  QString m_musicTrack;         ///< path to the music track;
+  bool m_isPlayingMusic{
+      false};  ///< true if music was started but not stopped again.
+
+  QMap<QString, Mix_Chunk*> m_soundMap;  ///< maps sound file paths to channels
+
+  int lastchannel{};  ///< channel of the last music played
+};
+
 SDLInteraction& SDLInteraction::instance() {
   static SDLInteraction instance;
   return instance;
 }
 
-SDLInteraction::SDLInteraction() {
+SDLInteraction::SDLInteraction() : d_ptr(new SDLInteractionPrivate) {
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 
-  m_audioInitialized = false;
-  m_music = NULL;
-  m_musicTrack = QLatin1String("");
-  m_isPlayingMusic = false;
-  lastchannel = 0;
   int i;
   // Initialize sdlkeys_iskeyboard
   for (i = 0; i < 1024; i++) {
@@ -68,22 +75,18 @@ SDLInteraction::SDLInteraction() {
               .constData());
 
   SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-
-  m_soundMap = new QMap<QString, Mix_Chunk*>();
 }
 
 SDLInteraction::~SDLInteraction() {
   stopMusic();
-  if (m_audioInitialized) {
-    if (m_music != NULL) {
+  if (d_ptr->m_audioInitialized) {
+    if (d_ptr->m_music != NULL) {
       Mix_HaltMusic();
-      Mix_FreeMusic(m_music);
+      Mix_FreeMusic(d_ptr->m_music);
     }
     Mix_CloseAudio();
   }
   SDL_Quit();
-
-  delete m_soundMap;
 }
 
 QStringList SDLInteraction::getResolutions() const {
@@ -229,73 +232,74 @@ void SDLInteraction::addGameControllerKeys() const {
 
 void SDLInteraction::SDLAudioInit() {
   // don't init again
-  if (m_audioInitialized) return;
+  if (d_ptr->m_audioInitialized) return;
 
   SDL_Init(SDL_INIT_AUDIO);
   if (!Mix_OpenAudio(
           44100, MIX_DEFAULT_FORMAT, 2,
           1024)) /* should we keep trying, or just turn off permanently? */
-    m_audioInitialized = true;
+    d_ptr->m_audioInitialized = true;
 }
 
 void SDLInteraction::playSoundFile(const QString& soundFile) {
   if (!HWForm::config || !HWForm::config->isFrontendSoundEnabled()) return;
   SDLAudioInit();
-  if (!m_audioInitialized) return;
-  if (!m_soundMap->contains(soundFile))
-    m_soundMap->insert(
+  if (!d_ptr->m_audioInitialized) return;
+  if (!d_ptr->m_soundMap.contains(soundFile))
+    d_ptr->m_soundMap.insert(
         soundFile,
         Mix_LoadWAV_RW(
             PHYSFSRWOPS_openRead(soundFile.toLocal8Bit().constData()), 1));
 
   // FIXME: this is a hack, but works as long as we have few concurrent playing
   // sounds
-  if (Mix_Playing(lastchannel) == false)
-    lastchannel = Mix_PlayChannel(-1, m_soundMap->value(soundFile), 0);
+  if (Mix_Playing(d_ptr->lastchannel) == false)
+    d_ptr->lastchannel =
+        Mix_PlayChannel(-1, d_ptr->m_soundMap.value(soundFile), 0);
 }
 
 void SDLInteraction::setMusicTrack(const QString& musicFile) {
-  bool wasPlayingMusic = m_isPlayingMusic;
+  bool wasPlayingMusic = d_ptr->m_isPlayingMusic;
 
   stopMusic();
 
-  if (m_music != NULL) {
-    Mix_FreeMusic(m_music);
-    m_music = NULL;
+  if (d_ptr->m_music != NULL) {
+    Mix_FreeMusic(d_ptr->m_music);
+    d_ptr->m_music = NULL;
   }
 
-  m_musicTrack = musicFile;
+  d_ptr->m_musicTrack = musicFile;
 
   if (wasPlayingMusic) startMusic();
 }
 
 void SDLInteraction::startMusic() {
-  if (m_isPlayingMusic) return;
+  if (d_ptr->m_isPlayingMusic) return;
 
-  m_isPlayingMusic = true;
+  d_ptr->m_isPlayingMusic = true;
 
-  if (m_musicTrack.isEmpty()) return;
+  if (d_ptr->m_musicTrack.isEmpty()) return;
 
   SDLAudioInit();
-  if (!m_audioInitialized) return;
+  if (!d_ptr->m_audioInitialized) return;
 
-  if (m_music == NULL)
-    m_music = Mix_LoadMUS_RW(
-        PHYSFSRWOPS_openRead(m_musicTrack.toLocal8Bit().constData()), 0);
+  if (d_ptr->m_music == NULL)
+    d_ptr->m_music = Mix_LoadMUS_RW(
+        PHYSFSRWOPS_openRead(d_ptr->m_musicTrack.toLocal8Bit().constData()), 0);
 
   Mix_VolumeMusic(MIX_MAX_VOLUME / 4);
-  Mix_FadeInMusic(m_music, -1, 1750);
+  Mix_FadeInMusic(d_ptr->m_music, -1, 1750);
 }
 
 void SDLInteraction::stopMusic() {
-  if (m_isPlayingMusic && (m_music != NULL)) {
+  if (d_ptr->m_isPlayingMusic && (d_ptr->m_music != NULL)) {
     // fade out music to finish 0,5 seconds from now
     while (!Mix_FadeOutMusic(1000) && Mix_PlayingMusic()) {
       SDL_Delay(100);
     }
   }
 
-  m_isPlayingMusic = false;
+  d_ptr->m_isPlayingMusic = false;
 }
 
 QSize SDLInteraction::getCurrentResolution() {

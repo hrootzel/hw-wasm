@@ -25,10 +25,9 @@
 #define HEDGEWARS_SDLINTERACTION_H
 
 #include <QMap>
+#include <QScopedPointer>
 #include <QSize>
 #include <QStringList>
-
-#include "SDL_mixer.h"
 
 /**
  * @brief Class for interacting with SDL (used for music and keys)
@@ -36,6 +35,7 @@
  * @see <a href="https://en.wikipedia.org/wiki/Singleton_pattern">singleton
  * pattern</a>
  */
+struct SDLInteractionPrivate;
 class SDLInteraction {
   Q_DISABLE_COPY_MOVE(SDLInteraction)
 
@@ -54,14 +54,7 @@ class SDLInteraction {
   /// Initializes SDL for sound output if needed.
   void SDLAudioInit();
 
-  bool m_audioInitialized;  ///< true if audio is initialized already
-  Mix_Music* m_music;       ///< pointer to the music channel of the mixer
-  QString m_musicTrack;     ///< path to the music track;
-  bool m_isPlayingMusic;  ///< true if music was started but not stopped again.
-
-  QMap<QString, Mix_Chunk*>* m_soundMap;  ///< maps sound file paths to channels
-
-  int lastchannel;  ///< channel of the last music played
+  QScopedPointer<SDLInteractionPrivate> d_ptr;
 
  public:
   /**

@@ -30,7 +30,7 @@
 
 #include "HWApplication.h"
 #include "SDL.h"
-#include "SDLInteraction.h"
+#include "SDL_mixer.h"
 #include "SDL_version.h"
 #include "creditsmessages.h"
 #include "hwconsts.h"
