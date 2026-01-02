@@ -5,6 +5,5 @@ services:
     volumes:
       - ../../:/src
       - ./out:/build-Hedgewars
-    command: ["wine", "cmd", "/c", "/src/tools/winbuild/build-hedgewars.cmd"]
-
+    command: ["wine", "cmd", "/c", "z:/src/tools/winbuild/build-hedgewars.cmd"]
 

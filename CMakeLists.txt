@@ -40,13 +40,17 @@ option(BUILD_ENGINE_C "Compile hwengine as native C (off)" OFF)
 option(BUILD_ENGINE_JS "Compile hwengine as JavaScript (off)" OFF)
 option(GL2 "Enable OpenGL 2 rendering, only use if you know what you're doing (off)" OFF)
 
-set(GHFLAGS "" CACHE STRING "Additional Haskell flags")
+set(CABAL_FLAGS "" CACHE STRING "Additional Haskell cabal flags")
+set(CARGO_FLAGS "" CACHE STRING "Additional Rust cargo flags")
 if(UNIX AND NOT APPLE)
     set(DATA_INSTALL_DIR "share/hedgewars" CACHE STRING "Resource folder path")
 endif()
 
 option(NOVERSIONINFOUPDATE "Disable update of version_info.txt. To be used if source is in a git/repo that is NOT the hedgewars repo" OFF)
 
+
+separate_arguments(CABAL_FLAGS NATIVE_COMMAND "${CABAL_FLAGS}")
+separate_arguments(CARGO_FLAGS NATIVE_COMMAND "${CARGO_FLAGS}")
 
 if(BUILD_ENGINE_C AND NOT NOVIDEOREC)
     if((CMAKE_BUILD_TYPE STREQUAL "Release") OR (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
@@ -157,24 +161,8 @@ endif()
 
 
 if(GHC_DYNAMIC)
-  list(APPEND haskell_flags "-dynamic")
+  list(APPEND CABAL_FLAGS "-dynamic")
 endif()
-
-#get BUILD_TYPE and enable/disable optimisation
-message(STATUS "Using ${CMAKE_BUILD_TYPE} configuration")
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list(APPEND haskell_flags "-Wall"       # all warnings
-                              "-debug"      # debug mode
-                              "-fno-warn-unused-do-bind"
-                              "-O0"
-                              )
-    set(USE_DEBUG_LIBRARIES TRUE)
-else()
-    list(APPEND haskell_flags "-w" # no warnings
-                              "-O2"
-                              )
-endif()
-
 
 #build engine without freepascal
 if(BUILD_ENGINE_C AND NOT BUILD_ENGINE_JS)
@@ -263,9 +251,7 @@ add_subdirectory(misc/libphyslayer)
 
 #rust libraries
 if(${BUILD_OFFLINE})
-    set(CARGO_FLAGS "--offline")
-else()
-    set(CARGO_FLAGS "")
+    list(APPEND CARGO_FLAGS "--offline")
 endif()
 add_subdirectory(tools/corrosion)
 corrosion_import_crate(MANIFEST_PATH rust/lib-hwengine-future/Cargo.toml NO_LINKER_OVERRIDE FLAGS ${CARGO_FLAGS})

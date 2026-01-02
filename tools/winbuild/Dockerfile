@@ -76,21 +76,19 @@ RUN wget --no-verbose https://downloads.haskell.org/cabal/cabal-install-3.16.1.0
         https://eternallybored.org/misc/wget/1.21.4/64/wget.exe && \
         mv wget.exe w64devkit/bin/
 
-# Upack cabal and SDL libs
+# NSIS
+
+RUN wget --no-verbose https://sourceforge.net/projects/nsis/files/NSIS%203/3.11/nsis-3.11.zip/download -O nsis.zip
+
+# Upack cabal, NSIS and SDL libs
 
 RUN find *.zip -print -exec unzip -q {} \; -delete \
         && mv plan.json cabal.exe ghc-9.12.3-x86_64-unknown-mingw32/bin/
-
-# NSIS
-
-RUN wget --no-verbose https://sourceforge.net/projects/nsis/files/NSIS%203/3.11/nsis-3.11-setup.exe/download -O nsis_setup.exe
 
 # FPC
 
 RUN wget --no-verbose http://downloads.freepascal.org/fpc/dist/3.2.2/i386-win32/fpc-3.2.2.i386-win32.exe \
         http://downloads.freepascal.org/fpc/dist/3.2.2/i386-win32/fpc-3.2.2.i386-win32.cross.x86_64-win64.exe
-
-RUN xvfb-run --auto-servernum wine nsis_setup.exe /S
 
 RUN innoextract fpc-3.2.2.i386-win32.exe fpc-3.2.2.i386-win32.cross.x86_64-win64.exe && \
         mv app FPC && \
@@ -121,21 +119,18 @@ RUN ln --force --symbolic /FPC/bin/i386-win32/x86_64-win64-ld.exe /FPC/bin/i386-
 
 RUN mkdir Z prefetch && \
     ln -s /prefetch /Z/prefetch && \
+    mkdir build-Hedgewars && \
+    ln -s /build-Hedgewars /Z/build-Hedgewars && \
     cd prefetch && \  
     wine cmd /c "set PATH=z:/ghc-9.12.3-x86_64-unknown-mingw32/bin && \
         cabal v2-update"
 
 COPY ./hedgewars-server.cabal /prefetch/
 
-RUN echo "repository hackage.haskell.org" > /cabal-config && \
-    echo "  url: http://hackage.haskell.org/" >> /cabal-config && \
-    echo "extra-prog-path: z:/w64devkit/bin, z:/ghc-9.12.3-x86_64-unknown-mingw32/bin" >> /cabal-config && \
-    echo "configure-options: --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32" >> /cabal-config
-
-RUN cd prefetch && wine cmd /c "set PATH=z:/ghc-9.12.3-x86_64-unknown-mingw32/bin && \
-        set CABAL_CONFIG=z:/cabal-config && \
-        cabal v2-build --flags="-officialServer" --dependencies-only exe:hedgewars-server" && \
-        rm -rf /prefetch
+RUN cd prefetch && \
+    wine cmd /c "set PATH=z:/ghc-9.12.3-x86_64-unknown-mingw32/bin && \
+        cabal fetch" && \
+    rm -rf /prefetch
 
 RUN wine cmd /c "set PATH=z:/RUST/bin && \
         cargo new --lib z:/prefetch && \

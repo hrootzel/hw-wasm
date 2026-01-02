@@ -8,11 +8,12 @@ set HWREPO=Z:/src
 set CMAKE=%ROOTPATH%/cmake-4.2.1-windows-x86_64/bin/cmake.exe
 set CPACK=%ROOTPATH%/cmake-4.2.1-windows-x86_64/bin/cpack.exe
 
+set PATH=%ROOTPATH%/nsis;%PATH%
 set PATH=%ROOTPATH%/FPC/bin/i386-win32;%PATH%
-set PATH=%ROOTPATH%/w64devkit/bin;%PATH%
 set PATH=%ROOTPATH%/ninja;%PATH%
 set PATH=%ROOTPATH%/RUST/bin;%PATH%
 set PATH=%ROOTPATH%/ghc-9.12.3-x86_64-unknown-mingw32/bin;%PATH%
+set PATH=%ROOTPATH%/w64devkit/bin;%PATH%
 
 set SDL2_DIR=%ROOTPATH%/SDL2-2.32.8/x86_64-w64-mingw32
 set SDL2IMAGEDIR=%ROOTPATH%/SDL2_image-2.8.6/x86_64-w64-mingw32
@@ -25,6 +26,9 @@ set OPENSSL_ROOT_DIR=%ROOTPATH%/openssl-master
 
 set CMAKE_PREFIX_PATH=%ROOTPATH%/ffmpeg;%ROOTPATH%/zlib1211;%ROOTPATH%/libpng16;%ROOTPATH%/physfs
 
+set GREP=Z:/w64devkit/bin/grep.exe
+set SED=Z:/w64devkit/bin/sed.exe
+
 echo Removing old build dir...
 del /s /q "%BUILDDIR%"
 mkdir "%BUILDDIR%"
@@ -32,7 +36,7 @@ xcopy /S /Y %ROOTPATH%/install_libs/* %HWREPO%/bin
 
 echo Configuring...
 cd %BUILDDIR%
-%CMAKE% -G Ninja -DCMAKE_BUILD_TYPE="Release" -DWIN32_WIN64_CROSS_COMPILE=on %HWREPO%
+%CMAKE% -G Ninja -DCMAKE_BUILD_TYPE="Release" -DWIN32_WIN64_CROSS_COMPILE=on -DCABAL_FLAGS=--project-file=tools/winbuild/cabal.project.local %HWREPO%
 
 if %errorlevel% neq 0 (
     echo Configure failed!

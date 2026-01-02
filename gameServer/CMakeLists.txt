@@ -15,9 +15,7 @@ set(SERVER_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${SERVER_EXECUTABLE_NAME}")
 set(CABAL_DIST_DIR "${CMAKE_CURRENT_BINARY_DIR}/cabal-dist")
 
 if(${BUILD_OFFLINE})
-    set(CABAL_FLAGS "--offline")
-else()
-    set(CABAL_FLAGS "")
+    list(APPEND CABAL_FLAGS "--offline")
 endif()
 
 if(BUILD_OFFICIAL_SERVER)
