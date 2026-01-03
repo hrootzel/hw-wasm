@@ -97,3 +97,5 @@ cabal.sandbox.config
 build/
 target/
 dist-newstyle
+tools/winbuild/out
+
