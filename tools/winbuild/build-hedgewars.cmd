@@ -8,7 +8,7 @@ set HWREPO=Z:/src
 set CMAKE=%ROOTPATH%/cmake-4.2.1-windows-x86_64/bin/cmake.exe
 set CPACK=%ROOTPATH%/cmake-4.2.1-windows-x86_64/bin/cpack.exe
 
-set PATH=%ROOTPATH%/nsis;%PATH%
+set PATH=%ROOTPATH%/nsis-3.11;%PATH%
 set PATH=%ROOTPATH%/FPC/bin/i386-win32;%PATH%
 set PATH=%ROOTPATH%/ninja;%PATH%
 set PATH=%ROOTPATH%/RUST/bin;%PATH%
@@ -36,7 +36,7 @@ xcopy /S /Y %ROOTPATH%/install_libs/* %HWREPO%/bin
 
 echo Configuring...
 cd %BUILDDIR%
-%CMAKE% -G Ninja -DCMAKE_BUILD_TYPE="Release" -DWIN32_WIN64_CROSS_COMPILE=on -DCABAL_FLAGS=--project-file=tools/winbuild/cabal.project.local %HWREPO%
+%CMAKE% -G Ninja -DCMAKE_BUILD_TYPE="Release" -DWIN32_WIN64_CROSS_COMPILE=on -DCABAL_FLAGS="-j --project-file=tools/winbuild/cabal.project.local" %HWREPO%
 
 if %errorlevel% neq 0 (
     echo Configure failed!
@@ -46,7 +46,7 @@ if %errorlevel% neq 0 (
 
 echo Building...
 
-%CMAKE% --build . --verbose
+%CMAKE% --build . --verbose --parallel
 
 if %errorlevel% neq 0 (
     echo Build failed!
@@ -54,6 +54,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Creating package...
+
 %CPACK% -G ZIP
 %CPACK% -G NSIS
 

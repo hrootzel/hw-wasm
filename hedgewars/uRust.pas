@@ -5,7 +5,7 @@ unit uRust;
 interface
 uses SDLh, uTypes;
 
-const HWEngineFutureLibName = 'libhwengine_future';
+const HWEngineFutureLibName = 'hwengine_future';
 
 {$IFNDEF WINDOWS}
   {$linklib hwengine_future}
