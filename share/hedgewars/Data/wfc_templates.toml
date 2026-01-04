@@ -255,6 +255,170 @@ edges = [ "H", "H", "H", "H" ]
 anti_match = [0, 2, 0, 2]
 is_negative = true
 
+# hex tiles
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "eE", "EE", "Ee", "e" ]
+is_negative = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "fE", "EE", "Ee", "e" ]
+is_negative = true
+can_flip = true
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "fE", "EE", "Ef", "e" ]
+is_negative = true
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_1.png"
+edges = [ "fE", "EE", "Ef", "f" ]
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_1.png"
+edges = [ "eE", "EE", "Ef", "f" ]
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_1.png"
+edges = [ "eE", "EE", "Ee", "f" ]
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_1.png"
+edges = [ "eF", "FF", "Fe", "e" ]
+is_negative = true
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_1.png"
+edges = [ "fF", "FF", "Fe", "e" ]
+is_negative = true
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_1.png"
+edges = [ "fF", "FF", "Ff", "e" ]
+is_negative = true
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "eF", "FE", "Ee", "e" ]
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "eF", "FE", "Ef", "e" ]
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "fF", "FE", "Ee", "e" ]
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "fF", "FE", "Ef", "e" ]
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "fE", "EF", "Ff", "f" ]
+is_negative = true
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "fE", "EF", "Fe", "f" ]
+is_negative = true
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "eE", "EF", "Ff", "f" ]
+is_negative = true
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "eE", "EF", "Fe", "f" ]
+is_negative = true
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "fF", "FF", "Ff", "f" ]
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "eF", "FF", "Ff", "f" ]
+can_flip = true
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "eF", "FF", "Fe", "f" ]
+can_mirror = true
+
+# borders compatibility:
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "!ef", "FE", "Ee", "e" ]
+weight = 0
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "fE", "EF", "!f", "f" ]
+weight = 0
+is_negative = true
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_2.png"
+edges = [ "eE", "EF", "!f", "f" ]
+weight = 0
+is_negative = true
+can_mirror = true
+can_flip = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "fF", "FF", "!f", "f" ]
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "!e", "EE", "Ef", "e" ]
+is_negative = true
+can_mirror = true
+
+[[tiles.hex]]
+name = "hex_0.png"
+edges = [ "!e", "EE", "Ee", "e" ]
+is_negative = true
+can_mirror = true
+
 ################ EDGES ################
 [edges.bottom_row]
 top = { begin = "e", fill = "e", end = "e" }
@@ -357,9 +521,42 @@ wrap = true
 edges = "bottom_fill"
 tiles = [ "Shoppa" ]
 
+[[templates]]
+# 7
+width = 1960
+height = 1140
+can_invert = false
+is_negative = false
+put_girders = true
+max_hedgehogs = 64
+edges = "bottom_row"
+tiles = [ "hex" ]
+
+[[templates]]
+# 8
+width = 980
+height = 570
+can_invert = false
+is_negative = false
+put_girders = true
+max_hedgehogs = 64
+edges = "bottom_row"
+tiles = [ "hex" ]
+
+[[templates]]
+# 9
+width = 3920
+height = 1710
+can_invert = false
+is_negative = false
+put_girders = true
+max_hedgehogs = 64
+edges = "bottom_row"
+tiles = [ "hex" ]
+
 [template_types]
-small = [ 2 ]
-medium = [ 4 ]
-large = [ 1 ]
+small = [ 2, 8 ]
+medium = [ 4, 7 ]
+large = [ 1, 9 ]
 cavern = [ 0, 5 ]
 wacky = [ 6 ]
