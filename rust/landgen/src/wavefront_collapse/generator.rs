@@ -163,7 +163,10 @@ impl WavefrontCollapseLandGenerator {
         if tile_description.can_rotate90.unwrap_or_default() {
             result.push(tile.rotated90());
         }
-        if tile_description.can_rotate180.unwrap_or_default() {
+        if tile_description.can_rotate180.unwrap_or_default()
+            && !tile_description.can_flip.unwrap_or_default()
+            && !tile_description.can_mirror.unwrap_or_default()
+        {
             result.push(tile.rotated180());
         }
         if tile_description.can_rotate270.unwrap_or_default() {
@@ -360,7 +363,7 @@ impl LandGenerator for WavefrontCollapseLandGenerator {
                     if row > 0 {
                         let tile = wfc.grid().get(row - 1, column);
                         edges[0] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().bottom().name()
+                            tiles[*tile_index].edge_set().bottom().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }
@@ -368,7 +371,7 @@ impl LandGenerator for WavefrontCollapseLandGenerator {
                     if column < wfc_size.width as usize - 1 {
                         let tile = wfc.grid().get(row, column + 1);
                         edges[1] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().left().name()
+                            tiles[*tile_index].edge_set().left().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }
@@ -376,7 +379,7 @@ impl LandGenerator for WavefrontCollapseLandGenerator {
                     if row < wfc_size.height as usize - 1 {
                         let tile = wfc.grid().get(row + 1, column);
                         edges[2] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().top().name()
+                            tiles[*tile_index].edge_set().top().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }
@@ -384,13 +387,13 @@ impl LandGenerator for WavefrontCollapseLandGenerator {
                     if column > 0 {
                         let tile = wfc.grid().get(row, column - 1);
                         edges[3] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().right().name()
+                            tiles[*tile_index].edge_set().right().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }
                     }
                     eprintln!(
-                        "Couldn't find a tile to place here (row, column): ({}, {}), edges are: [{}]",
+                        "Couldn't find a tile to place here (row, column): ({}, {}) with edges: [{}]",
                         row, column, edges.join(", "),
                     );
                 }

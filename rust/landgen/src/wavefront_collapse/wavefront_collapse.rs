@@ -60,12 +60,20 @@ impl WavefrontCollapse {
         seed_fn(&mut self.grid);
 
         let mut backtracks = 0usize;
-        while let Some(b) = self.collapse_step(random_numbers) {
-            backtracks += b;
+        loop {
+            let (entropy, tiles) = self.collapse_step(backtracks <= 128, random_numbers);
 
-            if backtracks >= 128 {
-                println!("[WFC] Too much backtracking, stopping generation!");
-                break;
+            if entropy == 0 {
+                self.apply_all(tiles);
+
+                backtracks += 1;
+            } else {
+                if tiles.is_empty() {
+                    // Reached maximum fill level
+                    break;
+                }
+
+                self.apply_one(tiles, random_numbers)
             }
         }
 
@@ -121,7 +129,11 @@ impl WavefrontCollapse {
         })
     }
 
-    fn collapse_step(&mut self, random_numbers: &mut impl Rng) -> Option<usize> {
+    fn collapse_step(
+        &self,
+        ignore_unsolvable_tiles: bool,
+        random_numbers: &mut impl Rng,
+    ) -> (usize, Vec<(usize, usize, Tile)>) {
         let mut tiles_to_collapse = (usize::MAX, Vec::new());
 
         // Iterate through the tiles in the land
@@ -181,13 +193,24 @@ impl WavefrontCollapse {
                                 tiles_to_collapse.1.push(entry)
                             }
                         }
-                    } else {
+                    } else if !ignore_unsolvable_tiles {
+                        let mut neighbors = neighbors.to_vec();
+                        if random_numbers.random_bool(0.2) {
+                            neighbors.extend([
+                                (y.wrapping_add(1), x.wrapping_add(1)),
+                                (y.wrapping_add(1), x.wrapping_sub(1)),
+                                (y.wrapping_sub(1), x.wrapping_sub(1)),
+                                (y.wrapping_sub(1), x.wrapping_add(1)),
+                            ]);
+                        }
+
                         let entries = neighbors
                             .iter()
                             .filter(|(y, x)| self.grid.get(*y, *x).is_some())
                             .map(|(y, x)| (*y, *x, Tile::Empty))
                             .collect::<Vec<_>>();
 
+                        // NOTE: entropy is zero at this point
                         if entropy < tiles_to_collapse.0 {
                             tiles_to_collapse = (entropy, entries);
                         } else {
@@ -198,29 +221,24 @@ impl WavefrontCollapse {
             }
         }
 
-        if tiles_to_collapse.0 == 0 {
-            // cannot collapse, we're clearing some tiles
+        tiles_to_collapse
+    }
 
-            for (y, x, tile) in tiles_to_collapse.1 {
-                *self
-                    .grid
-                    .get_mut(y, x)
-                    .expect("correct iteration over grid") = tile;
-            }
+    pub fn apply_all(&mut self, tiles: Vec<(usize, usize, Tile)>) {
+        for (y, x, tile) in tiles {
+            *self
+                .grid
+                .get_mut(y, x)
+                .expect("correct iteration over grid") = tile;
+        }
+    }
 
-            Some(1)
-        } else {
-            if let Some(&(y, x, tile)) = tiles_to_collapse.1.as_slice().choose(random_numbers) {
-                *self
-                    .grid
-                    .get_mut(y, x)
-                    .expect("correct iteration over grid") = tile;
-
-                Some(0)
-            } else {
-                // all tiles are filled according to the rules
-                None
-            }
+    pub fn apply_one(&mut self, tiles: Vec<(usize, usize, Tile)>, random_numbers: &mut impl Rng) {
+        if let Some(&(y, x, tile)) = tiles.as_slice().choose(random_numbers) {
+            *self
+                .grid
+                .get_mut(y, x)
+                .expect("correct iteration over grid") = tile;
         }
     }
 

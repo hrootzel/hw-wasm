@@ -314,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_edge_new() {
-        let edge = Edge::new(1, true);
+        let edge = Edge::new(1, true, false);
         assert_eq!(edge.id, 1);
         assert_eq!(edge.symmetrical, true);
         assert_eq!(edge.reverse, false);
@@ -322,13 +322,13 @@ mod tests {
 
     #[test]
     fn test_edge_reversed() {
-        let edge = Edge::new(1, true);
+        let edge = Edge::new(1, true, false);
         let reversed = edge.reversed();
         assert_eq!(reversed.id, edge.id);
         assert_eq!(reversed.symmetrical, edge.symmetrical);
         assert_eq!(reversed.reverse, false);
 
-        let edge = Edge::new(1, false);
+        let edge = Edge::new(1, false, false);
         let reversed = edge.reversed();
         assert_eq!(reversed.id, edge.id);
         assert_eq!(reversed.symmetrical, edge.symmetrical);
@@ -337,30 +337,30 @@ mod tests {
 
     #[test]
     fn test_edge_equality() {
-        let edge1 = Edge::new(1, true);
-        let edge2 = Edge::new(1, true);
+        let edge1 = Edge::new(1, true, false);
+        let edge2 = Edge::new(1, true, false);
         assert_eq!(edge1, edge2);
 
-        let edge1 = Edge::new(1, false);
-        let edge2 = Edge::new(1, false);
+        let edge1 = Edge::new(1, false, false);
+        let edge2 = Edge::new(1, false, false);
         assert_eq!(edge1, edge2);
 
-        let edge1 = Edge::new(1, false);
-        let edge2 = Edge::new(2, false);
+        let edge1 = Edge::new(1, false, false);
+        let edge2 = Edge::new(2, false, false);
         assert_ne!(edge1, edge2);
     }
 
     #[test]
     fn test_edge_equality_with_reverse() {
-        let edge1 = Edge::new(1, true);
+        let edge1 = Edge::new(1, true, false);
         let edge2 = edge1.reversed();
         assert_eq!(edge1, edge2);
 
-        let edge1 = Edge::new(1, false);
+        let edge1 = Edge::new(1, false, false);
         let edge2 = edge1.reversed();
         assert_ne!(edge1, edge2);
 
-        let edge1 = Edge::new(1, true);
+        let edge1 = Edge::new(1, true, false);
         let edge2 = edge1.reversed().reversed();
         assert_eq!(edge1, edge2);
     }
