@@ -84,6 +84,5 @@ add_custom_target(hedgewars-server ALL
     VERBATIM
 )
 
-
 install(PROGRAMS "${SERVER_BIN_PATH}" DESTINATION ${target_binary_install_dir})
 

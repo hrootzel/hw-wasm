@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.19)
 
+if(POLICY CMP0177)
+  cmake_policy(SET CMP0177 NEW)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
@@ -340,7 +344,7 @@ include(GNUInstallDirs)
 
 install(TARGETS hedgewars
     BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RUNTIME DESTINATION ${target_binary_install_dir}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 

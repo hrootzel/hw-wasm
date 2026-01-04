@@ -32,7 +32,6 @@ set SED=Z:/w64devkit/bin/sed.exe
 echo Removing old build dir...
 del /s /q "%BUILDDIR%"
 mkdir "%BUILDDIR%"
-xcopy /S /Y %ROOTPATH%/install_libs/* %HWREPO%/bin
 
 echo Configuring...
 cd %BUILDDIR%
