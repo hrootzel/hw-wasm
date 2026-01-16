@@ -61,7 +61,7 @@ impl WavefrontCollapse {
 
         let mut backtracks = 0usize;
         loop {
-            let (entropy, tiles) = self.collapse_step(backtracks <= 128, random_numbers);
+            let (entropy, tiles) = self.collapse_step(backtracks > 128, random_numbers);
 
             if entropy == 0 {
                 self.apply_all(tiles);
@@ -137,8 +137,8 @@ impl WavefrontCollapse {
         let mut tiles_to_collapse = (usize::MAX, Vec::new());
 
         // Iterate through the tiles in the land
-        for x in 0..self.grid.width() {
-            for y in 0..self.grid.height() {
+        for y in 0..self.grid.height() {
+            for x in 0..self.grid.width() {
                 let current_tile = self.get_tile(y, x);
 
                 if let Tile::Empty = current_tile {
@@ -194,16 +194,6 @@ impl WavefrontCollapse {
                             }
                         }
                     } else if !ignore_unsolvable_tiles {
-                        let mut neighbors = neighbors.to_vec();
-                        if random_numbers.random_bool(0.2) {
-                            neighbors.extend([
-                                (y.wrapping_add(1), x.wrapping_add(1)),
-                                (y.wrapping_add(1), x.wrapping_sub(1)),
-                                (y.wrapping_sub(1), x.wrapping_sub(1)),
-                                (y.wrapping_sub(1), x.wrapping_add(1)),
-                            ]);
-                        }
-
                         let entries = neighbors
                             .iter()
                             .filter(|(y, x)| self.grid.get(*y, *x).is_some())
@@ -224,7 +214,7 @@ impl WavefrontCollapse {
         tiles_to_collapse
     }
 
-    pub fn apply_all(&mut self, tiles: Vec<(usize, usize, Tile)>) {
+    fn apply_all(&mut self, tiles: Vec<(usize, usize, Tile)>) {
         for (y, x, tile) in tiles {
             *self
                 .grid
@@ -233,7 +223,7 @@ impl WavefrontCollapse {
         }
     }
 
-    pub fn apply_one(&mut self, tiles: Vec<(usize, usize, Tile)>, random_numbers: &mut impl Rng) {
+    fn apply_one(&mut self, tiles: Vec<(usize, usize, Tile)>, random_numbers: &mut impl Rng) {
         if let Some(&(y, x, tile)) = tiles.as_slice().choose(random_numbers) {
             *self
                 .grid
