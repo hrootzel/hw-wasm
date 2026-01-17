@@ -1,5 +1,5 @@
 use super::tile_image::{Edge, EdgeSet, MatchSide, TileImage};
-use super::wavefront_collapse::{CollapseRule, Tile, WavefrontCollapse};
+use super::wavefront_collapse::{Cell, CollapseRule, Tile, WavefrontCollapse};
 use crate::{LandGenerationParameters, LandGenerator};
 use integral_geometry::Size;
 use png::Decoder;
@@ -340,7 +340,7 @@ impl LandGenerator for WavefrontCollapseLandGenerator {
 
         for row in 0..wfc_size.height as usize {
             for column in 0..wfc_size.width as usize {
-                if let Some(Tile::Numbered(tile_index)) = wfc.grid().get(row, column) {
+                if let Some(Cell{tile: Tile::Numbered(tile_index), ..}) = wfc.grid().get(row, column) {
                     let tile = &tiles[*tile_index];
 
                     for tile_row in 0..tile.size().height as usize {
@@ -361,33 +361,33 @@ impl LandGenerator for WavefrontCollapseLandGenerator {
                     let mut edges = ["-", "|", "-", "|"].map(|s| s.to_owned());
 
                     if row > 0 {
-                        let tile = wfc.grid().get(row - 1, column);
+                        let tile = wfc.grid().get(row - 1, column).map(|c| c.tile);
                         edges[0] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().bottom().reversed().name()
+                            tiles[tile_index].edge_set().bottom().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }
                     }
                     if column < wfc_size.width as usize - 1 {
-                        let tile = wfc.grid().get(row, column + 1);
+                        let tile = wfc.grid().get(row, column + 1).map(|c| c.tile);
                         edges[1] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().left().reversed().name()
+                            tiles[tile_index].edge_set().left().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }
                     }
                     if row < wfc_size.height as usize - 1 {
-                        let tile = wfc.grid().get(row + 1, column);
+                        let tile = wfc.grid().get(row + 1, column).map(|c| c.tile);
                         edges[2] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().top().reversed().name()
+                            tiles[tile_index].edge_set().top().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }
                     }
                     if column > 0 {
-                        let tile = wfc.grid().get(row, column - 1);
+                        let tile = wfc.grid().get(row, column - 1).map(|c| c.tile);
                         edges[3] = if let Some(Tile::Numbered(tile_index)) = tile {
-                            tiles[*tile_index].edge_set().right().reversed().name()
+                            tiles[tile_index].edge_set().right().reversed().name()
                         } else {
                             format!("{:?}", tile.unwrap())
                         }

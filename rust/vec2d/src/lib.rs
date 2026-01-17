@@ -51,7 +51,7 @@ impl<T> Vec2D<T> {
     }
 }
 
-impl<T: Copy> Vec2D<T> {
+impl<T: Clone> Vec2D<T> {
     pub fn new(size: &Size, value: T) -> Self {
         Self {
             size: *size,
