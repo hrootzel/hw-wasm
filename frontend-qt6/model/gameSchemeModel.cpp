@@ -1148,7 +1148,7 @@ void GameSchemeModel::Save() {
 }
 
 NetGameSchemeModel::NetGameSchemeModel(QObject *parent)
-    : QAbstractTableModel(parent), netScheme{defaultScheme} {}
+    : QAbstractTableModel(parent), netScheme(defaultScheme) {}
 
 QVariant NetGameSchemeModel::headerData(int section,
                                         Qt::Orientation orientation,
@@ -1175,16 +1175,16 @@ int NetGameSchemeModel::columnCount(const QModelIndex &parent) const {
 }
 
 QVariant NetGameSchemeModel::data(const QModelIndex &index, int role) const {
-  if (!index.isValid() || index.row() < 0 || index.row() > 1 ||
+  if (!index.isValid() || index.row() != 0 ||
       index.column() >= defaultScheme.size() ||
       (role != Qt::EditRole && role != Qt::DisplayRole))
-    return QVariant();
+    return {};
 
   return netScheme[index.column()];
 }
 
 void NetGameSchemeModel::setNetSchemeConfig(QStringList cfg) {
-  if (cfg.size() != netScheme.size()) {
+  if (cfg.size() != defaultScheme.size()) {
     qWarning("Incorrect scheme cfg size");
     return;
   }
