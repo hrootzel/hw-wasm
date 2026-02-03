@@ -5,7 +5,10 @@ param(
   [switch]$NoServer = $true,
   [switch]$NoVideoRec = $true,
   [switch]$LuaSystemOff = $true,
-  [switch]$BuildEngineC = $true
+  [switch]$BuildEngineC = $true,
+  [switch]$BuildEngineJS = $true,
+  [switch]$SkipPas2c,
+  [switch]$Clean
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,10 +22,12 @@ function Resolve-EmsdkRoot {
 }
 
 function Resolve-Ninja {
-  $candidates = @(
-    Join-Path $env:LOCALAPPDATA "Microsoft\\WinGet\\Links\\ninja.exe",
-    "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
-  )
+  $localAppData = $env:LOCALAPPDATA
+  $candidates = @()
+  if ($localAppData) {
+    $candidates += "$localAppData\\Microsoft\\WinGet\\Links\\ninja.exe"
+  }
+  $candidates += "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe"
   foreach ($c in $candidates) {
     if (Test-Path $c) { return $c }
   }
@@ -40,10 +45,14 @@ if (Test-Path $LLVMBin) {
   $env:PATH = $LLVMBin + ";" + $env:PATH
 }
 
+if ($Clean -and (Test-Path $BuildDir)) {
+  Remove-Item -Recurse -Force $BuildDir
+}
 New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
 
 # Generate a minimal SDL2Config.cmake pointing at Emscripten's internal SDL2.
-$sdl2Config = Join-Path $BuildDir "SDL2Config.cmake"
+$buildDirFull = (Resolve-Path $BuildDir).Path
+$sdl2Config = Join-Path $buildDirFull "SDL2Config.cmake"
 @'
 set(SDL2_INCLUDE_DIRS "${CMAKE_SYSTEM_INCLUDE_PATH}/SDL")
 set(SDL2_LIBRARIES "sdl2_emscripten_internal")
@@ -57,7 +66,7 @@ endif()
 
 # Build a minimal PhysFS static library for wasm.
 $physfsSrc = "misc\\libphysfs"
-$physfsOut = Join-Path $BuildDir "physfs"
+$physfsOut = Join-Path $buildDirFull "physfs"
 New-Item -ItemType Directory -Force -Path $physfsOut | Out-Null
 
 $excludeNames = @(
@@ -69,31 +78,40 @@ $excludeNames = @(
 )
 
 $sources = Get-ChildItem -Recurse -Path $physfsSrc -Filter *.c |
-  Where-Object { ($excludeNames -notcontains $_.Name) -and ($_.FullName -notmatch "\\\\lzma\\\\") } |
+  Where-Object {
+    ($excludeNames -notcontains $_.Name) -and
+    (-not ($_.FullName -match "([/\\\\])lzma([/\\\\])"))
+  } |
   ForEach-Object { $_.FullName }
 
 foreach ($s in $sources) {
   $outObj = Join-Path $physfsOut ((Split-Path $s -Leaf) + ".o")
   emcc -O2 -c $s -I$physfsSrc -DPHYSFS_NO_CDROM_SUPPORT=1 -D__unix__=1 -o $outObj
+  if ($LASTEXITCODE -ne 0) { throw "emcc failed for $s" }
 }
 
 $physfsLib = Join-Path $physfsOut "libphysfs2.a"
 if (Test-Path $physfsLib) { Remove-Item $physfsLib -Force }
 emar rcs $physfsLib
 Get-ChildItem -Path $physfsOut -Filter *.o | ForEach-Object { emar q $physfsLib $_.FullName }
+if ($LASTEXITCODE -ne 0) { throw "emar failed for PhysFS library" }
 
 $cmakeArgs = @(
   "-S", ".",
-  "-B", $BuildDir,
+  "-B", $buildDirFull,
   "-G", "Ninja",
   "-DCMAKE_BUILD_TYPE=Release",
   "-DBUILD_ENGINE_C=1",
+  "-DBUILD_ENGINE_JS=$($BuildEngineJS.IsPresent.ToString().ToUpper())",
   "-DNOSERVER=ON",
   "-DLUA_SYSTEM=OFF",
   "-DNOVIDEOREC=1",
+  "-DSKIP_RUST=ON",
+  "-DSKIP_PAS2C=$($SkipPas2c.IsPresent.ToString().ToUpper())",
   "-DPHYSFS_LIBRARY=$physfsLib",
   "-DPHYSFS_INCLUDE_DIR=$physfsSrc",
-  "-DSDL2_DIR=$BuildDir"
+  "-DSDL2_DIR=$buildDirFull",
+  "-DCMAKE_PREFIX_PATH=$buildDirFull"
 )
 
 if (-not $BuildEngineC) { $cmakeArgs += "-DBUILD_ENGINE_C=0" }
