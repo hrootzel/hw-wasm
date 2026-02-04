@@ -31,17 +31,25 @@
     </style>
   </head>
   <body>
-    <div id="status">Loading…</div>
+    <div id="status">Loading...</div>
     <canvas id="canvas"></canvas>
     <script>
       var statusEl = document.getElementById('status');
       var Module = {
         canvas: document.getElementById('canvas'),
+        arguments: ['--prefix', '/Data', '--user-prefix', '/', '--nosound'],
         print: function(text) { console.log(text); },
         printErr: function(text) { console.error(text); },
         setStatus: function(text) {
           statusEl.textContent = text || '';
           if (!text) statusEl.style.display = 'none';
+        },
+        monitorRunDependencies: function(left) {
+          if (left) {
+            Module.setStatus('Downloading data...');
+          } else {
+            Module.setStatus('');
+          }
         },
         onRuntimeInitialized: function() {
           Module.setStatus('');
