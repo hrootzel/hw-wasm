@@ -485,6 +485,11 @@ begin
         ParseCommand('theme Nature', true);
         ParseCommand('seed wasm', true);
 
+        // Default ammo scheme (from frontend defaults).
+        ParseCommand('ammloadt 939192942219912103223511100120000000021110010101111100010001', true);
+        ParseCommand('ammprob 040504054160065554655446477657666666615551010111541111111073', true);
+        ParseCommand('ammdelay 000000000000020550000004000700400000000022000000060002000000', true);
+        ParseCommand('ammreinf 131111031211111112311411111111111111121111111111111111111111', true);
         ParseCommand('ammstore', true);
         ParseCommand('ammstore', true);
 
