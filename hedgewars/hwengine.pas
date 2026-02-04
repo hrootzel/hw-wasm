@@ -568,7 +568,11 @@ begin
     initEverything(true);
     GameRoutine;
     // clean up all the memory allocated
+{$IFDEF WEBGL}
+    // Keep resources alive; main loop is driven by emscripten.
+{$ELSE}
     freeEverything(true);
+{$ENDIF}
 end;
 ///////////////////////////////////////////////////////////////////////////////
 // preInitEverything - init variables that are going to be ovewritten by arguments
