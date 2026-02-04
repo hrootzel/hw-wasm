@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Hedgewars (WASM)</title>
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+      }
+      #canvas {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+      #status {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        color: #c7c7c7;
+        font: 14px/1.4 monospace;
+        z-index: 10;
+        background: rgba(0,0,0,0.4);
+        padding: 6px 8px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status">Loading…</div>
+    <canvas id="canvas"></canvas>
+    <script>
+      var statusEl = document.getElementById('status');
+      var Module = {
+        canvas: document.getElementById('canvas'),
+        print: function(text) { console.log(text); },
+        printErr: function(text) { console.error(text); },
+        setStatus: function(text) {
+          statusEl.textContent = text || '';
+          if (!text) statusEl.style.display = 'none';
+        },
+        onRuntimeInitialized: function() {
+          Module.setStatus('');
+        }
+      };
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>
