@@ -8,6 +8,7 @@ find_package(SDL2_ttf 2 REQUIRED)
 
 #compile our rtl implementation
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/rtl)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${PHYSFS_INCLUDE_DIR})
 include_directories(${PHYSLAYER_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
@@ -82,6 +83,15 @@ if(LIBAV_FOUND)
     set(pas2c_args ${pas2c_args} -d USE_VIDEO_RECORDING)
 endif()
 
+set(HW_RUST_LIBS "")
+if(NOT SKIP_RUST)
+    if(BUILD_ENGINE_JS)
+        set(HW_RUST_LIBS ${CMAKE_BINARY_DIR}/bin/libhwengine_future.a)
+    else()
+        set(HW_RUST_LIBS hwengine_future)
+    endif()
+endif()
+
 #invoke pas2c on main module, it will call all the others
 add_custom_command(OUTPUT ${engine_sources}
                    COMMAND "${EXECUTABLE_OUTPUT_PATH}/pas2c${CMAKE_EXECUTABLE_SUFFIX}"
@@ -95,14 +105,18 @@ add_custom_target(engine_c DEPENDS ${engine_sources})
 
 
 if(BUILD_ENGINE_JS)
-    add_flag_append(CMAKE_C_FLAGS "--memory-init-file 0 -O0 --js-opts 0 -g4 --use-preload-plugins -s ASSERTIONS=2 -s USE_SDL=2 -s USE_SDL_IMAGE=1 -s USE_LIBPNG=1 -s USE_SDL_TTF=2 -s USE_VORBIS=1 -s USE_OGG=1 -s TOTAL_MEMORY=100000000 -s GL_UNSAFE_OPTS=0 -s EXPORTED_FUNCTIONS=\"['_hwengine_RunEngine', '_hwengine_MainLoop']\" --post-js ${CMAKE_SOURCE_DIR}/project_files/web/post.js --pre-js ${CMAKE_SOURCE_DIR}/project_files/web/pre.js")
+    add_flag_append(CMAKE_C_FLAGS "--memory-init-file 0 -O0 --js-opts 0 -g4 -s ASSERTIONS=2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"['png']\" -s USE_LIBPNG=1 -s USE_SDL_TTF=2 -s USE_VORBIS=1 -s USE_OGG=1 -s INITIAL_MEMORY=134217728 -s STACK_SIZE=16777216 -s ALLOW_MEMORY_GROWTH=1 -s GL_UNSAFE_OPTS=0 -s EXPORTED_FUNCTIONS=\"['_main','_hwengine_RunEngine', '_hwengine_MainLoop']\" --shell-file ${CMAKE_SOURCE_DIR}/project_files/web/shell.html --preload-file ${CMAKE_SOURCE_DIR}/share/hedgewars/Data@/Data --post-js ${CMAKE_SOURCE_DIR}/project_files/web/post.js --pre-js ${CMAKE_SOURCE_DIR}/project_files/web/pre.js")
 endif()
 
 #compile the c files
 add_definitions(-DPAS2C)
 add_definitions(-Werror=incompatible-pointer-types)
 
-add_executable(hwengine WIN32 ${engine_sources})
+add_executable(hwengine WIN32 ${engine_sources}
+    ${CMAKE_SOURCE_DIR}/project_files/hwc/net_stubs.c
+    ${CMAKE_SOURCE_DIR}/project_files/hwc/mixer_stubs.c
+    ${CMAKE_SOURCE_DIR}/project_files/hwc/web_main.c
+)
 
 if(BUILD_ENGINE_JS)
     set_target_properties(hwengine PROPERTIES SUFFIX ".html")
@@ -119,9 +133,11 @@ target_link_libraries(hwengine  fpcrtl
                                 physfs
                                 physlayer
                                 m
-                                hwengine_future
+                                ${HW_RUST_LIBS}
                                 ${HW_LINK_LIBS}
                                 #TODO: add other libraries
                             )
+if(BUILD_ENGINE_JS AND NOT SKIP_RUST)
+    add_dependencies(hwengine cargo-build_hwengine_future)
+endif()
 install(PROGRAMS "${EXECUTABLE_OUTPUT_PATH}/hwengine${CMAKE_EXECUTABLE_SUFFIX}" DESTINATION ${target_binary_install_dir})
-

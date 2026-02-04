@@ -1093,11 +1093,11 @@ function  SDL_CreateWindow(title: PChar; x,y,w,h: LongInt; flags: LongWord): PSD
 procedure SDL_SetWindowIcon(window: PSDL_Window; icon: PSDL_Surface); cdecl; external SDLLibName;
 
 function  SDL_CreateRenderer(window: PSDL_Window; index: LongInt; flags: LongWord): PSDL_Renderer; cdecl; external SDLLibName;
-function  SDL_DestroyWindow(window: PSDL_Window): LongInt; cdecl; external SDLLibName;
+procedure SDL_DestroyWindow(window: PSDL_Window); cdecl; external SDLLibName;
 function  SDL_DestroyRenderer(renderer: PSDL_Renderer): LongInt; cdecl; external SDLLibName;
 procedure SDL_SetWindowPosition(window: PSDL_Window; w, h: LongInt); cdecl; external SDLLibName;
 procedure SDL_SetWindowSize(window: PSDL_Window; w, h: LongInt); cdecl; external SDLLibName;
-procedure SDL_SetWindowFullscreen(window: PSDL_Window; flags: LongWord); cdecl; external SDLLibName;
+function  SDL_SetWindowFullscreen(window: PSDL_Window; flags: LongWord): LongInt; cdecl; external SDLLibName;
 function  SDL_GetCurrentVideoDriver:Pchar; cdecl; external SDLLibName;
 
 function  SDL_GL_CreateContext(window: PSDL_Window): PSDL_GLContext; cdecl; external SDLLibName;
@@ -1347,4 +1347,3 @@ end;
 {$ENDIF}
 
 end.
-

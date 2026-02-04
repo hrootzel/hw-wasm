@@ -26,8 +26,8 @@ pub struct GameField {
 
 #[repr(C)]
 pub struct HedgehogState {
-    pub x: f32,
-    pub y: f32,
+    pub x: f64,
+    pub y: f64,
     pub angle: u32,
     pub looking_to_the_right: bool,
     pub is_moving: bool,
@@ -276,8 +276,8 @@ pub extern "C" fn ai_clear_team(ai: &mut AI) {
 #[no_mangle]
 pub unsafe extern "C" fn ai_add_team_hedgehog(
     ai: &mut AI,
-    x: f32,
-    y: f32,
+    x: f64,
+    y: f64,
     ammo_counts: *const u32,
 ) {
     let ammo_counts =
@@ -285,8 +285,8 @@ pub unsafe extern "C" fn ai_add_team_hedgehog(
     let ammo_counts = std::array::from_fn(|i| ammo_counts[i].clone());
 
     ai.get_team_mut().push(Hedgehog {
-        x,
-        y,
+        x: x as f32,
+        y: y as f32,
         ammo: ammo_counts,
     });
 }
@@ -307,8 +307,15 @@ pub extern "C" fn ai_get_action(
     current_hedgehog_state: &HedgehogState,
     action: &mut ShortString,
 ) {
+    let internal_state = HedgehogState {
+        x: current_hedgehog_state.x,
+        y: current_hedgehog_state.y,
+        angle: current_hedgehog_state.angle,
+        looking_to_the_right: current_hedgehog_state.looking_to_the_right,
+        is_moving: current_hedgehog_state.is_moving,
+    };
     *action = ai
-        .get_action(current_hedgehog_state)
+        .get_action(&internal_state)
         .as_str()
         .try_into()
         .unwrap_or_default();

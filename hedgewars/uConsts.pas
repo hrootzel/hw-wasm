@@ -428,12 +428,13 @@ const
     cMaxTurnTime = Pred(High(LongInt)); // maximum possible turn time
 
 var
-    cTeamHealthHeight,
-    cFontBorder,
-    cFontPadding: LongInt;
+    cTeamHealthHeight: LongInt = 19;
+    cFontBorder: LongInt = 2;
+    cFontPadding: LongInt = 2;
 
 implementation
 
+{$IFNDEF PAS2C}
 initialization
 
     cTeamHealthHeight:= round(19 * HDPIScaleFactor);
@@ -441,3 +442,6 @@ initialization
     cFontPadding:= round(2 * HDPIScaleFactor);
 
 end.
+{$ELSE}
+end.
+{$ENDIF}

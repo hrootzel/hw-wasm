@@ -35,6 +35,7 @@ double      ceil(double);
 double      sqrt(double);
 double      atan(double);
 double      atan2(double, double);
+double      pow(double, double);
 #endif
 
 #endif /* PMATH_H_ */

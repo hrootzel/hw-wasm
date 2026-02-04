@@ -12,6 +12,7 @@
 #include "misc.h"
 #include "fileio.h"
 #include "pmath.h"
+#include "GL.h"
 
 #define fpcrtl_memcpy                       memcpy
 
@@ -204,4 +205,6 @@ void idb_loader_hook();
 void showcursor_hook();
 void hidecursor_hook();
 void drawworld_init_hook();
+
+void fpcrtl_glShaderSource(GLuint shader, GLsizei count, GLchar **string, const GLint *length);
 #endif
