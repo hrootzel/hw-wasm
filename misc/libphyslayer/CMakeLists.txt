@@ -13,7 +13,7 @@ set(PHYSLAYER_SRCS
 )
 
 #compiles and links actual library
-add_library (physlayer ${PHYSLAYER_SRCS})
+add_library (physlayer STATIC ${PHYSLAYER_SRCS})
 set_target_properties(physlayer PROPERTIES
                           VERSION 1.0
                           SOVERSION 1.0)
@@ -31,6 +31,6 @@ install(TARGETS physlayer RUNTIME DESTINATION ${target_binary_install_dir}
 set(PHYSLAYER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "Physlayer include dir" FORCE)
 
 if(BUILD_ENGINE_JS)
-    set_target_properties(physlayer PROPERTIES SUFFIX ".bc")
+    target_compile_options(physlayer PRIVATE "-sUSE_SDL=2")
+    target_link_options(physlayer PRIVATE "-sUSE_SDL=2")
 endif()
-

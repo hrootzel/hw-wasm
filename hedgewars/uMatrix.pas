@@ -230,6 +230,7 @@ begin
     Result[3,3]:=lhs[0,3]*rhs[3,0] + lhs[1,3]*rhs[3,1] + lhs[2,3]*rhs[3,2] + lhs[3,3]*rhs[3,3];
 }
 
+    {$IFNDEF WEBGL}
     glPushMatrix;
     glLoadMatrixf(@lhs[0, 0]);
     glMultMatrixf(@rhs[0, 0]);
@@ -241,6 +242,9 @@ begin
       for j:=0 to 3 do
         if Abs(test[i, j] - Result[i, j]) > 0.000001 then
           error:=true;
+    {$ELSE}
+    error:=false;
+    {$ENDIF}
 
     {$IFNDEF PAS2C}
     if error then

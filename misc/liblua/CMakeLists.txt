@@ -22,8 +22,4 @@ install(TARGETS lua RUNTIME DESTINATION ${target_binary_install_dir}
 set(LUA_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "Lua include dir" FORCE)
 set(LUA_LIBRARY lua CACHE STRING "Lua library" FORCE)
 
-#emscripten does not expose headers but has an internal binary copy
-if(BUILD_ENGINE_JS)
-    set(LUA_LIBRARY "lua_emscripten_internal" CACHE STRING "Lua library" FORCE)
-endif()
-
+# For Emscripten we still link against the built static Lua library.
