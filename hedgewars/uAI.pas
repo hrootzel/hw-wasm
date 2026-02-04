@@ -45,8 +45,12 @@ begin
     AddFileLog('FreeActionsList called');
 
     StopThinking:= true;
+{$IFDEF WEBGL}
+    // No background AI thread in WebGL.
+{$ELSE}
     SDL_SemWait(ThreadSem);
     SDL_SemPost(ThreadSem);
+{$ENDIF}
 
     if CurrentHedgehog <> nil then
         with CurrentHedgehog^ do
@@ -136,7 +140,9 @@ for i:= 0 to Pred(Targets.Count) do
         with Me^.Hedgehog^ do
             a:= CurAmmoType;
         aa:= a;
+{$IFNDEF WEBGL}
         SDL_delay(0); // hint to let the context switch run
+{$ENDIF}
         repeat
         if (CanUseAmmo[a])
             and ((not rareChecks) or ((AmmoTests[a].flags and amtest_Rare) = 0))
@@ -541,8 +547,10 @@ if ((Me^.State and gstAttacked) = 0) or isInMultiShoot or bonuses.activity or ((
             or (itHedgehog = currHedgehogIndex)
             or BestActions.isWalkingToABetterPlace;
 
+{$IFNDEF WEBGL}
         if (StartTicks > GameTicks - 1500) and (not StopThinking) then
             SDL_Delay(700);
+{$ENDIF}
 
         if (BestActions.Score < -1023) and (not BestActions.isWalkingToABetterPlace) then
             begin
@@ -592,14 +600,18 @@ else
         Actions.Score:= 0;
         Walk(@WalkMe, Actions);
         if not bonuses.activity then dec(i);
+{$IFNDEF WEBGL}
         if not StopThinking then
             SDL_Delay(100)
+{$ENDIF}
         end
     end;
 
 Me^.State:= Me^.State and (not gstHHThinking);
 Think:= 0;
+{$IFNDEF WEBGL}
 SDL_SemPost(ThreadSem);
+{$ENDIF}
 end;
 
 procedure StartThink(Me: PGear);
@@ -609,7 +621,9 @@ if ((Me^.State and (gstAttacking or gstHHJumping or gstMoving)) <> 0)
 or isInMultiShoot then
     exit;
 
-SDL_SemWait(ThreadSem);
+{$IFNDEF WEBGL}
+ SDL_SemWait(ThreadSem);
+{$ENDIF}
 //DeleteCI(Me); // this will break demo/netplay
 
 Me^.State:= Me^.State or gstHHThinking;
@@ -691,13 +705,19 @@ end;
 procedure initModule;
 begin
     StartTicks:= 0;
+{$IFDEF WEBGL}
+    ThreadSem:= nil;
+{$ELSE}
     ThreadSem:= SDL_CreateSemaphore(1);
+{$ENDIF}
 end;
 
 procedure freeModule;
 begin
     FreeActionsList();
+{$IFNDEF WEBGL}
     SDL_DestroySemaphore(ThreadSem);
+{$ENDIF}
 end;
 
 end.
