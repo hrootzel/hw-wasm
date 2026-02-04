@@ -627,8 +627,13 @@ FillTargets;
 
 FillBonuses(((Me^.State and gstAttacked) <> 0) and (not isInMultiShoot) and ((GameFlags and gfInfAttack) = 0));
 
+{$IFDEF WEBGL}
+// No threads in WebGL builds; run AI thinking synchronously on the main thread.
+Think(Me);
+{$ELSE}
 ThinkThread:= SDL_CreateThread(@Think, PChar('think'), Me);
 SDL_DetachThread(ThinkThread);
+{$ENDIF}
 end;
 
 {$IFDEF DEBUGAI}
