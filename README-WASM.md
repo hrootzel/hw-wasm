@@ -3,7 +3,8 @@ WASM Build Environment (So Far)
 Status
 - Emscripten + CMake are installed.
 - We are using the pas2c -> C -> Emscripten pipeline.
-- We can now configure and link a WASM build (see build commands below).
+- We can build and run the WebGL2 engine in-browser with assets packed.
+- Local autostart works (no frontend/IPC).
 - Remaining runtime/ABI warnings exist (see "Current Issues").
 
 Required Tools (Installed/Verified)
@@ -70,10 +71,17 @@ WebGL compatibility (GL2)
 - We disabled the fixed-function validation block in `uMatrix.pas` for WEBGL
   because WebGL2 doesn't support `glPushMatrix`/`glLoadMatrixf`/`glMultMatrixf`.
 
+Web build runtime notes
+- The engine now runs under `emscripten_set_main_loop` and keeps resources alive.
+  This avoids early cleanup that caused WebGL texture deletion errors.
+- The shell includes a boot overlay canvas so you always see "Booting..." before
+  the wasm runtime starts.
+- We serve from `build/wasm8/bin` and use port 8001 by default (port 8000 was
+  returning empty replies on this machine).
+
 Stubs for browser builds
 - SDL_net is stubbed for local play (no server/IPC).
-- SDL_mixer and SDL_image are stubbed to avoid linking issues while we focus
-  on gameplay and rendering.
+- SDL_mixer is stubbed (audio optional). Rendering and textures load via SDL2_image.
 
 Current Issues (Warnings to Fix)
 - ABI mismatch between Pascal and Rust AI functions:
@@ -83,9 +91,21 @@ Current Issues (Warnings to Fix)
   - `SDL_DestroyWindow` return type mismatch.
   - `SDL_SetWindowFullscreen` return type mismatch.
 
+Local autostart (WEBGL)
+- We inject a default local match configuration in `hedgewars/hwengine.pas` when
+  running in WEBGL. This includes default ammo scheme strings from
+  `frontend-qt6/weapons.h`. If you see "Incomplete or missing ammo scheme set",
+  the strings are the wrong length.
+
 Next Step
 Run `build.ps1` to configure the wasm build dir, then:
 ```powershell
 & "C:\\Users\\andre\\emsdk\\emsdk_env.ps1" | Out-Null
 ninja -C build/wasm8 -j 1
 ```
+
+Serve and run
+```powershell
+.\serve.ps1
+```
+Open `http://localhost:8001/hwengine.html`
