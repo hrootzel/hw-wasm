@@ -414,6 +414,10 @@ end;
 procedure GameRoutine;
 var s: shortstring;
     i: LongInt;
+{$IFDEF WEBGL}
+    cfgLine: shortstring;
+    cfgChar: char;
+{$ENDIF}
 begin
 {$IFDEF PAS2C}
     AddFileLog('Generated using pas2c');
@@ -479,33 +483,58 @@ begin
 {$IFDEF WEBGL}
     if WasmAutoStart then
         begin
-        // Minimal local config to start a playable match without frontend IPC.
+        // Local config to start a playable match without frontend IPC.
         GameType:= gmtLocal;
-        ParseCommand('mapgen 0', true);
-        ParseCommand('theme Nature', true);
-        ParseCommand('seed wasm', true);
+        WriteLnToConsole('WASM autostart: parsing web config');
+        if WasmConfigLen > 0 then
+            begin
+            WriteLnToConsole('WASM webcfg64 bytes: ' + inttostr(WasmConfigLen));
+            cfgLine:= '';
+            for i:= 0 to Pred(WasmConfigLen) do
+                begin
+                cfgChar:= WasmConfigBuf[i];
+                if (cfgChar = #10) or (cfgChar = #13) then
+                    begin
+                    if (Length(cfgLine) > 0) and (cfgLine[1] <> '#') then
+                        ParseCommand(cfgLine, true);
+                    cfgLine:= '';
+                    end
+                else
+                    cfgLine:= cfgLine + cfgChar;
+                end;
+            if (Length(cfgLine) > 0) and (cfgLine[1] <> '#') then
+                ParseCommand(cfgLine, true);
+            end
+        else
+            begin
+            WriteLnToConsole('WASM webcfg64 missing; using defaults');
+            ParseCommand('mapgen 0', true);
+            ParseCommand('theme Nature', true);
+            ParseCommand('seed wasm', true);
 
-        // Default ammo scheme (from frontend defaults).
-        ParseCommand('ammloadt 939192942219912103223511100120000000021110010101111100010001', true);
-        ParseCommand('ammprob 040504054160065554655446477657666666615551010111541111111073', true);
-        ParseCommand('ammdelay 000000000000020550000004000700400000000022000000060002000000', true);
-        ParseCommand('ammreinf 131111031211111112311411111111111111121111111111111111111111', true);
-        ParseCommand('ammstore', true);
-        ParseCommand('ammstore', true);
+            // Default ammo scheme (from frontend defaults).
+            ParseCommand('ammloadt 939192942219912103223511100120000000021110010101111100010001', true);
+            ParseCommand('ammprob 040504054160065554655446477657666666615551010111541111111073', true);
+            ParseCommand('ammdelay 000000000000020550000004000700400000000022000000060002000000', true);
+            ParseCommand('ammreinf 131111031211111112311411111111111111121111111111111111111111', true);
+            ParseCommand('ammstore', true);
+            ParseCommand('ammstore', true);
 
-        ParseCommand('addteam x 0 TeamA', true);
-        ParseCommand('grave Bone', true);
-        ParseCommand('fort Castle', true);
-        ParseCommand('flag united_states', true);
-        ParseCommand('addhh 0 100 Hog1', true);
-        ParseCommand('hat NoHat', true);
+            ParseCommand('addteam x 0 TeamA', true);
+            ParseCommand('grave Bone', true);
+            ParseCommand('fort Castle', true);
+            ParseCommand('flag united_states', true);
+            ParseCommand('addhh 0 100 Hog1', true);
+            ParseCommand('hat NoHat', true);
 
-        ParseCommand('addteam x 1 TeamB', true);
-        ParseCommand('grave Bone', true);
-        ParseCommand('fort Castle', true);
-        ParseCommand('flag united_kingdom', true);
-        ParseCommand('addhh 1 100 Hog2', true);
-        ParseCommand('hat NoHat', true);
+            ParseCommand('addteam x 1 TeamB', true);
+            ParseCommand('grave Bone', true);
+            ParseCommand('fort Castle', true);
+            ParseCommand('flag united_kingdom', true);
+            ParseCommand('addhh 1 100 Hog2', true);
+            ParseCommand('hat NoHat', true);
+            end;
+        WriteLnToConsole('WASM params: mapgen=' + inttostr(ord(cMapGen)) + ' theme=' + shortstring(Theme) + ' seed=' + shortstring(cSeed));
         end;
 {$ENDIF}
 
