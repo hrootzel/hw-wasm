@@ -1,5 +1,5 @@
 param(
-  [int]$Port = 8000,
+  [int]$Port = 8001,
   [string]$Dir = "build/wasm8/bin"
 )
 

@@ -22,6 +22,9 @@ unit ArgParsers;
 interface
 
 procedure GetParams;
+{$IFDEF WEBGL}
+var WasmAutoStart: boolean;
+{$ENDIF}
 {$IFDEF HWLIBRARY}
 var operatingsystem_parameter_argc: LongInt = 0; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cdecl;{$ENDIF} export;{$ENDIF}
     operatingsystem_parameter_argv: pointer = nil; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cdecl;{$ENDIF} export;{$ENDIF}
@@ -343,11 +346,18 @@ procedure GetParams;
 begin
     isInternal:= (ParamStr(1) = '--internal');
     helpCommandUsed:= false;
+{$IFDEF WEBGL}
+    WasmAutoStart:= false;
+{$ENDIF}
 
     UserPathPrefix := _S'.';
     PathPrefix     := cDefaultPathPrefix;
     recordFileName := '';
     parseCommandLine();
+{$IFDEF WEBGL}
+    if recordFileName = './this.program' then
+        recordFileName := '';
+{$ENDIF}
 
     if (isInternal) and (ParamCount<=1) then
         begin
@@ -358,8 +368,12 @@ begin
     if (not helpCommandUsed) then
         if (not cTestLua) and (not isInternal) and (recordFileName = '') then
             begin
+{$IFDEF WEBGL}
+            WasmAutoStart:= true;
+{$ELSE}
             WriteLn(stderr, 'You must specify a demo file.');
             GameType := gmtBadSyntax;
+{$ENDIF}
             end
         else if (recordFileName <> '') then
             WriteLn(stdout, 'Attempting to play demo file "' + recordFilename + '".');
@@ -370,4 +384,3 @@ begin
 end;
 
 end.
-

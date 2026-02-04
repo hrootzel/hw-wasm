@@ -17,6 +17,14 @@
         height: 100vh;
         display: block;
       }
+      #boot-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: block;
+        z-index: 2;
+      }
       #status {
         position: absolute;
         top: 12px;
@@ -33,8 +41,44 @@
   <body>
     <div id="status">Loading...</div>
     <canvas id="canvas"></canvas>
+    <canvas id="boot-canvas"></canvas>
     <script>
       var statusEl = document.getElementById('status');
+      var bootCanvas = document.getElementById('boot-canvas');
+      var bootCtx = bootCanvas.getContext('2d');
+      var bootShown = true;
+
+      function resizeBootCanvas() {
+        bootCanvas.width = window.innerWidth || 1;
+        bootCanvas.height = window.innerHeight || 1;
+      }
+
+      function drawBoot(message) {
+        if (!bootShown) return;
+        resizeBootCanvas();
+        var w = bootCanvas.width;
+        var h = bootCanvas.height;
+        var grad = bootCtx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, '#12213a');
+        grad.addColorStop(1, '#11161f');
+        bootCtx.fillStyle = grad;
+        bootCtx.fillRect(0, 0, w, h);
+        bootCtx.fillStyle = '#9fd7ff';
+        bootCtx.font = '600 20px "Segoe UI", system-ui, sans-serif';
+        bootCtx.textAlign = 'center';
+        bootCtx.textBaseline = 'middle';
+        bootCtx.fillText(message || 'Booting Hedgewars...', w / 2, h / 2);
+      }
+
+      function hideBootCanvas() {
+        bootShown = false;
+        bootCanvas.style.display = 'none';
+      }
+
+      window.addEventListener('resize', function () {
+        if (bootShown) drawBoot(statusEl.textContent || 'Booting Hedgewars...');
+      });
+
       var Module = {
         canvas: document.getElementById('canvas'),
         arguments: ['--prefix', '/Data', '--user-prefix', '/', '--nosound'],
@@ -43,6 +87,7 @@
         setStatus: function(text) {
           statusEl.textContent = text || '';
           if (!text) statusEl.style.display = 'none';
+          if (text) drawBoot(text);
         },
         monitorRunDependencies: function(left) {
           if (left) {
@@ -53,8 +98,10 @@
         },
         onRuntimeInitialized: function() {
           Module.setStatus('');
+          hideBootCanvas();
         }
       };
+      drawBoot('Starting...');
     </script>
     {{{ SCRIPT }}}
   </body>
