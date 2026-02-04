@@ -105,18 +105,25 @@ add_custom_target(engine_c DEPENDS ${engine_sources})
 
 
 if(BUILD_ENGINE_JS)
-    add_flag_append(CMAKE_C_FLAGS "--memory-init-file 0 -O0 --js-opts 0 -g4 -s ASSERTIONS=2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"['png']\" -s USE_LIBPNG=1 -s USE_SDL_TTF=2 -s USE_VORBIS=1 -s USE_OGG=1 -s INITIAL_MEMORY=134217728 -s STACK_SIZE=16777216 -s ALLOW_MEMORY_GROWTH=1 -s GL_UNSAFE_OPTS=0 -s EXPORTED_FUNCTIONS=\"['_main','_hwengine_RunEngine', '_hwengine_MainLoop']\" --shell-file ${CMAKE_SOURCE_DIR}/project_files/web/shell.html --preload-file ${CMAKE_SOURCE_DIR}/share/hedgewars/Data@/Data --post-js ${CMAKE_SOURCE_DIR}/project_files/web/post.js --pre-js ${CMAKE_SOURCE_DIR}/project_files/web/pre.js")
+    add_flag_append(CMAKE_C_FLAGS "--memory-init-file 0 -O0 --js-opts 0 -g4 -s ASSERTIONS=2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"['png']\" -s USE_LIBPNG=1 -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s SDL2_MIXER_FORMATS=\"['ogg']\" -s USE_VORBIS=1 -s USE_OGG=1 -s INITIAL_MEMORY=134217728 -s STACK_SIZE=16777216 -s ALLOW_MEMORY_GROWTH=1 -s GL_UNSAFE_OPTS=0 -s EXPORTED_FUNCTIONS=\"['_main','_hwengine_RunEngine', '_hwengine_MainLoop']\" --shell-file ${CMAKE_SOURCE_DIR}/project_files/web/shell.html --preload-file ${CMAKE_SOURCE_DIR}/share/hedgewars/Data@/Data --post-js ${CMAKE_SOURCE_DIR}/project_files/web/post.js --pre-js ${CMAKE_SOURCE_DIR}/project_files/web/pre.js")
 endif()
 
 #compile the c files
 add_definitions(-DPAS2C)
 add_definitions(-Werror=incompatible-pointer-types)
 
-add_executable(hwengine WIN32 ${engine_sources}
-    ${CMAKE_SOURCE_DIR}/project_files/hwc/net_stubs.c
-    ${CMAKE_SOURCE_DIR}/project_files/hwc/mixer_stubs.c
-    ${CMAKE_SOURCE_DIR}/project_files/hwc/web_main.c
-)
+if(BUILD_ENGINE_JS)
+    add_executable(hwengine WIN32 ${engine_sources}
+        ${CMAKE_SOURCE_DIR}/project_files/hwc/net_stubs.c
+        ${CMAKE_SOURCE_DIR}/project_files/hwc/web_main.c
+    )
+else()
+    add_executable(hwengine WIN32 ${engine_sources}
+        ${CMAKE_SOURCE_DIR}/project_files/hwc/net_stubs.c
+        ${CMAKE_SOURCE_DIR}/project_files/hwc/mixer_stubs.c
+        ${CMAKE_SOURCE_DIR}/project_files/hwc/web_main.c
+    )
+endif()
 
 if(BUILD_ENGINE_JS)
     set_target_properties(hwengine PROPERTIES SUFFIX ".html")

@@ -81,7 +81,7 @@
 
       var Module = {
         canvas: document.getElementById('canvas'),
-        arguments: ['--prefix', '/Data', '--user-prefix', '/', '--nosound'],
+        arguments: ['--prefix', '/Data', '--user-prefix', '/'],
         print: function(text) { console.log(text); },
         printErr: function(text) { console.error(text); },
         setStatus: function(text) {
@@ -102,6 +102,18 @@
         }
       };
       drawBoot('Starting...');
+
+      function unlockAudio() {
+        try {
+          if (Module.SDL2 && Module.SDL2.audioContext && Module.SDL2.audioContext.state === 'suspended') {
+            Module.SDL2.audioContext.resume();
+          }
+        } catch (e) {}
+        window.removeEventListener('pointerdown', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+      }
+      window.addEventListener('pointerdown', unlockAudio);
+      window.addEventListener('keydown', unlockAudio);
     </script>
     {{{ SCRIPT }}}
   </body>
