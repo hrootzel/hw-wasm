@@ -109,3 +109,50 @@ Serve and run
 .\serve.ps1
 ```
 Open `http://localhost:8001/hwengine.html`
+
+Qt WASM Single-Player Bridge (Experimental)
+- The Qt WASM frontend writes the base64 web config to `localStorage` under `hw-wasm-webcfg64` and then navigates to `hwengine.html`.
+- The engine shell (`project_files/web/shell.html`) reads `hw-wasm-webcfg64` and passes `--webcfg64` to the engine.
+- Network play and training/campaign are stubbed out in the Qt WASM build.
+
+Qt Frontend (WebAssembly) Option (Experimental)
+
+Frontend locations
+- Qt6 Widgets frontend: `frontend-qt6/` (full-featured, closest to current UI)
+- Qt5 Widgets frontend: `QTfrontend/` (legacy Qt5)
+- Qt6 QML frontend: `qmlfrontend/` (minimal skeleton, not feature-complete)
+
+Portability assessment (Qt6 Widgets)
+- UI/Widgets: Mostly portable with Qt for WebAssembly.
+- Networking: Not portable as-is (TCP/UDP, server browser, admin). Must be stubbed or hidden.
+- SDLInteraction (audio/joystick): Must be stubbed or replaced (Qt for WASM has no native SDL/joystick).
+- Engine launch: The Qt frontend expects to spawn `hwengine` as a process. In WASM, this must be replaced with a JS bridge to the engine wasm (use `Module.callMain([...])` with `--webcfg64`).
+
+Minimum stubs for single-player (to implement)
+- Disable net UI pages: `pageNet`, `pageNetGame`, `pageNetServer`, `pageRoomsList`, admin/net options.
+- Stub `HWNewNet`, `HWNetServer`, `NetUDP*` references (or compile them out and guard usage in `hwform.cpp`).
+- Stub `SDLInteraction` audio/joystick/resolution calls.
+- Keep local game flow: `pageSinglePlayer`, `pageSelectWeapon`, `pageScheme`.
+
+Build steps (Qt for WebAssembly)
+1) Install Qt for WebAssembly (Qt 6.5+). Set:
+   - `QT_WASM=C:\Qt\6.x.x\wasm_singlethread` (or `wasm_multithread`)
+   - Default used by `build-qt-wasm.ps1` if `QT_WASM` is not set: `C:\Qt\wasm_singlethread`
+2) Ensure Emscripten is configured:
+   - `EMSDK=C:\Users\andre\emsdk`
+   - Qt 6.10.2 wasm_singlethread expects Emscripten **4.0.7**
+   - `build-qt-wasm.ps1` auto-runs `emsdk install 4.0.7` and `emsdk activate 4.0.7`
+3) Build the Qt frontend:
+```powershell
+$env:QT_WASM="C:\Qt\6.x.x\wasm_singlethread"
+$env:EMSDK="C:\Users\andre\emsdk"
+.\build-qt-wasm.ps1
+```
+
+Integration notes
+- The Qt WASM build produces `hedgewars.html`, `hedgewars.js`, `hedgewars.wasm` in `build/qt-wasm`.
+- You will still need to wire a JS bridge so the frontend calls the engine wasm (single-player only).
+
+Which path is faster?
+- Short-term: the custom WebGL UI (current `project_files/web/shell.html`) is much faster because it already talks to the engine via `--webcfg64` and avoids Qt/WASM constraints.
+- Long-term fidelity: Qt6 Widgets in WASM is closer to the original frontend but requires larger refactors (network stubs + engine launch bridge + SDLInteraction replacement).

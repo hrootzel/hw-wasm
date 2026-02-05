@@ -1,6 +1,6 @@
 param(
   [int]$Port = 8001,
-  [string]$Dir = "build/wasm8/bin"
+  [string]$Dir = $(if (Test-Path "build/qt-wasm") { "build/qt-wasm" } else { "build/wasm8/bin" })
 )
 
 $ErrorActionPreference = "Stop"

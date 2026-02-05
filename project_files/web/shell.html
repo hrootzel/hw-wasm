@@ -5,370 +5,77 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Hedgewars (WASM)</title>
     <style>
-      @font-face {
-        font-family: "HWUI";
-        src: url("/Data/Fonts/DejaVuSans-Bold.ttf") format("truetype");
-        font-weight: 700;
-        font-style: normal;
-        font-display: swap;
-      }
       html, body {
         margin: 0;
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: radial-gradient(circle at 20% 20%, #2a3b5f, #0f1420 55%, #080a0f 100%);
+        background: #10131c;
       }
       #canvas {
         width: 100vw;
         height: 100vh;
         display: block;
       }
-      #boot-canvas {
-        position: absolute;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        display: block;
-        z-index: 2;
-      }
       #status {
         position: absolute;
-        top: 12px;
         left: 12px;
+        bottom: 12px;
+        font: 12px "Segoe UI", system-ui, sans-serif;
         color: #c7c7c7;
-        font: 14px/1.4 monospace;
-        z-index: 10;
-        background: rgba(0,0,0,0.4);
-        padding: 6px 8px;
-        border-radius: 4px;
-      }
-      #menu {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 3;
-        background:
-          linear-gradient(180deg, rgba(10, 14, 24, 0.85), rgba(5, 8, 14, 0.95)),
-          url("/Data/Graphics/hwengine.png") no-repeat 8% 12% / 160px auto;
-      }
-      .menu-panel {
-        width: min(820px, 92vw);
-        background: rgba(12, 16, 26, 0.95);
-        border: 2px solid #2c3d5a;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-        padding: 24px 26px;
-        color: #e6edf7;
-        font-family: "HWUI", "Segoe UI", system-ui, sans-serif;
-      }
-      .menu-title {
-        font-size: 22px;
-        letter-spacing: 0.5px;
-        margin: 0 0 14px 0;
-        text-transform: uppercase;
-        color: #cfe5ff;
-      }
-      .menu-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px 18px;
-      }
-      .menu-field label {
-        display: block;
-        font-size: 12px;
-        color: #9db4d4;
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-      }
-      .menu-field input,
-      .menu-field select {
-        width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #2a3b5b;
-        background: #111826;
-        color: #e6edf7;
-        border-radius: 4px;
-        font-family: "HWUI", "Segoe UI", system-ui, sans-serif;
-      }
-      .menu-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 16px;
-      }
-      .menu-hint {
-        font-size: 12px;
-        color: #8aa1c1;
-      }
-      .menu-hint.error {
-        color: #f2a7a7;
-      }
-      .menu-button {
-        background: linear-gradient(180deg, #4b86d6, #2f5fa8);
-        border: 1px solid #234a84;
-        color: #f7fbff;
-        padding: 10px 18px;
-        font-weight: 700;
-        letter-spacing: 0.4px;
-        cursor: pointer;
-        border-radius: 4px;
-        text-transform: uppercase;
-      }
-      .menu-button[disabled] {
-        cursor: not-allowed;
-        filter: grayscale(0.5);
-        opacity: 0.7;
-      }
-      .menu-button:hover {
-        filter: brightness(1.05);
-      }
-      .menu-sublabel {
-        font-size: 11px;
-        color: #7f93b0;
-        margin-top: 4px;
-      }
-      .menu-row {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr;
-        gap: 10px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        pointer-events: none;
       }
     </style>
   </head>
   <body>
-    <div id="status">Loading...</div>
-    <div id="menu">
-      <div class="menu-panel">
-        <div class="menu-title">Local Game Setup</div>
-        <div class="menu-grid">
-          <div class="menu-field">
-            <label>Theme</label>
-            <select id="cfg-theme">
-              <option value="Nature" selected>Nature</option>
-              <option value="City">City</option>
-              <option value="Underwater">Underwater</option>
-              <option value="Desert">Desert</option>
-              <option value="Snow">Snow</option>
-              <option value="Jungle">Jungle</option>
-            </select>
-          </div>
-          <div class="menu-field">
-            <label>Mapgen</label>
-            <select id="cfg-mapgen">
-              <option value="0" selected>Random</option>
-              <option value="1">Maze</option>
-              <option value="2">Perlin</option>
-              <option value="3">Drawn</option>
-              <option value="4">Forts</option>
-              <option value="5">WFC</option>
-            </select>
-          </div>
-          <div class="menu-field">
-            <label>Seed</label>
-            <input id="cfg-seed" type="text" value="wasm"/>
-          </div>
-          <div class="menu-field">
-            <label>Bot Level (Team B)</label>
-            <select id="cfg-bot">
-              <option value="0">Off</option>
-              <option value="1" selected>Easy</option>
-              <option value="2">Medium</option>
-              <option value="3">Hard</option>
-            </select>
-          </div>
-        </div>
-        <div style="height:14px"></div>
-        <div class="menu-title" style="font-size:16px">Teams</div>
-        <div class="menu-grid">
-          <div class="menu-field">
-            <label>Team A</label>
-            <div class="menu-row">
-              <input id="teamA-name" type="text" value="TeamA"/>
-              <input id="teamA-flag" type="text" value="united_states"/>
-              <input id="teamA-color" type="number" min="0" max="7" value="0"/>
-            </div>
-            <div class="menu-sublabel">name / flag / color index</div>
-          </div>
-          <div class="menu-field">
-            <label>Team B</label>
-            <div class="menu-row">
-              <input id="teamB-name" type="text" value="TeamB"/>
-              <input id="teamB-flag" type="text" value="united_kingdom"/>
-              <input id="teamB-color" type="number" min="0" max="7" value="1"/>
-            </div>
-            <div class="menu-sublabel">name / flag / color index</div>
-          </div>
-        </div>
-        <div class="menu-footer">
-          <div id="menu-hint" class="menu-hint">Loading data...</div>
-          <button id="btn-start" class="menu-button" disabled>Start Game</button>
-        </div>
-      </div>
-    </div>
     <canvas id="canvas"></canvas>
-    <canvas id="boot-canvas"></canvas>
+    <div id="status">Loading...</div>
     <script>
       var statusEl = document.getElementById('status');
-      var bootCanvas = document.getElementById('boot-canvas');
-      var bootCtx = bootCanvas.getContext('2d');
-      var bootShown = true;
-
-      function resizeBootCanvas() {
-        bootCanvas.width = window.innerWidth || 1;
-        bootCanvas.height = window.innerHeight || 1;
-      }
-
-      function drawBoot(message) {
-        if (!bootShown) return;
-        resizeBootCanvas();
-        var w = bootCanvas.width;
-        var h = bootCanvas.height;
-        var grad = bootCtx.createLinearGradient(0, 0, w, h);
-        grad.addColorStop(0, '#12213a');
-        grad.addColorStop(1, '#11161f');
-        bootCtx.fillStyle = grad;
-        bootCtx.fillRect(0, 0, w, h);
-        bootCtx.fillStyle = '#9fd7ff';
-        bootCtx.font = '600 20px "Segoe UI", system-ui, sans-serif';
-        bootCtx.textAlign = 'center';
-        bootCtx.textBaseline = 'middle';
-        bootCtx.fillText(message || 'Booting Hedgewars...', w / 2, h / 2);
-      }
-
-      function hideBootCanvas() {
-        bootShown = false;
-        bootCanvas.style.display = 'none';
-      }
-
-      window.addEventListener('resize', function () {
-        if (bootShown) drawBoot(statusEl.textContent || 'Booting Hedgewars...');
-      });
-
-      var startButton = document.getElementById('btn-start');
-      var menuHint = document.getElementById('menu-hint');
-      var dataReady = false;
-
       var Module = {
         canvas: document.getElementById('canvas'),
         noInitialRun: true,
-        arguments: ['--prefix', '/Data', '--user-prefix', '/'],
         preRun: [],
-        print: function(text) { console.log(text); },
-        printErr: function(text) { console.error(text); },
+        postRun: [],
+        print: (function() {
+          return function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.log(text);
+          };
+        })(),
+        printErr: function(text) {
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+          console.error(text);
+        },
         setStatus: function(text) {
-          statusEl.textContent = text || '';
-          if (!text) statusEl.style.display = 'none';
-          if (text) drawBoot(text);
+          statusEl.textContent = text;
         },
         monitorRunDependencies: function(left) {
-          if (left) {
-            Module.setStatus('Downloading data...');
-          } else {
-            Module.setStatus('');
-            dataReady = true;
-            startButton.disabled = false;
-            menuHint.textContent = 'Ready. Click Start, then click the canvas once to unlock audio.';
-            menuHint.classList.remove('error');
-          }
-        },
-        onRuntimeInitialized: function() {
-          Module.setStatus('');
-          hideBootCanvas();
+          Module.setStatus(left ? ('Preparing... ' + left) : 'Ready');
         }
       };
-      drawBoot('Starting...');
 
-      function unlockAudio() {
-        try {
-          if (Module.SDL2 && Module.SDL2.audioContext && Module.SDL2.audioContext.state === 'suspended') {
-            Module.SDL2.audioContext.resume();
-          }
-        } catch (e) {}
-        window.removeEventListener('pointerdown', unlockAudio);
-        window.removeEventListener('keydown', unlockAudio);
-      }
-      window.addEventListener('pointerdown', unlockAudio);
-      window.addEventListener('keydown', unlockAudio);
-
-      function buildConfig() {
-        var lines = [];
-        var mapgen = document.getElementById('cfg-mapgen').value;
-        var theme = document.getElementById('cfg-theme').value;
-        var seed = document.getElementById('cfg-seed').value || 'wasm';
-        lines.push('mapgen ' + mapgen);
-        lines.push('theme ' + theme);
-        lines.push('seed ' + seed);
-
-        // Default ammo scheme (frontend defaults).
-        lines.push('ammloadt 939192942219912103223511100120000000021110010101111100010001');
-        lines.push('ammprob 040504054160065554655446477657666666615551010111541111111073');
-        lines.push('ammdelay 000000000000020550000004000700400000000022000000060002000000');
-        lines.push('ammreinf 131111031211111112311411111111111111121111111111111111111111');
-
-        var teamAName = document.getElementById('teamA-name').value || 'TeamA';
-        var teamAFlag = document.getElementById('teamA-flag').value || 'united_states';
-        var teamAColor = document.getElementById('teamA-color').value || '0';
-        lines.push('ammstore');
-        lines.push('addteam x ' + teamAColor + ' ' + teamAName);
-        lines.push('grave Bone');
-        lines.push('fort Castle');
-        lines.push('flag ' + teamAFlag);
-        lines.push('addhh 0 100 Hog1');
-        lines.push('hat NoHat');
-
-        var botLevel = document.getElementById('cfg-bot').value || '1';
-        var teamBName = document.getElementById('teamB-name').value || 'TeamB';
-        var teamBFlag = document.getElementById('teamB-flag').value || 'united_kingdom';
-        var teamBColor = document.getElementById('teamB-color').value || '1';
-        lines.push('ammstore');
-        lines.push('addteam x ' + teamBColor + ' ' + teamBName);
-        lines.push('grave Bone');
-        lines.push('fort Castle');
-        lines.push('flag ' + teamBFlag);
-        lines.push('addhh ' + botLevel + ' 100 Hog2');
-        lines.push('hat NoHat');
-        var cfgText = lines.join('\n');
-        console.log('[menu] mapgen=', mapgen, 'theme=', theme, 'seed=', seed);
-        console.log('[menu] config:\n' + cfgText);
-        return cfgText;
-      }
-
-      function setArgsWithConfig(configText) {
+      function buildArgsFromStorage() {
+        var cfg64 = localStorage.getItem('hw-wasm-webcfg64');
         var args = ['--prefix', '/Data', '--user-prefix', '/'];
-        var encoded = btoa(configText);
-        var chunkSize = 200;
-        for (var i = 0; i < encoded.length; i += chunkSize) {
+        if (!cfg64) return args;
+        var chunk = 200;
+        for (var i = 0; i < cfg64.length; i += chunk) {
           args.push('--webcfg64');
-          args.push(encoded.slice(i, i + chunkSize));
+          args.push(cfg64.slice(i, i + chunk));
         }
-        Module.arguments = args;
         return args;
       }
 
-      document.getElementById('btn-start').addEventListener('click', function() {
-        if (!dataReady) {
-          menuHint.textContent = 'Still loading data... please wait.';
-          menuHint.classList.add('error');
-          return;
-        }
-        if (typeof FS !== 'undefined') {
-          try {
-            if (!FS.analyzePath('/Data/map_templates.yaml').exists) {
-              menuHint.textContent = 'Missing /Data/map_templates.yaml in the virtual filesystem.';
-              menuHint.classList.add('error');
-              return;
-            }
-          } catch (e) {}
-        }
-        var cfg = buildConfig();
-        var args = setArgsWithConfig(cfg);
-        console.log('[menu] args:', args);
-        document.getElementById('menu').style.display = 'none';
-        Module.callMain(args);
-        Module.setStatus('Starting...');
+      Module.preRun.push(function() {
+        Module.arguments = buildArgsFromStorage();
       });
+
+      Module.onRuntimeInitialized = function() {
+        Module.setStatus('Starting...');
+        if (Module.callMain) Module.callMain(Module.arguments || []);
+      };
     </script>
     {{{ SCRIPT }}}
   </body>

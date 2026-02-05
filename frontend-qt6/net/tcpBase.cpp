@@ -81,7 +81,9 @@ TCPBase::~TCPBase() {
       thread->quit();
       thread->wait();
 #else
+#ifndef HW_WASM
       process->waitForFinished(1000);
+#endif
 #endif
     }
   }
@@ -98,8 +100,13 @@ TCPBase::TCPBase(bool demoMode, bool usesCustomLanguage, QObject *parent)
       m_connected(false),
       m_usesCustomLanguage(usesCustomLanguage),
       IPCSocket(0) {
+#ifndef HW_WASM
   process = 0;
+#endif
 
+#ifdef HW_WASM
+  ipc_port = 0;
+#else
   if (!IPCServer) {
     IPCServer = new QTcpServer(0);
     IPCServer->setMaxPendingConnections(1);
@@ -112,6 +119,7 @@ TCPBase::TCPBase(bool demoMode, bool usesCustomLanguage, QObject *parent)
   }
 
   ipc_port = IPCServer->serverPort();
+#endif
 }
 
 void TCPBase::NewConnection() {
@@ -140,6 +148,11 @@ void TCPBase::NewConnection() {
 }
 
 void TCPBase::RealStart() {
+#ifdef HW_WASM
+  m_hasStarted = true;
+  Q_EMIT isReadyNow();
+  return;
+#else
   connect(IPCServer.data(), &QTcpServer::newConnection, this,
           &TCPBase::NewConnection);
   IPCSocket = 0;
@@ -183,6 +196,7 @@ void TCPBase::RealStart() {
                  arguments);
 #endif
   m_hasStarted = true;
+#endif
 }
 
 void TCPBase::ClientDisconnect() {
@@ -213,6 +227,7 @@ void TCPBase::ClientRead() {
   onClientRead();
 }
 
+#ifndef HW_WASM
 void TCPBase::StartProcessError(QProcess::ProcessError error) {
   MessageDialog::ShowFatalMessage(
       tr("Unable to run engine at %1\nError code: %2")
@@ -245,6 +260,7 @@ void TCPBase::onEngineDeath(int exitCode, QProcess::ExitStatus exitStatus) {
             .arg(QCoreApplication::translate("PageMain", "Feedback")));
   }
 }
+#endif
 
 void TCPBase::tcpServerReady() {
   if (!srvsList.isEmpty()) {
@@ -290,6 +306,11 @@ void TCPBase::SendIPC(const QByteArray &buf) {
 }
 
 void TCPBase::RawSendIPC(const QByteArray &buf) {
+#ifdef HW_WASM
+  if (m_isDemoMode && !buf.isEmpty()) demo.append(buf);
+  Q_UNUSED(buf);
+  return;
+#endif
   if (!IPCSocket) {
     toSendBuf += buf;
   } else {
