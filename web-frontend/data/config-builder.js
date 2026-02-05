@@ -107,7 +107,7 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams }) 
     lines.push('flag ' + (team.flag || 'hedgewars'));
     lines.push('voicepack ' + (team.voice || 'Default'));
 
-    const hogCount = team.hedgehogs ? Math.min(team.hedgehogs.length, 8) : 1;
+    const hogCount = team.hogCount || (team.hedgehogs ? Math.min(team.hedgehogs.length, 8) : 8);
     for (let h = 0; h < hogCount; h++) {
       const hog = team.hedgehogs?.[h] || { name: 'Hedgehog ' + (h + 1) };
       lines.push('addhh ' + (team.difficulty || 0) + ' ' + (scheme?.initialHealth ?? 100) + ' ' + hog.name);

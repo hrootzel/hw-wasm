@@ -149,7 +149,23 @@ export class TeamEditorPage extends BasePage {
 
     // Hedgehog names
     this._addLabel('Hedgehogs', ex, y);
-    y += 30;
+    
+    // Hedgehog count controls
+    const minusBtn = new Button('-', () => this._adjustHogCount(-1));
+    minusBtn.x = ex + 120; minusBtn.y = y; minusBtn.width = 30; minusBtn.height = 30;
+    this.addChild(minusBtn);
+    
+    this.hogCountLabel = new Label('8', 'body');
+    this.hogCountLabel.x = ex + 155; this.hogCountLabel.y = y;
+    this.hogCountLabel.width = 30; this.hogCountLabel.height = 30;
+    this.hogCountLabel.align = 'center';
+    this.addChild(this.hogCountLabel);
+    
+    const plusBtn = new Button('+', () => this._adjustHogCount(1));
+    plusBtn.x = ex + 190; plusBtn.y = y; plusBtn.width = 30; plusBtn.height = 30;
+    this.addChild(plusBtn);
+    
+    y += 40;
     this.hogInputs = [];
     for (let i = 0; i < 8; i++) {
       const input = new TextInput(`Hog ${i + 1}`, (v) => {
@@ -182,6 +198,10 @@ export class TeamEditorPage extends BasePage {
     this.teamList.selectedIndex = idx;
     this.selectedTeam = this.teams[idx];
     if (this.selectedTeam) {
+      // Ensure hedgehogs array exists and has hogCount property
+      if (!this.selectedTeam.hedgehogs) this.selectedTeam.hedgehogs = [];
+      if (!this.selectedTeam.hogCount) this.selectedTeam.hogCount = this.selectedTeam.hedgehogs.length || 8;
+      
       this.nameInput.text = this.selectedTeam.name;
       this.nameInput.cursorPos = this.selectedTeam.name.length;
       this.diffDropdown.selectedIndex = this.selectedTeam.difficulty || 0;
@@ -199,12 +219,39 @@ export class TeamEditorPage extends BasePage {
       this.graveDropdown.selectedIndex = graveIdx >= 0 ? graveIdx : 0;
       this.gravePreview.setItem(this.selectedTeam.grave || COMMON_GRAVES[0]);
       
+      this.hogCountLabel.text = String(this.selectedTeam.hogCount);
+      
       for (let i = 0; i < 8; i++) {
-        this.hogInputs[i].text = this.selectedTeam.hedgehogs[i]?.name || '';
-        this.hogInputs[i].cursorPos = this.hogInputs[i].text.length;
+        const visible = i < this.selectedTeam.hogCount;
+        this.hogInputs[i].visible = visible;
+        if (visible) {
+          this.hogInputs[i].text = this.selectedTeam.hedgehogs[i]?.name || '';
+          this.hogInputs[i].cursorPos = this.hogInputs[i].text.length;
+        }
       }
     }
     this.dirty = false;
+  }
+
+  _adjustHogCount(delta) {
+    if (!this.selectedTeam) return;
+    const newCount = Math.max(1, Math.min(8, (this.selectedTeam.hogCount || 8) + delta));
+    if (newCount === this.selectedTeam.hogCount) return;
+    
+    this.selectedTeam.hogCount = newCount;
+    
+    // Ensure hedgehogs array has enough entries
+    while (this.selectedTeam.hedgehogs.length < newCount) {
+      this.selectedTeam.hedgehogs.push({ name: `Hedgehog ${this.selectedTeam.hedgehogs.length + 1}` });
+    }
+    
+    this.hogCountLabel.text = String(newCount);
+    for (let i = 0; i < 8; i++) {
+      this.hogInputs[i].visible = i < newCount;
+    }
+    
+    this.dirty = true;
+    audio.playClick();
   }
 
   _updateList() { this.teamList.items = this.teams.map(t => t.name); }
