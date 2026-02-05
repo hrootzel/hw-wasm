@@ -227,18 +227,14 @@ export class LocalGamePage extends BasePage {
     const args = buildArgs(cfgText);
     console.log('[local-game] args:', args);
 
-    // Launch engine if available
-    if (typeof Module !== 'undefined' && Module.callMain) {
-      Module.arguments = args;
-      Module.callMain(args);
-    } else {
-      // Store config for engine page to pick up
-      localStorage.setItem('hw-wasm-webcfg64', btoa(cfgText));
-      console.log('[local-game] Config stored in localStorage. Navigate to engine page to launch.');
-      // If hwengine.html exists alongside, redirect
-      const engineUrl = window.location.pathname.replace(/web-frontend\/.*/, 'project_files/web/hwengine.html');
-      console.log('[local-game] Engine URL would be:', engineUrl);
-    }
+    // Launch engine
+    localStorage.setItem('hw-wasm-webcfg64', btoa(cfgText));
+
+    // Navigate to engine page (works in both dev and build layouts)
+    const base = window.location.pathname.replace(/\/web-frontend\/.*/, '');
+    const engineUrl = base + '/hwengine.html';
+    console.log('[local-game] Navigating to engine:', engineUrl);
+    window.location.href = engineUrl;
 
     audio.playClick();
   }

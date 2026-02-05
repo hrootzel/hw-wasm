@@ -80,10 +80,22 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams }) 
   }
 
   // Ammo
-  lines.push('ammloadt ' + buildAmmoString(weaponSet, 'ammo'));
-  lines.push('ammprob ' + buildAmmoString(weaponSet, 'prob'));
-  lines.push('ammdelay ' + buildAmmoString(weaponSet, 'delay'));
-  lines.push('ammreinf ' + buildAmmoString(weaponSet, 'crate'));
+  const ammloadt = buildAmmoString(weaponSet, 'ammo');
+  const ammprob = buildAmmoString(weaponSet, 'prob');
+  const ammdelay = buildAmmoString(weaponSet, 'delay');
+  const ammreinf = buildAmmoString(weaponSet, 'crate');
+  
+  console.log('[config] ammo string lengths:', {
+    ammloadt: ammloadt.length,
+    ammprob: ammprob.length,
+    ammdelay: ammdelay.length,
+    ammreinf: ammreinf.length
+  });
+  
+  lines.push('ammloadt ' + ammloadt);
+  lines.push('ammprob ' + ammprob);
+  lines.push('ammdelay ' + ammdelay);
+  lines.push('ammreinf ' + ammreinf);
 
   // Teams - one ammstore per team
   for (let i = 0; i < teams.length; i++) {

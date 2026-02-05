@@ -57,8 +57,9 @@ export const WEAPONS = [
   { id: 'amKnife', name: 'Cleaver', slot: 6, icon: 'knife' },
   { id: 'amRubber', name: 'Rubber', slot: 4, icon: 'rubber' },
   { id: 'amAirMine', name: 'Air Mine', slot: 3, icon: 'airmine' },
-  { id: 'amDuck', name: 'Rubber Duck', slot: 3, icon: 'duck' },
+  { id: 'amCreeper', name: 'Creeper', slot: 3, icon: 'creeper' },
   { id: 'amMinigun', name: 'Minigun', slot: 2, icon: 'minigun' },
+  { id: 'amSentry', name: 'Sentry', slot: 4, icon: 'sentry' },
 ];
 
 // Ammo count: 0=none, 1-8=count, 9=infinite

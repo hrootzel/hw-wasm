@@ -4,7 +4,25 @@ class AssetManager {
     this.images = new Map();
     this.pending = 0;
     this.loaded = 0;
-    this.basePath = '../share/hedgewars/Data/';
+    // Auto-detect: build layout has Data/ as sibling, dev has ../share/hedgewars/Data/
+    this.basePath = this._detectBasePath();
+  }
+
+  _detectBasePath() {
+    // In build output: /web-frontend/ sits next to /Data/
+    // In dev mode: /web-frontend/ sits next to /share/hedgewars/Data/
+    const path = window.location.pathname;
+    if (path.includes('/web-frontend/')) {
+      const base = path.replace(/\/web-frontend\/.*/, '');
+      // Try build layout first (check synchronously via XHR)
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('HEAD', base + '/Data/misc/hedgewars.png', false);
+        xhr.send();
+        if (xhr.status === 200) return base + '/Data/';
+      } catch (e) {}
+    }
+    return '../share/hedgewars/Data/';
   }
 
   setBasePath(path) { this.basePath = path; }

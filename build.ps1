@@ -168,6 +168,7 @@ $cmakeArgs = @(
   "-S", ".",
   "-B", $buildDirFull,
   "-G", "Ninja",
+  "-DCMAKE_MAKE_PROGRAM=$ninja",
   "-DCMAKE_BUILD_TYPE=Release",
   "-DBUILD_ENGINE_C=1",
   "-DBUILD_ENGINE_JS=$($BuildEngineJS.IsPresent.ToString().ToUpper())",
@@ -204,6 +205,17 @@ if ($StageData) {
       Write-Host "Staged Data to $dataDst"
     } else {
       Write-Warning "Data source not found at $dataSrc"
+    }
+
+    # Stage web frontend
+    $frontendSrc = Join-Path $PSScriptRoot "web-frontend"
+    $frontendDst = Join-Path $binDir "web-frontend"
+    if (Test-Path $frontendSrc) {
+      if (Test-Path $frontendDst) {
+        Remove-Item -Recurse -Force $frontendDst
+      }
+      Copy-Item $frontendSrc -Destination $frontendDst -Recurse
+      Write-Host "Staged web-frontend to $frontendDst"
     }
   } else {
     Write-Warning "Build bin directory not found yet: $binDir (run build first)"
