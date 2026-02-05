@@ -82,33 +82,54 @@ export const CORE_ASSETS = {
 // Row 1: Mine, DEagle, Dynamite, FirePunch, Whip, Baseball, Parachute, AirAttack
 // Row 2: MineStrike, BlowTorch, Girder, Teleport, Switch, Mortar, Kamikaze, Cake
 // Row 3: Seduction, Watermelon, HellishBomb, Napalm, Drill, Ballgun, RCPlane, LowGravity
-// Row 4: ExtraDamage, Invulnerable, ExtraTime, LaserSight, Vampiric, SniperRifle, Jetpack, Molotov
-// Row 5: Birdy, PortalGun, Piano, GasBomb, SineGun, Flamethrower, SMine, Hammer
-// Row 6: Resurrector, DrillStrike, (empty slots...)
-export const WEAPON_ICON_MAP = {
-  'grenade': [0, 0], 'cluster': [1, 0], 'bazooka': [2, 0], 'bee': [3, 0],
-  'shotgun': [4, 0], 'pickhammer': [5, 0], 'skip': [6, 0], 'rope': [7, 0],
-  'mine': [0, 1], 'deagle': [1, 1], 'dynamite': [2, 1], 'firepunch': [3, 1],
-  'whip': [4, 1], 'baseball': [5, 1], 'parachute': [6, 1], 'airstrike': [7, 1],
-  'minestrike': [0, 2], 'blowtorch': [1, 2], 'girder': [2, 2], 'teleport': [3, 2],
-  'switch': [4, 2], 'mortar': [5, 2], 'kamikaze': [6, 2], 'cake': [7, 2],
-  'seduction': [0, 3], 'watermelon': [1, 3], 'hellish': [2, 3], 'napalm': [3, 3],
-  'drill': [4, 3], 'ballgun': [5, 3], 'rcplane': [6, 3], 'lowgravity': [7, 3],
-  'extradamage': [0, 4], 'invulnerable': [1, 4], 'extratime': [2, 4], 'lasersight': [3, 4],
-  'vampiric': [4, 4], 'sniper': [5, 4], 'jetpack': [6, 4], 'molotov': [7, 4],
-  'birdy': [0, 5], 'portal': [1, 5], 'piano': [2, 5], 'gasbomb': [3, 5],
-  'sinegun': [4, 5], 'flamethrower': [5, 5], 'smine': [6, 5], 'hammer': [7, 5],
-  'resurrector': [0, 6], 'drillstrike': [1, 6], 'snowball': [2, 6], 'tardis': [3, 6],
-  'landgun': [4, 6], 'freezer': [5, 6], 'knife': [6, 6], 'rubber': [7, 6],
-  'airmine': [0, 7], 'duck': [1, 7], 'minigun': [2, 7],
-};
+// Weapon icon sprite sheet mapping  
+// The sprite sheet is in HW_AMMOMENU_ARRAY order (the UI display order from Qt)
+// Position i in sprite = ICON_GRID_ORDER[i] = ammo type
+const ICON_GRID_ORDER = [
+  3,  4,  22, 29, 51, 55, 1,  2,  26, 27, 40, 44, 5,  10, 38,
+  45, 54, 59, 12, 13, 14, 23, 25, 48, 9,  11, 24, 30, 31, 47,
+  16, 17, 28, 43, 50, 57, 6,  18, 19, 46, 53, 56, 8,  15, 20,
+  39, 41, 42, 34, 36, 37, 49, 52, 58, 7,  21, 32, 33, 35, 60
+];
+
+// Weapon ID to icon name mapping (TAmmoType order 1-60)
+const WEAPON_ID_TO_ICON = [
+  'grenade', 'cluster', 'bazooka', 'bee', 'shotgun', 'pickhammer',
+  'skip', 'rope', 'mine', 'deagle', 'dynamite', 'firepunch', 'whip',
+  'baseball', 'parachute', 'airstrike', 'minestrike', 'blowtorch',
+  'girder', 'teleport', 'switch', 'mortar', 'kamikaze', 'cake',
+  'seduction', 'watermelon', 'hellish', 'napalm', 'drill', 'ballgun',
+  'rcplane', 'lowgravity', 'extradamage', 'invulnerable', 'extratime',
+  'lasersight', 'vampiric', 'sniper', 'jetpack', 'molotov', 'birdy',
+  'portal', 'piano', 'gasbomb', 'sinegun', 'flamethrower', 'smine',
+  'hammer', 'resurrector', 'drillstrike', 'snowball', 'tardis',
+  'landgun', 'freezer', 'knife', 'rubber', 'airmine', 'creeper',
+  'minigun', 'sentry'
+];
+
+// Build icon map using Qt's column-major calculation
+// Qt code: x = num / (height/32), y = (num % (height/32)) * 32
+// With height=512: x = num / 16, y = (num % 16) * 32
+// So position num maps to column (num/16), row (num%16)
+export const WEAPON_ICON_MAP = {};
+const ROWS = 16; // 512px / 32px
+for (let i = 0; i < WEAPON_ID_TO_ICON.length; i++) {
+  const iconName = WEAPON_ID_TO_ICON[i];
+  const col = Math.floor(i / ROWS);
+  const row = i % ROWS;
+  WEAPON_ICON_MAP[iconName] = [col, row];
+}
 
 // Draw weapon icon from sprite sheet
 export function drawWeaponIcon(ctx, weaponId, x, y, size = 32) {
   const icons = assets.get('ammo-icons');
-  if (!icons) return;
+  if (!icons) {
+    console.warn('ammo-icons not loaded');
+    return;
+  }
   const pos = WEAPON_ICON_MAP[weaponId];
   if (!pos) return;
+  
   ctx.drawImage(icons, pos[0] * 32, pos[1] * 32, 32, 32, x, y, size, size);
 }
 

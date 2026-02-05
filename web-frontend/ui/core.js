@@ -35,6 +35,15 @@ class Core {
     input.on('mousemove', (e) => this._onMouseMove(e));
     input.on('keydown', (e) => this._onKeyDown(e));
     input.on('keyup', (e) => this._onKeyUp(e));
+    
+    // Mouse wheel
+    canvas.addEventListener('wheel', (e) => {
+      const pos = this._clientToGame(e.clientX, e.clientY);
+      const page = this.currentPage;
+      if (page && page.onMouseWheel) {
+        page.onMouseWheel({ x: pos.x, y: pos.y, deltaY: e.deltaY, original: e });
+      }
+    }, { passive: false });
   }
 
   _resize() {

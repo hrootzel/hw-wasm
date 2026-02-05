@@ -25,47 +25,50 @@ class WeaponRow extends Node {
   }
 
   draw(ctx) {
-    const x = this.x, y = this.y;
-    
+    // Draw at origin since container already translates to our position
     // Icon
-    drawWeaponIcon(ctx, this.weapon.icon, x, y + 2, 32);
+    drawWeaponIcon(ctx, this.weapon.icon, 0, 2, 32);
     
     // Name
     ctx.fillStyle = '#fff';
     ctx.font = '14px sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText(this.weapon.name, x + 40, y + 18);
+    ctx.fillText(this.weapon.name, 40, 18);
     
     // Ammo slider track
-    const ammoX = x + 200, sliderW = 100;
+    const ammoX = 200, sliderW = 100;
     ctx.fillStyle = '#333';
-    ctx.fillRect(ammoX, y + 14, sliderW, 8);
+    ctx.fillRect(ammoX, 14, sliderW, 8);
     // Ammo handle
     const ammoPos = (this.ammo / 9) * sliderW;
     ctx.fillStyle = '#4a9';
-    ctx.fillRect(ammoX + ammoPos - 4, y + 10, 8, 16);
+    ctx.fillRect(ammoX + ammoPos - 4, 10, 8, 16);
     // Ammo value
     ctx.fillStyle = '#fff';
-    ctx.fillText(this.ammo === 9 ? '∞' : this.ammo, ammoX + sliderW + 10, y + 18);
+    ctx.fillText(this.ammo === 9 ? '∞' : this.ammo, ammoX + sliderW + 10, 18);
     
     // Delay slider track
-    const delayX = x + 350;
+    const delayX = 350;
     ctx.fillStyle = '#333';
-    ctx.fillRect(delayX, y + 14, 80, 8);
+    ctx.fillRect(delayX, 14, 80, 8);
     // Delay handle
     const delayPos = (this.delay / 8) * 80;
     ctx.fillStyle = '#a94';
-    ctx.fillRect(delayX + delayPos - 4, y + 10, 8, 16);
+    ctx.fillRect(delayX + delayPos - 4, 10, 8, 16);
     // Delay value
     ctx.fillStyle = '#fff';
-    ctx.fillText(String(this.delay), delayX + 90, y + 18);
+    ctx.fillText(String(this.delay), delayX + 90, 18);
   }
 
   onMouseDown(e) {
-    const lx = e.x - this.x;
+    const lx = e.x;
+    console.log('[WeaponRow] mousedown at', lx, 'for', this.weapon.name);
     if (lx >= 200 && lx < 310) this.dragging = 'ammo';
     else if (lx >= 350 && lx < 440) this.dragging = 'delay';
-    if (this.dragging) this._updateFromMouse(e);
+    if (this.dragging) {
+      console.log('[WeaponRow] started dragging', this.dragging);
+      this._updateFromMouse(e);
+    }
   }
 
   onMouseMove(e) {
@@ -75,7 +78,7 @@ class WeaponRow extends Node {
   onMouseUp() { this.dragging = null; }
 
   _updateFromMouse(e) {
-    const lx = e.x - this.x;
+    const lx = e.x;
     if (this.dragging === 'ammo') {
       const v = Math.round(Math.max(0, Math.min(9, ((lx - 200) / 100) * 9)));
       if (v !== this.ammo) { this.ammo = v; this.onAmmoChange(v); }
@@ -135,15 +138,86 @@ export class WeaponEditorPage extends BasePage {
       this.addChild(h);
     }
 
-    // Weapon rows (all weapons, scrollable via clip)
-    let y = 165;
+    // Scrollable container for weapon rows
+    this.weaponContainer = new Node();
+    this.weaponContainer.x = 210;
+    this.weaponContainer.y = 165;
+    this.weaponContainer.width = 550;
+    this.weaponContainer.height = 520;
+    this.weaponContainer.interactive = true;
+    this.weaponContainer.hitTest = (gx, gy) => {
+      const local = this.weaponContainer.globalToLocal(gx, gy);
+      return local.x >= 0 && local.x < this.weaponContainer.width && 
+             local.y >= 0 && local.y < this.weaponContainer.height;
+    };
+    this.weaponContainer.onMouseDown = (e) => {
+      const local = this.weaponContainer.globalToLocal(e.x, e.y);
+      console.log('[Container] mousedown at', local);
+      const adjustedY = local.y + this.scrollOffset;
+      const rowIdx = Math.floor(adjustedY / 36);
+      console.log('[Container] row', rowIdx);
+      if (rowIdx >= 0 && rowIdx < this.weaponRows.length) {
+        const row = this.weaponRows[rowIdx];
+        row.onMouseDown({ x: local.x, y: adjustedY - rowIdx * 36 });
+      }
+    };
+    this.weaponContainer.onMouseMove = (e) => {
+      // If dragging, route to the dragging row
+      for (const row of this.weaponRows) {
+        if (row.dragging) {
+          const local = this.weaponContainer.globalToLocal(e.x, e.y);
+          row.onMouseMove({ x: local.x, y: 0 });
+          return;
+        }
+      }
+    };
+    this.weaponContainer.onMouseUp = (e) => {
+      for (const row of this.weaponRows) {
+        if (row.dragging) row.onMouseUp(e);
+      }
+    };
+    this.scrollOffset = 0;
+    
+    // Override draw to clip and scroll
+    this.weaponContainer.draw = (ctx) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(this.weaponContainer.x, this.weaponContainer.y, this.weaponContainer.width, this.weaponContainer.height);
+      ctx.clip();
+      
+      for (const row of this.weaponRows) {
+        const screenY = this.weaponContainer.y + row.y - this.scrollOffset;
+        if (screenY + 36 < this.weaponContainer.y || screenY > this.weaponContainer.y + this.weaponContainer.height) continue;
+        
+        ctx.save();
+        ctx.translate(this.weaponContainer.x + row.x, screenY);
+        row.draw(ctx);
+        ctx.restore();
+      }
+      
+      ctx.restore();
+      
+      // Scrollbar
+      const totalHeight = this.weaponRows.length * 36;
+      if (totalHeight > this.weaponContainer.height) {
+        const barHeight = Math.max(20, (this.weaponContainer.height / totalHeight) * this.weaponContainer.height);
+        const barY = (this.scrollOffset / (totalHeight - this.weaponContainer.height)) * (this.weaponContainer.height - barHeight);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(this.weaponContainer.x + this.weaponContainer.width - 8, this.weaponContainer.y + barY, 6, barHeight);
+      }
+    };
+    
+    this.addChild(this.weaponContainer);
+
+    // Create weapon rows
+    let y = 0;
     for (const w of WEAPONS) {
       const row = new WeaponRow(w,
         (v) => { if (this.selectedSet) { this.selectedSet.ammo[w.id] = v; this.dirty = true; } },
         (v) => { if (this.selectedSet) { this.selectedSet.delay[w.id] = v; this.dirty = true; } }
       );
-      row.x = 210; row.y = y;
-      this.addChild(row);
+      row.x = 0; // Relative to container
+      row.y = y;
       this.weaponRows.push(row);
       y += 36;
     }
@@ -199,8 +273,25 @@ export class WeaponEditorPage extends BasePage {
     this.dirty = false;
   }
 
+  onMouseWheel(e) {
+    // Mouse wheel scrolling
+    const delta = e.deltaY || 0;
+    const maxScroll = Math.max(0, this.weaponRows.length * 36 - this.weaponContainer.height);
+    this.scrollOffset = Math.max(0, Math.min(maxScroll, this.scrollOffset + delta * 0.5));
+    if (e.original) e.original.preventDefault();
+  }
+
   onKeyDown(e) {
     if (this.nameInput.focused) { this.nameInput.handleKey(e); e.original?.preventDefault(); return; }
+    
+    // Arrow keys for scrolling
+    if (e.code === 'ArrowUp') {
+      this.scrollOffset = Math.max(0, this.scrollOffset - 36);
+    } else if (e.code === 'ArrowDown') {
+      const maxScroll = Math.max(0, this.weaponRows.length * 36 - this.weaponContainer.height);
+      this.scrollOffset = Math.min(maxScroll, this.scrollOffset + 36);
+    }
+    
     super.onKeyDown(e);
   }
 
