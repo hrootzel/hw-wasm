@@ -4,12 +4,12 @@ import { Button, Label } from '../ui/widgets.js';
 import { TextInput, ScrollList, Dropdown } from '../ui/widgets-adv.js';
 import { storage } from '../data/storage.js';
 import { DEFAULT_TEAMS, createDefaultTeam } from '../data/defaults.js';
-import { assets, getHatPath, getFlagPath, getGravePath } from '../assets.js';
+import { assets, getHatPath, getFlagPath, getGravePath, getFortPath } from '../assets.js';
 import { audio } from '../util/audio.js';
 import { core } from '../ui/core.js';
 import { Node } from '../ui/scene.js';
-
 import { IconPicker } from '../ui/icon-picker.js';
+import { randomHogNamesSync } from '../util/namegen.js';
 
 const DIFFICULTIES = ['Human', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
 const TEAM_COLORS = [
@@ -26,7 +26,8 @@ const TEAM_COLORS = [
 const ALL_HATS = ['NoHat', '4gsuif', 'AkuAku', 'Bandit', 'Coonskin3', 'Cowboy', 'Dan', 'Dauber', 'DayAndNight', 'Disguise', 'Dragon', 'Einstein', 'Elvis', 'Eva_00b', 'Eva_00y', 'Evil', 'Gasmask', 'Glasses', 'HogInTheHat', 'IndianChief', 'InfernalHorns', 'Jason', 'Joker', 'Laminaria', 'MegaHogX', 'Meteorhelmet', 'Moustache', 'Moustache_glasses', 'Mummy', 'NinjaFull', 'NinjaStraight', 'NinjaTriangle', 'OldMan', 'Pantsu', 'Plunger', 'RSR', 'Rain', 'Rambo', 'RamboClean', 'RobinHood', 'Samurai', 'Santa', 'ShaggyYeti', 'ShortHair_Black', 'ShortHair_Brown', 'ShortHair_Grey', 'ShortHair_Red', 'ShortHair_Yellow', 'Skull', 'Sleepwalker', 'Sniper', 'SparkleSuperFun', 'StrawHat', 'StrawHatEyes', 'StrawHatFacial', 'SunWukong', 'Sunglasses', 'TeamHeadband', 'TeamSoldier', 'TeamTophat', 'TeamWheatley', 'Terminator_Glasses', 'Viking', 'WhySoSerious', 'WizardHat', 'Zombi', 'android', 'angel', 'anzac', 'barrelhider', 'bb_bob', 'bb_bub', 'bb_cororon', 'bb_kululun', 'beefeater', 'beefeaterhat', 'bishop', 'bobby', 'bobby2v', 'bubble', 'bushhider', 'cap_blue', 'cap_green', 'cap_junior', 'cap_red', 'cap_team', 'cap_thinking', 'cap_yellow', 'car', 'chef', 'chuckl', 'clown', 'clown-copper', 'clown-crossed', 'constructor', 'cratehider', 'crown', 'cyborg1', 'cyborg2', 'cyclops'];
 const ALL_FLAGS = ['hedgewars', 'cm_balls', 'cm_binary', 'cm_birdy', 'cm_earth', 'cm_hw', 'afghanistan', 'albania', 'algeria', 'andorra', 'angola', 'argentina', 'armenia', 'australia', 'austria', 'azerbaijan', 'bahamas', 'bahrain', 'bangladesh', 'barbados', 'belarus', 'belgium', 'belize', 'benin', 'bhutan', 'bolivia', 'bosnia_and_herzegovina', 'botswana', 'brazil', 'brunei', 'bulgaria', 'burkina_faso', 'burundi', 'cambodia', 'cameroon', 'canada', 'cape_verde', 'central_african_republic', 'chad', 'chile', 'china', 'colombia', 'comoros', 'congo', 'costa_rica', 'croatia', 'cuba', 'cyprus', 'czech_republic', 'denmark', 'djibouti', 'dominica', 'dominican_republic', 'ecuador', 'egypt', 'el_salvador', 'equatorial_guinea', 'eritrea', 'estonia', 'ethiopia', 'fiji', 'finland', 'france', 'gabon', 'gambia', 'georgia', 'germany', 'ghana', 'greece', 'grenada', 'guatemala', 'guinea', 'guinea_bissau', 'guyana', 'haiti', 'honduras', 'hungary', 'iceland', 'india', 'indonesia', 'iran', 'iraq', 'ireland', 'israel', 'italy', 'jamaica', 'japan', 'jordan', 'kazakhstan', 'kenya', 'kiribati', 'kuwait', 'kyrgyzstan', 'laos', 'latvia', 'lebanon', 'lesotho', 'liberia', 'libya', 'liechtenstein', 'lithuania', 'luxembourg', 'macedonia', 'madagascar', 'malawi', 'malaysia', 'maldives', 'mali', 'malta', 'mauritania', 'mauritius', 'mexico', 'moldova', 'monaco', 'mongolia', 'montenegro', 'morocco', 'mozambique', 'myanmar', 'namibia', 'nepal', 'netherlands', 'new_zealand', 'nicaragua', 'niger', 'nigeria', 'norway', 'oman', 'pakistan', 'palau', 'palestine', 'panama', 'papua_new_guinea', 'paraguay', 'peru', 'philippines', 'poland', 'portugal', 'qatar', 'romania', 'russia', 'rwanda', 'samoa', 'san_marino', 'saudi_arabia', 'senegal', 'serbia', 'seychelles', 'sierra_leone', 'singapore', 'slovakia', 'slovenia', 'somalia', 'south_africa', 'south_korea', 'south_sudan', 'spain', 'sri_lanka', 'sudan', 'suriname', 'swaziland', 'sweden', 'switzerland', 'syria', 'taiwan', 'tajikistan', 'tanzania', 'thailand', 'togo', 'tonga', 'trinidad_and_tobago', 'tunisia', 'turkey', 'turkmenistan', 'tuvalu', 'uganda', 'ukraine', 'united_kingdom', 'united_states', 'uruguay', 'uzbekistan', 'vanuatu', 'vatican_city', 'venezuela', 'vietnam', 'yemen', 'zambia', 'zimbabwe'];
 const ALL_GRAVES = ['Grave', 'Badger', 'Bone', 'Cherry', 'Clover', 'Duck2', 'Earth', 'Egg', 'Flower', 'Ghost', 'Mushroom', 'Old_Apple', 'Plinko', 'Rip', 'Rubberduck', 'Simple', 'Simple_reversed', 'Statue', 'TV', 'Teapot', 'Whisky', 'Yin_and_Yang', 'bp2', 'bubble', 'chest', 'coffin', 'deadhog', 'dragonball', 'eyecross', 'heart', 'money', 'mouton1', 'octopus', 'pi', 'plant2', 'plant3', 'pokeball', 'pyramid', 'ring', 'skull', 'star'];
-const VOICES = ['Default', 'British', 'Classic', 'HillBilly', 'Mobster', 'Pirate', 'Robot', 'Russian', 'Singer', 'Surfer'];
+const ALL_FORTS = ['Castle', 'Cake', 'Earth', 'EvilChicken', 'Flowerhog', 'Hydrant', 'Lego', 'Lonely_Island', 'Octopus', 'OlympicL', 'Plane', 'Snail', 'Statue', 'SteelTower', 'Tank', 'UFO', 'Wood'];
+const VOICES = ['Default', 'British', 'Classic', 'Default_es', 'Default_pl', 'Default_ru', 'Default_uk', 'HillBilly', 'Mobster', 'Pirate', 'Robot', 'Russian', 'Russian_pl', 'Singer', 'Surfer'];
 
 // Image preview widget that loads on demand
 class ImagePreview extends Node {
@@ -170,34 +171,56 @@ export class TeamEditorPage extends BasePage {
     this.addChild(graveBtn);
     y += 50;
 
+    // Fort
+    this._addLabel('Fort', ex, y);
+    this.fortPreview = new ImagePreview(getFortPath, 32);
+    this.fortPreview.x = ex + 120; this.fortPreview.y = y;
+    this.addChild(this.fortPreview);
+    
+    this.fortLabel = new Label('', 'small');
+    this.fortLabel.x = ex + 160; this.fortLabel.y = y; this.fortLabel.width = 150; this.fortLabel.height = 30;
+    this.addChild(this.fortLabel);
+    
+    const fortBtn = new Button('Select...', () => this._showFortPicker());
+    fortBtn.x = ex + 320; fortBtn.y = y; fortBtn.width = 100; fortBtn.height = 30;
+    fortBtn.fontSize = 14;
+    this.addChild(fortBtn);
+    y += 50;
+
     // Voice
     this._addLabel('Voice', ex, y);
-    this.voiceDropdown = new Dropdown(VOICES, 0, (i) => {
-      if (this.selectedTeam) {
-        this.selectedTeam.voice = VOICES[i];
-        this.dirty = true;
-      }
-    });
-    this.voiceDropdown.x = ex + 120; this.voiceDropdown.y = y + 5; this.voiceDropdown.width = 150;
-    this.addChild(this.voiceDropdown);
-    y += 55;
+    this.voiceLabel = new Label('', 'small');
+    this.voiceLabel.x = ex + 120; this.voiceLabel.y = y; this.voiceLabel.width = 180; this.voiceLabel.height = 30;
+    this.addChild(this.voiceLabel);
+    
+    const voiceBtn = new Button('Select...', () => this._showVoicePicker());
+    voiceBtn.x = ex + 320; voiceBtn.y = y; voiceBtn.width = 100; voiceBtn.height = 30;
+    voiceBtn.fontSize = 14;
+    this.addChild(voiceBtn);
+    y += 50;
 
     // Hedgehog names
     this._addLabel('Hedgehogs', ex, y);
     
+    // Random names button
+    const randomBtn = new Button('Random', () => this._randomHogNames());
+    randomBtn.x = ex + 120; randomBtn.y = y; randomBtn.width = 80; randomBtn.height = 30;
+    randomBtn.fontSize = 14;
+    this.addChild(randomBtn);
+    
     // Hedgehog count controls
     const minusBtn = new Button('-', () => this._adjustHogCount(-1));
-    minusBtn.x = ex + 120; minusBtn.y = y; minusBtn.width = 30; minusBtn.height = 30;
+    minusBtn.x = ex + 210; minusBtn.y = y; minusBtn.width = 30; minusBtn.height = 30;
     this.addChild(minusBtn);
     
     this.hogCountLabel = new Label('8', 'body');
-    this.hogCountLabel.x = ex + 155; this.hogCountLabel.y = y;
+    this.hogCountLabel.x = ex + 245; this.hogCountLabel.y = y;
     this.hogCountLabel.width = 30; this.hogCountLabel.height = 30;
     this.hogCountLabel.align = 'center';
     this.addChild(this.hogCountLabel);
     
     const plusBtn = new Button('+', () => this._adjustHogCount(1));
-    plusBtn.x = ex + 190; plusBtn.y = y; plusBtn.width = 30; plusBtn.height = 30;
+    plusBtn.x = ex + 280; plusBtn.y = y; plusBtn.width = 30; plusBtn.height = 30;
     this.addChild(plusBtn);
     
     y += 40;
@@ -331,6 +354,70 @@ export class TeamEditorPage extends BasePage {
     audio.playClick();
   }
 
+  _showFortPicker() {
+    if (!this.selectedTeam) return;
+    
+    const picker = new IconPicker(ALL_FORTS, getFortPath, null);
+    picker.setSelected(this.selectedTeam.fort || 'Castle');
+    
+    const pickerPage = new BasePage('Select Fort');
+    pickerPage.addTitle('Select Fort');
+    picker.x = 362; picker.y = 100;
+    pickerPage.addChild(picker);
+    
+    const okBtn = new Button('OK', () => {
+      const fort = ALL_FORTS[picker.selectedIndex];
+      this.selectedTeam.fort = fort;
+      this.fortPreview.setItem(fort);
+      this.fortLabel.text = fort;
+      this.dirty = true;
+      core.popPage();
+      audio.playClick();
+    });
+    okBtn.x = 362; okBtn.y = 520; okBtn.width = 120; okBtn.height = 40;
+    pickerPage.addChild(okBtn);
+    pickerPage.addBackButton(() => core.popPage());
+    
+    pickerPage.onMouseWheel = (e) => {
+      if (picker.hitTest(e.x, e.y)) picker.onMouseWheel(e);
+    };
+    
+    core.pushPage(pickerPage);
+    audio.playClick();
+  }
+
+  _showVoicePicker() {
+    if (!this.selectedTeam) return;
+    
+    // Text-only picker (no icons for voices)
+    const picker = new IconPicker(VOICES, () => null, null, 32, 0);
+    picker.setSelected(this.selectedTeam.voice || 'Default');
+    
+    const pickerPage = new BasePage('Select Voice');
+    pickerPage.addTitle('Select Voice');
+    picker.x = 362; picker.y = 100;
+    pickerPage.addChild(picker);
+    
+    const okBtn = new Button('OK', () => {
+      const voice = VOICES[picker.selectedIndex];
+      this.selectedTeam.voice = voice;
+      this.voiceLabel.text = voice;
+      this.dirty = true;
+      core.popPage();
+      audio.playClick();
+    });
+    okBtn.x = 362; okBtn.y = 520; okBtn.width = 120; okBtn.height = 40;
+    pickerPage.addChild(okBtn);
+    pickerPage.addBackButton(() => core.popPage());
+    
+    pickerPage.onMouseWheel = (e) => {
+      if (picker.hitTest(e.x, e.y)) picker.onMouseWheel(e);
+    };
+    
+    core.pushPage(pickerPage);
+    audio.playClick();
+  }
+
   _selectTeam(idx) {
     if (this.dirty) this._saveTeam();
     this.teamList.selectedIndex = idx;
@@ -362,9 +449,12 @@ export class TeamEditorPage extends BasePage {
       this.gravePreview.setItem(this.selectedTeam.grave || 'Grave');
       this.graveLabel.text = this.selectedTeam.grave || 'Grave';
       
+      // Fort
+      this.fortPreview.setItem(this.selectedTeam.fort || 'Castle');
+      this.fortLabel.text = this.selectedTeam.fort || 'Castle';
+      
       // Voice
-      const voiceIdx = VOICES.indexOf(this.selectedTeam.voice || 'Default');
-      this.voiceDropdown.selectedIndex = voiceIdx >= 0 ? voiceIdx : 0;
+      this.voiceLabel.text = this.selectedTeam.voice || 'Default';
       
       this.hogCountLabel.text = String(this.selectedTeam.hogCount);
       
@@ -397,6 +487,17 @@ export class TeamEditorPage extends BasePage {
       this.hogInputs[i].visible = i < newCount;
     }
     
+    this.dirty = true;
+    audio.playClick();
+  }
+
+  _randomHogNames() {
+    if (!this.selectedTeam) return;
+    randomHogNamesSync(this.selectedTeam);
+    for (let i = 0; i < this.selectedTeam.hogCount; i++) {
+      this.hogInputs[i].text = this.selectedTeam.hedgehogs[i].name;
+      this.hogInputs[i].cursorPos = this.selectedTeam.hedgehogs[i].name.length;
+    }
     this.dirty = true;
     audio.playClick();
   }

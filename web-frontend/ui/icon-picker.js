@@ -52,7 +52,7 @@ export class IconPicker extends Node {
     
     const selectedItem = this.items[this.selectedIndex];
     const previewImg = this.images.get(selectedItem);
-    if (previewImg) {
+    if (previewImg && this.frameSize !== 0) {
       // Show first square frame
       const frameSize = this.frameSize || Math.min(previewImg.width, previewImg.height);
       const scale = Math.min(64 / frameSize, 64 / frameSize);
@@ -92,7 +92,7 @@ export class IconPicker extends Node {
 
       // Icon
       const img = this.images.get(item);
-      if (img) {
+      if (img && this.frameSize !== 0) {
         // Show first square frame
         const frameSize = this.frameSize || Math.min(img.width, img.height);
         const scale = Math.min(this.iconSize / frameSize, this.iconSize / frameSize);
@@ -105,7 +105,8 @@ export class IconPicker extends Node {
       ctx.fillStyle = i === this.selectedIndex ? '#FFDD44' : '#fff';
       ctx.font = '14px sans-serif';
       ctx.textBaseline = 'middle';
-      ctx.fillText(item, this.x + this.iconSize + 16, itemY + this.rowHeight / 2);
+      const textX = this.frameSize === 0 ? this.x + 12 : this.x + this.iconSize + 16;
+      ctx.fillText(item, textX, itemY + this.rowHeight / 2);
     }
 
     ctx.restore();

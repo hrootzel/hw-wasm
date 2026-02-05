@@ -137,3 +137,4 @@ export function drawWeaponIcon(ctx, weaponId, x, y, size = 32) {
 export const getHatPath = (name) => `Graphics/Hats/${name}.png`;
 export const getFlagPath = (name) => `Graphics/Flags/${name}.png`;
 export const getGravePath = (name) => `Graphics/Graves/${name}.png`;
+export const getFortPath = (name) => `Forts/${name}-icon.png`;
