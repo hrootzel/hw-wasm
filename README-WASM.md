@@ -115,6 +115,13 @@ Qt WASM Single-Player Bridge (Experimental)
 - The engine shell (`project_files/web/shell.html`) reads `hw-wasm-webcfg64` and passes `--webcfg64` to the engine.
 - Network play and training/campaign are stubbed out in the Qt WASM build.
 
+Qt WASM Runtime Fixes (Current)
+- Qt WASM is built with asyncify enabled so blocking `QDialog::exec()` calls do not abort in the browser.
+- `qtloader.js` and `qtlogo.svg` are copied from the Qt WASM install into `build/qt-wasm` (and `build/qt-wasm/Release`) after build.
+- We generate `qt-preload.json` for a **curated** asset subset (fonts, locale, misc keys, limited frontend graphics) to avoid thousands of concurrent fetches that cause `ERR_INSUFFICIENT_RESOURCES`.
+- The full `share/hedgewars/Data` tree is copied into `build/qt-wasm/Data`, but only the allowlisted files are preloaded.
+- Serve from `build/qt-wasm` (not `build/qt-wasm/Release`) to ensure `hedgewars.js/.wasm` and `qtloader.js` are present.
+
 Qt Frontend (WebAssembly) Option (Experimental)
 
 Frontend locations

@@ -19,6 +19,14 @@ QString resolvePathForRead(const QString &path) {
   if (path.startsWith(QLatin1String("/"))) {
     const QString res = QStringLiteral(":") + path;
     if (QFile::exists(res)) return res;
+
+    const QString rel = path.mid(1);
+    if (QFile::exists(rel)) return rel;
+
+    if (!rel.startsWith(QLatin1String("Data/"))) {
+      const QString dataRel = QStringLiteral("Data/") + rel;
+      if (QFile::exists(dataRel)) return dataRel;
+    }
   }
   if (QFile::exists(path)) return path;
   return path;

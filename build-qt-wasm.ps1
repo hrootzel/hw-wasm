@@ -48,9 +48,80 @@ cmake --build $buildPath --config $Config
 
 $qtLoaderSrc = Join-Path $QtWasm "plugins\\platforms\\qtloader.js"
 $qtLogoSrc = Join-Path $QtWasm "plugins\\platforms\\qtlogo.svg"
-if (Test-Path $qtLoaderSrc) {
-  Copy-Item $qtLoaderSrc -Destination $buildPath -Force
+$copyTargets = @($buildPath, (Join-Path $buildPath "Release"))
+foreach ($target in $copyTargets) {
+  if (-not (Test-Path $target)) { continue }
+  if (Test-Path $qtLoaderSrc) {
+    Copy-Item $qtLoaderSrc -Destination $target -Force
+  }
+  if (Test-Path $qtLogoSrc) {
+    Copy-Item $qtLogoSrc -Destination $target -Force
+  }
 }
-if (Test-Path $qtLogoSrc) {
-  Copy-Item $qtLogoSrc -Destination $buildPath -Force
+
+$dataSrc = Join-Path $PSScriptRoot "share\\hedgewars\\Data"
+foreach ($target in $copyTargets) {
+  if (-not (Test-Path $target)) { continue }
+  $dataDst = Join-Path $target "Data"
+  if ((Test-Path $dataSrc) -and -not (Test-Path $dataDst)) {
+    Copy-Item $dataSrc -Destination $dataDst -Recurse
+  }
+}
+
+# Generate qt-preload.json and inject into hedgewars.html (root build dir only)
+if (Test-Path $dataSrc -and (Test-Path $buildPath)) {
+  $dataDst = Join-Path $buildPath "Data"
+  if (Test-Path $dataDst) {
+    $entries = @()
+    $base = (Resolve-Path $buildPath).Path
+    $allowPrefixes = @(
+      "Data/Fonts/",
+      "Data/Locale/",
+      "Data/misc/",
+      "Data/Graphics/AmmoMenu/",
+      "Data/Graphics/Flags/",
+      "Data/Graphics/Graves/",
+      "Data/Graphics/Frontend/",
+      "Data/Graphics/Hedgehog/",
+      "Data/Graphics/MapMasks/",
+      "Data/Graphics/MapEdges/",
+      "Data/Graphics/Buttons/",
+      "Data/Graphics/Icons/"
+    )
+    $allowFiles = @(
+      "Data/misc/keys.csv"
+    )
+
+    Get-ChildItem -Path $dataDst -Recurse -File | ForEach-Object {
+      $full = (Resolve-Path $_.FullName).Path
+      $rel = $full.Substring($base.Length).TrimStart('\', '/')
+      $source = $rel.Replace('\', '/')
+
+      $allowed = $false
+      foreach ($prefix in $allowPrefixes) {
+        if ($source.StartsWith($prefix)) { $allowed = $true; break }
+      }
+      if (-not $allowed -and ($allowFiles -contains $source)) {
+        $allowed = $true
+      }
+      if (-not $allowed) { return }
+
+      $entries += [pscustomobject]@{
+        source = $source
+        destination = "/" + $source
+      }
+    }
+    $preloadPath = Join-Path $buildPath "qt-preload.json"
+    $entries | ConvertTo-Json -Depth 4 | Set-Content -Path $preloadPath -Encoding UTF8
+
+    $htmlPath = Join-Path $buildPath "hedgewars.html"
+    if (Test-Path $htmlPath) {
+      $html = Get-Content -Path $htmlPath -Raw
+      if ($html -notmatch "preload:\\s*\\[") {
+        $html = $html -replace "entryFunction:\\s*window\\.hedgewars_entry,",
+          "entryFunction: window.hedgewars_entry,`r`n                        preload: ['qt-preload.json'],"
+        Set-Content -Path $htmlPath -Value $html -Encoding UTF8
+      }
+    }
+  }
 }
