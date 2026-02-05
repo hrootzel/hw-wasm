@@ -88,11 +88,12 @@ export class MainMenuPage extends Page {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, this.width, this.height);
 
-    // Clouds
+    // Clouds - fill bottom half
     const clouds = assets.get('clouds');
     if (clouds) {
       ctx.globalAlpha = 0.3;
-      ctx.drawImage(clouds, 0, this.height - 200, this.width, 200);
+      const cloudH = 720;
+      ctx.drawImage(clouds, 0, this.height - cloudH, this.width, cloudH);
       ctx.globalAlpha = 1;
     }
 
