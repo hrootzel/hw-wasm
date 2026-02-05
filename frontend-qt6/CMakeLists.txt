@@ -18,6 +18,7 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network LinguistTools)
 if(EMSCRIPTEN)
     message(STATUS "Building Qt frontend for WebAssembly: stubbing SDL/network features")
     add_compile_definitions(HW_WASM=1)
+    option(HW_WASM_ASYNCIFY "Enable Emscripten asyncify for Qt WASM" OFF)
 else()
     find_package(SDL2 REQUIRED CONFIG)
     find_package(SDL2_mixer REQUIRED)
@@ -340,12 +341,13 @@ if(NOT EMSCRIPTEN)
     )
 endif()
 
-if(EMSCRIPTEN)
+if(EMSCRIPTEN AND HW_WASM_ASYNCIFY)
     target_link_options(hedgewars PRIVATE
         "SHELL:-sASYNCIFY"
-        "SHELL:-sASYNCIFY_STACK_SIZE=65536"
+        "SHELL:-Os"
     )
 endif()
+
 
 if(EMSCRIPTEN)
     target_link_libraries(hedgewars

@@ -3,6 +3,8 @@ param(
   [string]$Emsdk = $(if ($env:EMSDK) { $env:EMSDK } else { "C:\\Users\\andre\\emsdk" }),
   [string]$BuildDir = "build/qt-wasm",
   [string]$Config = "Release",
+  [string]$EngineDir = "build/wasm8/bin",
+  [bool]$Asyncify = $true,
   [switch]$Clean
 )
 
@@ -41,7 +43,7 @@ if (-not $buildPath) {
   $buildPath = Resolve-Path -Path $BuildDir
 }
 
-& $qtCmake -S frontend-qt6 -B $buildPath -G Ninja -DCMAKE_BUILD_TYPE:STRING=$Config -DCMAKE_CONFIGURATION_TYPES=$Config
+& $qtCmake -S frontend-qt6 -B $buildPath -G Ninja -DCMAKE_BUILD_TYPE:STRING=$Config -DCMAKE_CONFIGURATION_TYPES=$Config -DHW_WASM_ASYNCIFY=$($Asyncify.ToString().ToUpper())
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 cmake --build $buildPath --config $Config
@@ -68,8 +70,8 @@ foreach ($target in $copyTargets) {
   }
 }
 
-# Generate qt-preload.json and inject into hedgewars.html (root build dir only)
-if (Test-Path $dataSrc -and (Test-Path $buildPath)) {
+# Generate qt-preload.json and inject into hedgewars.html (build dir + Release)
+if ((Test-Path $dataSrc) -and (Test-Path $buildPath)) {
   $dataDst = Join-Path $buildPath "Data"
   if (Test-Path $dataDst) {
     $entries = @()
@@ -111,17 +113,54 @@ if (Test-Path $dataSrc -and (Test-Path $buildPath)) {
         destination = "/" + $source
       }
     }
-    $preloadPath = Join-Path $buildPath "qt-preload.json"
-    $entries | ConvertTo-Json -Depth 4 | Set-Content -Path $preloadPath -Encoding UTF8
 
-    $htmlPath = Join-Path $buildPath "hedgewars.html"
-    if (Test-Path $htmlPath) {
-      $html = Get-Content -Path $htmlPath -Raw
-      if ($html -notmatch "preload:\\s*\\[") {
-        $html = $html -replace "entryFunction:\\s*window\\.hedgewars_entry,",
-          "entryFunction: window.hedgewars_entry,`r`n                        preload: ['qt-preload.json'],"
-        Set-Content -Path $htmlPath -Value $html -Encoding UTF8
+    foreach ($target in $copyTargets) {
+      if (-not (Test-Path $target)) { continue }
+      $preloadPath = Join-Path $target "qt-preload.json"
+      $entries | ConvertTo-Json -Depth 4 | Set-Content -Path $preloadPath -Encoding UTF8
+
+      $htmlPath = Join-Path $target "hedgewars.html"
+      if (Test-Path $htmlPath) {
+        $html = Get-Content -Path $htmlPath -Raw
+        if ($html -notlike "*preload:*") {
+          $needle = "entryFunction: window.hedgewars_entry,"
+          $insert = "entryFunction: window.hedgewars_entry,`r`n                        preload: ['qt-preload.json'],"
+          if ($html.Contains($needle)) {
+            $html = $html.Replace($needle, $insert)
+          } else {
+            $html += "`r`n<!-- preload injection failed: entryFunction not found -->`r`n"
+          }
+          Set-Content -Path $htmlPath -Value $html -Encoding UTF8
+        }
       }
     }
+  }
+}
+
+# Simplify loader UI (remove Qt logo, keep basic status text)
+$htmlPath = Join-Path $buildPath "hedgewars.html"
+if (Test-Path $htmlPath) {
+  $html = Get-Content -Path $htmlPath -Raw
+  $pattern = '(?s)<figure[^>]*id="qtspinner"[^>]*>.*?</figure>'
+  $replacement = '<div id="qtspinner" style="display:block; position:absolute; top:0; left:0; right:0; padding:16px; color:#fff; font-family:Arial, sans-serif; background:#111;"><strong>Hedgewars</strong> <span id="qtstatus">Loading...</span><noscript>JavaScript is disabled. Please enable JavaScript to use this application.</noscript></div>'
+  $html = [System.Text.RegularExpressions.Regex]::Replace($html, $pattern, $replacement)
+  Set-Content -Path $htmlPath -Value $html -Encoding UTF8
+}
+
+# Stage engine web artifacts into the Qt WASM output (so hwengine.html resolves).
+$engineDirFull = Join-Path $PSScriptRoot $EngineDir
+if (Test-Path $engineDirFull) {
+  $engineFiles = @("hwengine.html","hwengine.js","hwengine.wasm","hwengine.data")
+  foreach ($f in $engineFiles) {
+    $src = Join-Path $engineDirFull $f
+    if (Test-Path $src) {
+      Copy-Item $src -Destination $buildPath -Force
+    }
+  }
+
+  # Ensure we use our custom shell that reads hw-wasm-webcfg64
+  $customShell = Join-Path $PSScriptRoot "project_files\\web\\shell.html"
+  if (Test-Path $customShell) {
+    Copy-Item $customShell -Destination (Join-Path $buildPath "hwengine.html") -Force
   }
 }

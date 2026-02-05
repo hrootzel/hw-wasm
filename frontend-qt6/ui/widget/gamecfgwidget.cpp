@@ -422,8 +422,12 @@ QStringList GameCFGWidget::buildWebCfgLines() const {
     lines << QStringLiteral("map %1").arg(currentMap);
   }
 
-  lines << QStringLiteral("theme %1").arg(pMapContainer->getCurrentTheme());
-  lines << QStringLiteral("seed %1").arg(pMapContainer->getCurrentSeed());
+  QString theme = pMapContainer->getCurrentTheme();
+  if (theme.isEmpty()) theme = QStringLiteral("Nature");
+  QString seed = pMapContainer->getCurrentSeed();
+  if (seed.isEmpty()) seed = QStringLiteral("wasm");
+  lines << QStringLiteral("theme %1").arg(theme);
+  lines << QStringLiteral("seed %1").arg(seed);
   lines << QStringLiteral("gmflags %1").arg(getGameFlags());
   lines << QStringLiteral("damagepct %1").arg(schemeData(26).toInt());
   lines << QStringLiteral("turntime %1").arg(schemeData(27).toInt() * 1000);

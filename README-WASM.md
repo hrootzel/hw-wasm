@@ -21,6 +21,11 @@ $env:EMSDK="C:\\Users\\andre\\emsdk"
 & "$env:EMSDK\\emsdk_env.ps1"
 ```
 
+Emscripten Version Notes
+- Qt WASM (Qt 6.10.2 wasm_singlethread) expects Emscripten **4.0.7**.
+- The engine build can use the current/latest emsdk.
+- If you switched emsdk to 4.x for Qt, switch back to your latest toolchain after Qt builds.
+
 Notes:
 - Ninja was installed via winget and lives in:
   - `C:\Users\<you>\AppData\Local\Microsoft\WinGet\Links\ninja.exe`
@@ -121,6 +126,8 @@ Qt WASM Runtime Fixes (Current)
 - We generate `qt-preload.json` for a **curated** asset subset (fonts, locale, misc keys, limited frontend graphics) to avoid thousands of concurrent fetches that cause `ERR_INSUFFICIENT_RESOURCES`.
 - The full `share/hedgewars/Data` tree is copied into `build/qt-wasm/Data`, but only the allowlisted files are preloaded.
 - Serve from `build/qt-wasm` (not `build/qt-wasm/Release`) to ensure `hedgewars.js/.wasm` and `qtloader.js` are present.
+- The Qt WASM build script now defaults to asyncify. Use `-Asyncify:$false` to disable.
+- The Qt WASM build script stages engine artifacts (`hwengine.html/js/wasm/data`) into `build/qt-wasm` and overwrites `hwengine.html` with `project_files/web/shell.html` so `hw-wasm-webcfg64` is honored.
 
 Qt Frontend (WebAssembly) Option (Experimental)
 
