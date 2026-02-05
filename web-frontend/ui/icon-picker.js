@@ -3,12 +3,13 @@ import { Node } from './scene.js';
 import { assets } from '../assets.js';
 
 export class IconPicker extends Node {
-  constructor(items, getPath, onSelect, iconSize = 32) {
+  constructor(items, getPath, onSelect, iconSize = 32, frameSize = null) {
     super();
     this.items = items; // Array of item names
     this.getPath = getPath; // Function to get asset path
     this.onSelect = onSelect; // Callback when item selected
     this.iconSize = iconSize;
+    this.frameSize = frameSize; // Fixed frame size for sprite sheets (e.g., 32 for hats)
     this.width = 300;
     this.height = 400;
     this.rowHeight = iconSize + 8;
@@ -16,6 +17,7 @@ export class IconPicker extends Node {
     this.selectedIndex = 0;
     this.interactive = true;
     this.images = new Map();
+    this.draggingScrollbar = false;
     
     // Preload visible icons
     this._loadVisibleIcons();
@@ -51,10 +53,12 @@ export class IconPicker extends Node {
     const selectedItem = this.items[this.selectedIndex];
     const previewImg = this.images.get(selectedItem);
     if (previewImg) {
-      const scale = Math.min(64 / previewImg.width, 64 / previewImg.height);
-      const w = previewImg.width * scale;
-      const h = previewImg.height * scale;
-      ctx.drawImage(previewImg, this.x + 20, this.y + 12, w, h);
+      // Show first square frame
+      const frameSize = this.frameSize || Math.min(previewImg.width, previewImg.height);
+      const scale = Math.min(64 / frameSize, 64 / frameSize);
+      const w = frameSize * scale;
+      const h = frameSize * scale;
+      ctx.drawImage(previewImg, 0, 0, frameSize, frameSize, this.x + 20, this.y + 12, w, h);
     }
     
     ctx.fillStyle = '#FFDD44';
@@ -89,10 +93,12 @@ export class IconPicker extends Node {
       // Icon
       const img = this.images.get(item);
       if (img) {
-        const scale = Math.min(this.iconSize / img.width, this.iconSize / img.height);
-        const w = img.width * scale;
-        const h = img.height * scale;
-        ctx.drawImage(img, this.x + 8, itemY + 4, w, h);
+        // Show first square frame
+        const frameSize = this.frameSize || Math.min(img.width, img.height);
+        const scale = Math.min(this.iconSize / frameSize, this.iconSize / frameSize);
+        const w = frameSize * scale;
+        const h = frameSize * scale;
+        ctx.drawImage(img, 0, 0, frameSize, frameSize, this.x + 8, itemY + 4, w, h);
       }
 
       // Name
@@ -122,12 +128,44 @@ export class IconPicker extends Node {
   onMouseDown(e) {
     const local = this.globalToLocal(e.x, e.y);
     const listY = 88; // Preview height + padding
+    
+    // Check if clicking scrollbar
+    if (local.x >= this.width - 10) {
+      const listHeight = this.height - 88;
+      const totalHeight = this.items.length * this.rowHeight;
+      if (totalHeight > listHeight) {
+        this.draggingScrollbar = true;
+        const maxScroll = totalHeight - listHeight;
+        const clickRatio = (local.y - listY) / listHeight;
+        this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
+        this._loadVisibleIcons();
+      }
+      return;
+    }
+    
     if (local.y < listY) return; // Clicked in preview area
     
     const idx = Math.floor((local.y - listY + this.scrollOffset) / this.rowHeight);
     if (idx >= 0 && idx < this.items.length) {
       this.selectedIndex = idx;
     }
+  }
+
+  onMouseMove(e) {
+    if (!this.draggingScrollbar) return;
+    
+    const local = this.globalToLocal(e.x, e.y);
+    const listY = 88;
+    const listHeight = this.height - 88;
+    const totalHeight = this.items.length * this.rowHeight;
+    const maxScroll = totalHeight - listHeight;
+    const clickRatio = (local.y - listY) / listHeight;
+    this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
+    this._loadVisibleIcons();
+  }
+
+  onMouseUp(e) {
+    this.draggingScrollbar = false;
   }
 
   onMouseWheel(e) {

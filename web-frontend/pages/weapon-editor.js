@@ -101,6 +101,7 @@ export class WeaponEditorPage extends BasePage {
     this.dirty = false;
     this.scrollY = 0;
     this.weaponRows = [];
+    this.draggingScrollbar = false;
     this._buildUI();
     if (this.weaponSets.length > 0) this._selectSet(0);
   }
@@ -152,17 +153,38 @@ export class WeaponEditorPage extends BasePage {
     };
     this.weaponContainer.onMouseDown = (e) => {
       const local = this.weaponContainer.globalToLocal(e.x, e.y);
-      console.log('[Container] mousedown at', local);
+      
+      // Check if clicking scrollbar
+      if (local.x >= this.weaponContainer.width - 10) {
+        const totalHeight = this.weaponRows.length * 36;
+        if (totalHeight > this.weaponContainer.height) {
+          this.draggingScrollbar = true;
+          const maxScroll = totalHeight - this.weaponContainer.height;
+          const clickRatio = local.y / this.weaponContainer.height;
+          this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
+        }
+        return;
+      }
+      
       const adjustedY = local.y + this.scrollOffset;
       const rowIdx = Math.floor(adjustedY / 36);
-      console.log('[Container] row', rowIdx);
       if (rowIdx >= 0 && rowIdx < this.weaponRows.length) {
         const row = this.weaponRows[rowIdx];
         row.onMouseDown({ x: local.x, y: adjustedY - rowIdx * 36 });
       }
     };
     this.weaponContainer.onMouseMove = (e) => {
-      // If dragging, route to the dragging row
+      // If dragging scrollbar
+      if (this.draggingScrollbar) {
+        const local = this.weaponContainer.globalToLocal(e.x, e.y);
+        const totalHeight = this.weaponRows.length * 36;
+        const maxScroll = totalHeight - this.weaponContainer.height;
+        const clickRatio = local.y / this.weaponContainer.height;
+        this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
+        return;
+      }
+      
+      // If dragging slider, route to the dragging row
       for (const row of this.weaponRows) {
         if (row.dragging) {
           const local = this.weaponContainer.globalToLocal(e.x, e.y);
@@ -172,6 +194,7 @@ export class WeaponEditorPage extends BasePage {
       }
     };
     this.weaponContainer.onMouseUp = (e) => {
+      this.draggingScrollbar = false;
       for (const row of this.weaponRows) {
         if (row.dragging) row.onMouseUp(e);
       }

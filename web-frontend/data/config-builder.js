@@ -101,7 +101,7 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams }) 
   for (let i = 0; i < teams.length; i++) {
     const team = teams[i];
     lines.push('ammstore');
-    lines.push('addteam x ' + i + ' ' + team.name);
+    lines.push('addteam x ' + (team.color ?? i) + ' ' + team.name);
     lines.push('grave ' + (team.grave || 'Grave'));
     lines.push('fort ' + (team.fort || 'Castle'));
     lines.push('flag ' + (team.flag || 'hedgewars'));

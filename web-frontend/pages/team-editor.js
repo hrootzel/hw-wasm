@@ -12,6 +12,17 @@ import { Node } from '../ui/scene.js';
 import { IconPicker } from '../ui/icon-picker.js';
 
 const DIFFICULTIES = ['Human', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+const TEAM_COLORS = [
+  { name: 'Red', value: 0xffd12b42 },
+  { name: 'Blue', value: 0xff4980c1 },
+  { name: 'Green', value: 0xff6ab530 },
+  { name: 'Purple', value: 0xffbc64c4 },
+  { name: 'Orange', value: 0xffe76d14 },
+  { name: 'Cyan', value: 0xff3fb6e6 },
+  { name: 'Yellow', value: 0xffe3e90c },
+  { name: 'Mint', value: 0xff61d4ac },
+  { name: 'Pink', value: 0xfff1c3e1 }
+];
 const ALL_HATS = ['NoHat', '4gsuif', 'AkuAku', 'Bandit', 'Coonskin3', 'Cowboy', 'Dan', 'Dauber', 'DayAndNight', 'Disguise', 'Dragon', 'Einstein', 'Elvis', 'Eva_00b', 'Eva_00y', 'Evil', 'Gasmask', 'Glasses', 'HogInTheHat', 'IndianChief', 'InfernalHorns', 'Jason', 'Joker', 'Laminaria', 'MegaHogX', 'Meteorhelmet', 'Moustache', 'Moustache_glasses', 'Mummy', 'NinjaFull', 'NinjaStraight', 'NinjaTriangle', 'OldMan', 'Pantsu', 'Plunger', 'RSR', 'Rain', 'Rambo', 'RamboClean', 'RobinHood', 'Samurai', 'Santa', 'ShaggyYeti', 'ShortHair_Black', 'ShortHair_Brown', 'ShortHair_Grey', 'ShortHair_Red', 'ShortHair_Yellow', 'Skull', 'Sleepwalker', 'Sniper', 'SparkleSuperFun', 'StrawHat', 'StrawHatEyes', 'StrawHatFacial', 'SunWukong', 'Sunglasses', 'TeamHeadband', 'TeamSoldier', 'TeamTophat', 'TeamWheatley', 'Terminator_Glasses', 'Viking', 'WhySoSerious', 'WizardHat', 'Zombi', 'android', 'angel', 'anzac', 'barrelhider', 'bb_bob', 'bb_bub', 'bb_cororon', 'bb_kululun', 'beefeater', 'beefeaterhat', 'bishop', 'bobby', 'bobby2v', 'bubble', 'bushhider', 'cap_blue', 'cap_green', 'cap_junior', 'cap_red', 'cap_team', 'cap_thinking', 'cap_yellow', 'car', 'chef', 'chuckl', 'clown', 'clown-copper', 'clown-crossed', 'constructor', 'cratehider', 'crown', 'cyborg1', 'cyborg2', 'cyclops'];
 const ALL_FLAGS = ['hedgewars', 'cm_balls', 'cm_binary', 'cm_birdy', 'cm_earth', 'cm_hw', 'afghanistan', 'albania', 'algeria', 'andorra', 'angola', 'argentina', 'armenia', 'australia', 'austria', 'azerbaijan', 'bahamas', 'bahrain', 'bangladesh', 'barbados', 'belarus', 'belgium', 'belize', 'benin', 'bhutan', 'bolivia', 'bosnia_and_herzegovina', 'botswana', 'brazil', 'brunei', 'bulgaria', 'burkina_faso', 'burundi', 'cambodia', 'cameroon', 'canada', 'cape_verde', 'central_african_republic', 'chad', 'chile', 'china', 'colombia', 'comoros', 'congo', 'costa_rica', 'croatia', 'cuba', 'cyprus', 'czech_republic', 'denmark', 'djibouti', 'dominica', 'dominican_republic', 'ecuador', 'egypt', 'el_salvador', 'equatorial_guinea', 'eritrea', 'estonia', 'ethiopia', 'fiji', 'finland', 'france', 'gabon', 'gambia', 'georgia', 'germany', 'ghana', 'greece', 'grenada', 'guatemala', 'guinea', 'guinea_bissau', 'guyana', 'haiti', 'honduras', 'hungary', 'iceland', 'india', 'indonesia', 'iran', 'iraq', 'ireland', 'israel', 'italy', 'jamaica', 'japan', 'jordan', 'kazakhstan', 'kenya', 'kiribati', 'kuwait', 'kyrgyzstan', 'laos', 'latvia', 'lebanon', 'lesotho', 'liberia', 'libya', 'liechtenstein', 'lithuania', 'luxembourg', 'macedonia', 'madagascar', 'malawi', 'malaysia', 'maldives', 'mali', 'malta', 'mauritania', 'mauritius', 'mexico', 'moldova', 'monaco', 'mongolia', 'montenegro', 'morocco', 'mozambique', 'myanmar', 'namibia', 'nepal', 'netherlands', 'new_zealand', 'nicaragua', 'niger', 'nigeria', 'norway', 'oman', 'pakistan', 'palau', 'palestine', 'panama', 'papua_new_guinea', 'paraguay', 'peru', 'philippines', 'poland', 'portugal', 'qatar', 'romania', 'russia', 'rwanda', 'samoa', 'san_marino', 'saudi_arabia', 'senegal', 'serbia', 'seychelles', 'sierra_leone', 'singapore', 'slovakia', 'slovenia', 'somalia', 'south_africa', 'south_korea', 'south_sudan', 'spain', 'sri_lanka', 'sudan', 'suriname', 'swaziland', 'sweden', 'switzerland', 'syria', 'taiwan', 'tajikistan', 'tanzania', 'thailand', 'togo', 'tonga', 'trinidad_and_tobago', 'tunisia', 'turkey', 'turkmenistan', 'tuvalu', 'uganda', 'ukraine', 'united_kingdom', 'united_states', 'uruguay', 'uzbekistan', 'vanuatu', 'vatican_city', 'venezuela', 'vietnam', 'yemen', 'zambia', 'zimbabwe'];
 const ALL_GRAVES = ['Grave', 'Badger', 'Bone', 'Cherry', 'Clover', 'Duck2', 'Earth', 'Egg', 'Flower', 'Ghost', 'Mushroom', 'Old_Apple', 'Plinko', 'Rip', 'Rubberduck', 'Simple', 'Simple_reversed', 'Statue', 'TV', 'Teapot', 'Whisky', 'Yin_and_Yang', 'bp2', 'bubble', 'chest', 'coffin', 'deadhog', 'dragonball', 'eyecross', 'heart', 'money', 'mouton1', 'octopus', 'pi', 'plant2', 'plant3', 'pokeball', 'pyramid', 'ring', 'skull', 'star'];
@@ -100,6 +111,15 @@ export class TeamEditorPage extends BasePage {
     });
     this.diffDropdown.x = ex + 120; this.diffDropdown.y = y; this.diffDropdown.width = 140;
     this.addChild(this.diffDropdown);
+    y += 50;
+
+    // Team Color
+    this._addLabel('Color', ex, y);
+    this.colorDropdown = new Dropdown(TEAM_COLORS.map(c => c.name), 0, (i) => {
+      if (this.selectedTeam) { this.selectedTeam.color = i; this.dirty = true; }
+    });
+    this.colorDropdown.x = ex + 120; this.colorDropdown.y = y; this.colorDropdown.width = 140;
+    this.addChild(this.colorDropdown);
     y += 50;
 
     // Hat
@@ -211,7 +231,7 @@ export class TeamEditorPage extends BasePage {
   _showHatPicker() {
     if (!this.selectedTeam) return;
     
-    const picker = new IconPicker(ALL_HATS, getHatPath, null);
+    const picker = new IconPicker(ALL_HATS, getHatPath, null, 32, 32);
     picker.setSelected(this.selectedTeam.hat || 'NoHat');
     
     const pickerPage = new BasePage('Select Hat');
@@ -323,6 +343,7 @@ export class TeamEditorPage extends BasePage {
       this.nameInput.text = this.selectedTeam.name;
       this.nameInput.cursorPos = this.selectedTeam.name.length;
       this.diffDropdown.selectedIndex = this.selectedTeam.difficulty || 0;
+      this.colorDropdown.selectedIndex = this.selectedTeam.color || 0;
       
       // Hat
       this.hatPreview.setItem(this.selectedTeam.hat || 'NoHat');
