@@ -109,6 +109,9 @@ Run `build.ps1` to configure the wasm build dir, then:
 ninja -C build/wasm8 -j 1
 ```
 
+Debug tip
+- If you hit `memory access out of bounds` in wasm, reconfigure with `build.ps1 -WasmDebug` to enable SAFE_HEAP + stack checks (slow, but gives better diagnostics).
+
 Serve and run
 ```powershell
 .\serve.ps1

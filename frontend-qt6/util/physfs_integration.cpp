@@ -16,11 +16,15 @@
 namespace {
 QString resolvePathForRead(const QString &path) {
   if (path.startsWith(QLatin1String(":/"))) return path;
-  if (path.startsWith(QLatin1String("/"))) {
-    const QString res = QStringLiteral(":") + path;
+  if (path.startsWith(QLatin1Char('/'))) {
+    QString normalized = path;
+    while (normalized.startsWith(QLatin1Char('/'))) {
+      normalized = normalized.mid(1);
+    }
+    const QString res = QStringLiteral(":/") + normalized;
     if (QFile::exists(res)) return res;
 
-    const QString rel = path.mid(1);
+    const QString rel = normalized;
     if (QFile::exists(rel)) return rel;
 
     if (!rel.startsWith(QLatin1String("Data/"))) {

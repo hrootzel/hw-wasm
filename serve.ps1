@@ -1,6 +1,6 @@
 param(
   [int]$Port = 8001,
-  [string]$Dir = $(if (Test-Path "build/qt-wasm/hedgewars.js") { "build/qt-wasm" } elseif (Test-Path "build/qt-wasm/Release/hedgewars.js") { "build/qt-wasm/Release" } elseif (Test-Path "build/qt-wasm/Release") { "build/qt-wasm/Release" } elseif (Test-Path "build/qt-wasm") { "build/qt-wasm" } else { "build/wasm8/bin" })
+  [string]$Dir = $(if (Test-Path "build/wasm8/bin/hwengine.html") { "build/wasm8/bin" } elseif (Test-Path "build/qt-wasm/hedgewars.js") { "build/qt-wasm" } elseif (Test-Path "build/qt-wasm/Release/hedgewars.js") { "build/qt-wasm/Release" } elseif (Test-Path "build/qt-wasm/Release") { "build/qt-wasm/Release" } elseif (Test-Path "build/qt-wasm") { "build/qt-wasm" } else { "build/wasm8/bin" })
 )
 
 $ErrorActionPreference = "Stop"

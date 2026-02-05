@@ -681,6 +681,15 @@ QString HWGame::buildWebCfgText() const {
     lines << gamecfg->buildWebCfgLines();
   }
 
+  bool hasTheme = false;
+  bool hasSeed = false;
+  for (const auto &line : lines) {
+    if (line.startsWith(QStringLiteral("theme "))) hasTheme = true;
+    if (line.startsWith(QStringLiteral("seed "))) hasSeed = true;
+  }
+  if (!hasTheme) lines << QStringLiteral("theme Nature");
+  if (!hasSeed) lines << QStringLiteral("seed wasm");
+
   if (ammostr.size() >= 4 * cAmmoNumber) {
     lines << QStringLiteral("ammloadt %1").arg(ammostr.mid(0, cAmmoNumber));
     lines << QStringLiteral("ammprob %1")
