@@ -114,6 +114,21 @@ export class Page extends Container {
     this.height = 768;
   }
 
+  draw(ctx) {
+    super.draw(ctx);
+    // Draw dropdown overlays on top
+    this._drawOverlays(ctx, this);
+  }
+
+  _drawOverlays(ctx, node) {
+    if (node.drawOverlay && node.visible) {
+      node.drawOverlay(ctx);
+    }
+    for (const child of node.children) {
+      this._drawOverlays(ctx, child);
+    }
+  }
+
   onEnter() {}
   onExit() {}
   onResize(w, h) {}

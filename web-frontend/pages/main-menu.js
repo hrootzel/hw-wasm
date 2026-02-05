@@ -59,7 +59,26 @@ export class MainMenuPage extends Page {
     this.addChild(this.version);
   }
 
-  drawSelf(ctx) {
+  draw(ctx) {
+    if (!this.visible) return;
+    
+    // Draw background first (no transform)
+    this._drawBackground(ctx);
+    
+    // Then draw children with normal scene graph
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.globalAlpha *= this.alpha;
+    for (const child of this.children) {
+      child.draw(ctx);
+    }
+    ctx.restore();
+    
+    // Draw dropdown overlays on top
+    this._drawOverlays(ctx, this);
+  }
+
+  _drawBackground(ctx) {
     // Background gradient
     const grad = ctx.createLinearGradient(0, 0, 0, this.height);
     grad.addColorStop(0, '#1a3a5c');

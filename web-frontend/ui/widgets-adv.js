@@ -262,74 +262,95 @@ export class Dropdown extends Node {
       ctx.lineTo(ax, ay + 5);
     }
     ctx.fill();
+  }
+
+  // Draw dropdown list on top of everything
+  drawOverlay(ctx) {
+    if (!this.open) return;
     
-    // Dropdown list
-    if (this.open) {
-      const itemH = 32;
-      const visibleCount = Math.min(this.options.length, this.maxVisible);
-      const listH = visibleCount * itemH;
-      
-      ctx.fillStyle = 'rgba(40,50,70,0.98)';
-      ctx.strokeStyle = '#88AADD';
-      ctx.fillRect(0, this.height, this.width, listH);
-      ctx.strokeRect(0, this.height, this.width, listH);
-      
-      for (let i = 0; i < visibleCount; i++) {
-        const y = this.height + i * itemH;
-        if (i === this.hoverIndex) {
-          ctx.fillStyle = 'rgba(80,110,160,0.9)';
-          ctx.fillRect(2, y + 2, this.width - 4, itemH - 4);
-        }
-        ctx.fillStyle = i === this.selectedIndex ? '#FFDD44' : theme.colors.text;
-        ctx.fillText(this.options[i], 10, y + itemH / 2);
+    const pos = this.localToGlobal(0, this.height);
+    const itemH = 32;
+    const visibleCount = Math.min(this.options.length, this.maxVisible);
+    const listH = visibleCount * itemH;
+    
+    ctx.fillStyle = 'rgba(40,50,70,0.98)';
+    ctx.strokeStyle = '#88AADD';
+    ctx.lineWidth = 2;
+    ctx.fillRect(pos.x, pos.y, this.width, listH);
+    ctx.strokeRect(pos.x, pos.y, this.width, listH);
+    
+    applyFont(ctx, theme.fonts.body);
+    ctx.textBaseline = 'middle';
+    
+    for (let i = 0; i < visibleCount; i++) {
+      const y = pos.y + i * itemH;
+      if (i === this.hoverIndex) {
+        ctx.fillStyle = 'rgba(80,110,160,0.9)';
+        ctx.fillRect(pos.x + 2, y + 2, this.width - 4, itemH - 4);
       }
+      ctx.fillStyle = i === this.selectedIndex ? '#FFDD44' : theme.colors.text;
+      ctx.fillText(this.options[i], pos.x + 10, y + itemH / 2);
     }
   }
 
   hitTest(gx, gy) {
     if (!this.visible) return false;
+    
+    // Check dropdown list area when open (in global coords since overlay is drawn globally)
+    if (this.open) {
+      const pos = this.localToGlobal(0, this.height);
+      const itemH = 32;
+      const visibleCount = Math.min(this.options.length, this.maxVisible);
+      const listH = visibleCount * itemH;
+      
+      if (gx >= pos.x && gx < pos.x + this.width && gy >= pos.y && gy < pos.y + listH) {
+        return true;
+      }
+    }
+    
+    // Check main button (in local coords)
     const local = this.globalToLocal(gx, gy);
-    const h = this.open ? this.height + Math.min(this.options.length, this.maxVisible) * 32 : this.height;
-    return local.x >= 0 && local.x < this.width && local.y >= 0 && local.y < h;
+    return local.x >= 0 && local.x < this.width && local.y >= 0 && local.y < this.height;
   }
 
   onMouseMove(e) {
     if (this.open) {
-      const local = this.globalToLocal(e.x, e.y);
-      if (local.y > this.height) {
-        this.hoverIndex = Math.floor((local.y - this.height) / 32);
+      const pos = this.localToGlobal(0, this.height);
+      if (e.y >= pos.y) {
+        this.hoverIndex = Math.floor((e.y - pos.y) / 32);
       } else {
         this.hoverIndex = -1;
       }
     }
   }
 
-  onMouseUp(e) {
-    const local = this.globalToLocal(e.x, e.y);
+  onMouseDown(e) {
+    const pos = this.localToGlobal(0, this.height);
     
-    if (this.open && local.y > this.height) {
-      const idx = Math.floor((local.y - this.height) / 32);
+    if (this.open && e.y >= pos.y) {
+      const idx = Math.floor((e.y - pos.y) / 32);
       if (idx >= 0 && idx < this.options.length) {
         this.selectedIndex = idx;
         audio.playClick();
         if (this.onChange) this.onChange(idx, this.options[idx]);
       }
       this.open = false;
-    } else if (local.y <= this.height) {
-      this.open = !this.open;
-      audio.playClick();
     } else {
-      this.open = false;
+      const local = this.globalToLocal(e.x, e.y);
+      if (local.y <= this.height) {
+        this.open = !this.open;
+        audio.playClick();
+      }
     }
   }
 
   onMouseLeave() {
-    // Don't close on leave - let click outside handle it
     this.hoverIndex = -1;
   }
 
   close() {
     this.open = false;
+    this.hoverIndex = -1;
   }
 }
 

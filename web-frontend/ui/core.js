@@ -155,11 +155,28 @@ class Core {
     return null;
   }
 
+  _findOpenDropdown(node, x, y) {
+    // Check if this node is an open dropdown
+    if (node.open && node.hitTest && node.hitTest(x, y)) {
+      return node;
+    }
+    // Check children
+    for (const child of node.children || []) {
+      const found = this._findOpenDropdown(child, x, y);
+      if (found) return found;
+    }
+    return null;
+  }
+
   _onMouseMove(e) {
     const page = this.currentPage;
     if (!page) return;
 
-    const node = this._findInteractiveNode(page, e.x, e.y);
+    // Check open dropdowns first (they render on top)
+    let node = this._findOpenDropdown(page, e.x, e.y);
+    if (!node) {
+      node = this._findInteractiveNode(page, e.x, e.y);
+    }
 
     // Handle enter/leave
     if (node !== this._hoveredNode) {
@@ -175,9 +192,26 @@ class Core {
     const page = this.currentPage;
     if (!page) return;
 
-    const node = this._findInteractiveNode(page, e.x, e.y);
+    // Check open dropdowns first (they render on top)
+    let node = this._findOpenDropdown(page, e.x, e.y);
+    if (!node) {
+      node = this._findInteractiveNode(page, e.x, e.y);
+    }
+    
+    // Close all dropdowns EXCEPT the one being clicked
+    this._closeAllDropdownsExcept(page, node);
+    
     this._activeNode = node;
     if (node) node.onMouseDown(e);
+  }
+
+  _closeAllDropdownsExcept(node, exceptNode) {
+    if (node !== exceptNode && node.close && typeof node.close === 'function') {
+      node.close();
+    }
+    for (const child of node.children || []) {
+      this._closeAllDropdownsExcept(child, exceptNode);
+    }
   }
 
   _onMouseUp(e) {
