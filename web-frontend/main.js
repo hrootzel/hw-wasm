@@ -18,8 +18,9 @@ async function init() {
 
   // Load UI sounds (optional - won't fail if missing)
   try {
-    await audio.loadSound('click', assets.basePath + 'Sounds/UI/sndClick.ogg');
-    await audio.loadSound('hover', assets.basePath + 'Sounds/UI/sndHover.ogg');
+    await audio.loadSound('click', assets.basePath + 'Sounds/roperelease.ogg');
+    await audio.loadSound('hover', assets.basePath + 'Sounds/steps.ogg');
+    await audio.loadSound('main_theme', assets.basePath + 'Music/main_theme.ogg');
   } catch (e) {
     console.warn('UI sounds not loaded:', e);
   }
@@ -30,6 +31,16 @@ async function init() {
   const mainMenu = new MainMenuPage();
   core.pushPage(mainMenu);
   core.start();
+  
+  // Start music on first user interaction (required by browsers)
+  const startMusic = async () => {
+    await audio.resume();
+    audio.playMusic('main_theme', 1.0);
+    document.removeEventListener('click', startMusic);
+    document.removeEventListener('keydown', startMusic);
+  };
+  document.addEventListener('click', startMusic);
+  document.addEventListener('keydown', startMusic);
 }
 
 // Start when DOM is ready

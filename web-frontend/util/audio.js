@@ -16,20 +16,15 @@ class AudioManager {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
       this.masterGain = this.ctx.createGain();
       this.masterGain.connect(this.ctx.destination);
-      
-      // Resume on user interaction if suspended
-      if (this.ctx.state === 'suspended') {
-        const resume = () => {
-          this.ctx.resume();
-          document.removeEventListener('click', resume);
-          document.removeEventListener('keydown', resume);
-        };
-        document.addEventListener('click', resume);
-        document.addEventListener('keydown', resume);
-      }
     } catch (e) {
       console.warn('Web Audio not available:', e);
       this.enabled = false;
+    }
+  }
+
+  async resume() {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      await this.ctx.resume();
     }
   }
 
