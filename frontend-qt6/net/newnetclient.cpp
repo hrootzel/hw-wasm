@@ -19,6 +19,150 @@
 
 #include "newnetclient.h"
 
+#ifdef HW_WASM
+
+QString delimiter{"\n"};
+
+HWNewNet::HWNewNet() { m_private_game = false; }
+
+HWNewNet::~HWNewNet() {}
+
+void HWNewNet::Connect(const QString& hostName, quint16 port, bool useTls,
+                       const QString& nick) {
+  Q_UNUSED(hostName);
+  Q_UNUSED(port);
+  Q_UNUSED(useTls);
+  mynick = nick;
+  netClientState = Connecting;
+  Q_EMIT disconnected(
+      QStringLiteral("Networking is not available in the Web build."));
+  netClientState = Disconnected;
+}
+
+void HWNewNet::ContinueConnection() {}
+
+void HWNewNet::Disconnect() { netClientState = Disconnected; }
+
+void HWNewNet::SendPasswordHash(const QString& hash) { Q_UNUSED(hash); }
+
+void HWNewNet::NewNick(const QString& nick) { mynick = nick; }
+
+bool HWNewNet::isRoomChief() { return false; }
+
+bool HWNewNet::isInRoom() { return false; }
+
+HWNewNet::ClientState HWNewNet::clientState() { return netClientState; }
+
+QString HWNewNet::getNick() { return mynick; }
+
+QString HWNewNet::getRoom() { return myroom; }
+
+QString HWNewNet::getHost() { return myhost; }
+
+RoomsListModel* HWNewNet::roomsListModel() { return nullptr; }
+
+QAbstractItemModel* HWNewNet::lobbyPlayersModel() { return nullptr; }
+
+QAbstractItemModel* HWNewNet::roomPlayersModel() { return nullptr; }
+
+bool HWNewNet::allPlayersReady() { return true; }
+
+void HWNewNet::ToggleReady() {}
+
+void HWNewNet::chatLineToNet(const QString& str) { Q_UNUSED(str); }
+
+void HWNewNet::chatLineToNetWithEcho(const QString& str) { Q_UNUSED(str); }
+
+void HWNewNet::chatLineToLobby(const QString& str) { Q_UNUSED(str); }
+
+void HWNewNet::SendTeamMessage(const QString& str) { Q_UNUSED(str); }
+
+void HWNewNet::SendNet(const QByteArray& buf) { Q_UNUSED(buf); }
+
+void HWNewNet::AddTeam(const HWTeam& team) { Q_UNUSED(team); }
+
+void HWNewNet::RemoveTeam(const HWTeam& team) { Q_UNUSED(team); }
+
+void HWNewNet::onHedgehogsNumChanged(const HWTeam& team) { Q_UNUSED(team); }
+
+void HWNewNet::onTeamColorChanged(const HWTeam& team) { Q_UNUSED(team); }
+
+void HWNewNet::onParamChanged(const QString& param, const QStringList& value) {
+  Q_UNUSED(param);
+  Q_UNUSED(value);
+}
+
+void HWNewNet::setServerMessageNew(const QString& msg) { Q_UNUSED(msg); }
+
+void HWNewNet::setServerMessageOld(const QString& msg) { Q_UNUSED(msg); }
+
+void HWNewNet::setLatestProtocolVar(int proto) { Q_UNUSED(proto); }
+
+void HWNewNet::askServerVars() {}
+
+void HWNewNet::JoinRoom(const QString& room, const QString& password) {
+  Q_UNUSED(room);
+  Q_UNUSED(password);
+}
+
+void HWNewNet::CreateRoom(const QString& room, const QString& password) {
+  Q_UNUSED(room);
+  Q_UNUSED(password);
+}
+
+void HWNewNet::updateRoomName(const QString& name) { Q_UNUSED(name); }
+
+void HWNewNet::askRoomsList() {}
+
+void HWNewNet::gameFinished(bool correctly) { Q_UNUSED(correctly); }
+
+void HWNewNet::banPlayer(const QString& nick) { Q_UNUSED(nick); }
+
+void HWNewNet::kickPlayer(const QString& nick) { Q_UNUSED(nick); }
+
+void HWNewNet::delegateToPlayer(const QString& nick) { Q_UNUSED(nick); }
+
+void HWNewNet::infoPlayer(const QString& nick) { Q_UNUSED(nick); }
+
+void HWNewNet::followPlayer(const QString& nick) { Q_UNUSED(nick); }
+
+void HWNewNet::consoleCommand(const QString& cmd) { Q_UNUSED(cmd); }
+
+void HWNewNet::startGame() {}
+
+void HWNewNet::toggleRestrictJoins() {}
+
+void HWNewNet::toggleRestrictTeamAdds() {}
+
+void HWNewNet::toggleRegisteredOnly() {}
+
+void HWNewNet::partRoom() { netClientState = Disconnected; }
+
+void HWNewNet::clearAccountsCache() {}
+
+void HWNewNet::getBanList() {}
+
+void HWNewNet::removeBan(const QString& b) { Q_UNUSED(b); }
+
+void HWNewNet::banIP(const QString& ip, const QString& reason, int seconds) {
+  Q_UNUSED(ip);
+  Q_UNUSED(reason);
+  Q_UNUSED(seconds);
+}
+
+void HWNewNet::banNick(const QString& nick, const QString& reason,
+                       int seconds) {
+  Q_UNUSED(nick);
+  Q_UNUSED(reason);
+  Q_UNUSED(seconds);
+}
+
+void HWNewNet::roomPasswordEntered(const QString& password) {
+  Q_UNUSED(password);
+}
+
+#else
+
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QInputDialog>
@@ -1119,3 +1263,5 @@ void HWNewNet::maybeSendPassword() {
                  .arg(delimiter, hash)
                  .arg(m_clientSalt));
 }
+
+#endif  // HW_WASM

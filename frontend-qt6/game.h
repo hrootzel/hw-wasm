@@ -128,10 +128,13 @@ class HWGame : public TCPBase {
   void SetGameState(GameState state);
   void SetDemoPresence(bool hasDemo);
   void sendCampaignVar(const QByteArray &varToSend);
-  void writeCampaignVar(const QByteArray &varVal);
-  void sendMissionVar(const QByteArray &varToSend);
-  void writeMissionVar(const QByteArray &varVal);
-  void flushNetBuffer();
+ void writeCampaignVar(const QByteArray &varVal);
+ void sendMissionVar(const QByteArray &varToSend);
+ void writeMissionVar(const QByteArray &varVal);
+ void flushNetBuffer();
+  QString buildWebCfgText() const;
+  QString stripWebCfgPrefix(const QString &line) const;
+  void StartWasmSinglePlayer();
 };
 
 #endif

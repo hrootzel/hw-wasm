@@ -23,7 +23,9 @@
 
 #include "DataManager.h"
 
+#ifndef HW_WASM
 #include <SDL.h>
+#endif
 
 #include <QColor>
 #include <QFileInfo>
@@ -39,7 +41,9 @@
 #include "MapModel.h"
 #include "ThemeModel.h"
 #include "hwconsts.h"
+#ifndef HW_WASM
 #include "physfs.h"
+#endif
 #include "physfs_integration.h"
 #include "sdlkeys.h"
 

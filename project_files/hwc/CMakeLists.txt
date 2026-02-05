@@ -105,7 +105,11 @@ add_custom_target(engine_c DEPENDS ${engine_sources})
 
 
 if(BUILD_ENGINE_JS)
-    add_flag_append(CMAKE_C_FLAGS "--memory-init-file 0 -O0 --js-opts 0 -g4 -s ASSERTIONS=2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"['png']\" -s USE_LIBPNG=1 -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s SDL2_MIXER_FORMATS=\"['ogg']\" -s USE_VORBIS=1 -s USE_OGG=1 -s INITIAL_MEMORY=134217728 -s STACK_SIZE=16777216 -s ALLOW_MEMORY_GROWTH=1 -s GL_UNSAFE_OPTS=0 -s EXPORTED_FUNCTIONS=\"['_main','_hwengine_RunEngine', '_hwengine_MainLoop']\" -s EXPORTED_RUNTIME_METHODS=\"['callMain']\" --shell-file ${CMAKE_SOURCE_DIR}/project_files/web/shell.html --preload-file ${CMAKE_SOURCE_DIR}/share/hedgewars/Data@/Data --post-js ${CMAKE_SOURCE_DIR}/project_files/web/post.js --pre-js ${CMAKE_SOURCE_DIR}/project_files/web/pre.js")
+    option(HW_WASM_DEBUG "Enable extra wasm debug checks" OFF)
+    add_flag_append(CMAKE_C_FLAGS "-O0 -gsource-map -s ASSERTIONS=2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"['png']\" -s USE_LIBPNG=1 -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s SDL2_MIXER_FORMATS=\"['ogg']\" -s USE_VORBIS=1 -s USE_OGG=1 -s INITIAL_MEMORY=134217728 -s STACK_SIZE=16777216 -s ALLOW_MEMORY_GROWTH=1 -s GL_UNSAFE_OPTS=0 -s EXPORTED_FUNCTIONS=\"['_main','_hwengine_RunEngine', '_hwengine_MainLoop']\" -s EXPORTED_RUNTIME_METHODS=\"['callMain']\" --shell-file ${CMAKE_SOURCE_DIR}/project_files/web/shell.html --preload-file ${CMAKE_SOURCE_DIR}/share/hedgewars/Data@/Data --post-js ${CMAKE_SOURCE_DIR}/project_files/web/post.js --pre-js ${CMAKE_SOURCE_DIR}/project_files/web/pre.js")
+    if(HW_WASM_DEBUG)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -gsource-map -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s DEMANGLE_SUPPORT=1")
+    endif()
 endif()
 
 #compile the c files

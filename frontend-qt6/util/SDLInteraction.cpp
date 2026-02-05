@@ -25,6 +25,11 @@
 
 #include <QRegularExpression>
 
+#ifdef __EMSCRIPTEN__
+#include <QDebug>
+#include <QStringList>
+#include <QSize>
+#else
 #include "HWApplication.h"
 #include "SDL.h"
 #include "SDL_mixer.h"
@@ -32,6 +37,43 @@
 #include "hwform.h" /* you know, we could just put a config singleton lookup function in gameuiconfig or something... */
 #include "physfsrwops.h"
 #include "sdlkeys.h"
+#endif
+
+#ifdef __EMSCRIPTEN__
+
+struct SDLInteractionPrivate {
+  bool m_audioInitialized{false};
+};
+
+SDLInteraction& SDLInteraction::instance() {
+  static SDLInteraction instance;
+  return instance;
+}
+
+SDLInteraction::SDLInteraction() : d_ptr(new SDLInteractionPrivate) {}
+
+SDLInteraction::~SDLInteraction() {}
+
+void SDLInteraction::SDLAudioInit() {}
+
+QStringList SDLInteraction::getResolutions() const {
+  return {QStringLiteral("640x480"), QStringLiteral("800x600"),
+          QStringLiteral("1024x768")};
+}
+
+void SDLInteraction::addGameControllerKeys() const {}
+
+void SDLInteraction::playSoundFile(const QString&) {}
+
+void SDLInteraction::setMusicTrack(const QString&) {}
+
+void SDLInteraction::startMusic() {}
+
+void SDLInteraction::stopMusic() {}
+
+QSize SDLInteraction::getCurrentResolution() { return QSize(640, 480); }
+
+#else
 
 struct SDLInteractionPrivate {
   bool m_audioInitialized{false};  ///< true if audio is initialized already
@@ -309,3 +351,5 @@ QSize SDLInteraction::getCurrentResolution() {
 
   return QSize(mode.w, mode.h);
 }
+
+#endif  // __EMSCRIPTEN__

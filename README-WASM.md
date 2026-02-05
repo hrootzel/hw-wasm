@@ -1,111 +1,198 @@
-WASM Build Environment (So Far)
+WASM Build Environment
+======================
 
 Status
-- Emscripten + CMake are installed.
-- We are using the pas2c -> C -> Emscripten pipeline.
-- We can build and run the WebGL2 engine in-browser with assets packed.
-- Local autostart works (no frontend/IPC).
-- Remaining runtime/ABI warnings exist (see "Current Issues").
+------
+- Emscripten + CMake pipeline: pas2c → C → Emscripten → WASM
+- WebGL2 engine runs in-browser with packed assets
+- **Canvas-based web frontend** replaces the old shell.html menu
+- Local autostart works via `--webcfg64` config injection
+- Qt WASM frontend available as experimental alternative
 
-Required Tools (Installed/Verified)
-1) Emscripten SDK (emsdk)
-2) CMake
-3) Ninja
-4) LLVM/Clang (host tools for some checks)
-5) Cabal + GHC (for pas2c)
+Required Tools
+--------------
+1. Emscripten SDK (emsdk)
+2. CMake
+3. Ninja
+4. LLVM/Clang (host tools)
+5. Cabal + GHC (for pas2c Haskell tool)
+6. Rust with `wasm32-unknown-emscripten` target
+7. Python 3 (for dev server)
 
-Environment Setup (PowerShell)
+Environment Setup
+-----------------
+`build.ps1` auto-detects emsdk from `$env:EMSDK`, `C:\Users\andre\emsdk`, or
+the `-EmsdkRoot` parameter. It installs and activates the correct version
+automatically. Manual setup is only needed for `emmake` after configure:
+
 ```powershell
-# adjust to your install
-$env:EMSDK="C:\\Users\\andre\\emsdk"
-& "$env:EMSDK\\emsdk_env.ps1"
+& "$env:EMSDK\emsdk_env.ps1"
 ```
 
-Notes:
-- Ninja was installed via winget and lives in:
-  - `C:\Users\<you>\AppData\Local\Microsoft\WinGet\Links\ninja.exe`
-- LLVM is installed in:
-  - `C:\Program Files\LLVM\bin`
-- GHC extracted to:
-  - `C:\Users\andre\ghc` (bin at `C:\Users\andre\ghc\bin`)
+Quick Start
+-----------
 
-Current CMake Configure (baseline)
+### 1. Build the engine
+
 ```powershell
-emcmake cmake -S . -B build/wasm -G Ninja `
-  -DCMAKE_BUILD_TYPE=Release `
-  -DBUILD_ENGINE_C=1 `
-  -DBUILD_ENGINE_JS=TRUE `
-  -DNOSERVER=ON `
-  -DLUA_SYSTEM=OFF `
-  -DNOVIDEOREC=1
+# Configure and stage data (first time or after changes)
+.\build.ps1 -StageData
+
+# Build
+emmake cmake --build build/wasm8 -j
 ```
 
-PhysFS (temporary wasm build)
-We don't have a native PhysFS package for wasm. A workaround is to build a
-minimal static library from `misc/libphysfs` using Emscripten, then point
-CMake at it via `PHYSFS_LIBRARY` and `PHYSFS_INCLUDE_DIR`.
+`build.ps1` automatically finds emsdk, installs/activates the correct version,
+and sources the environment. The `-StageData` flag copies both
+`share/hedgewars/Data` and `web-frontend/` into `build/wasm8/bin/`.
 
-This is automated in `build.ps1`. The minimal build excludes Windows and LZMA
-code paths and defines `PHYSFS_NO_CDROM_SUPPORT` for wasm.
+### 2. Serve and play
 
-SDL2 (Emscripten)
-The project's `misc/libphyslayer` expects an SDL2 CMake config. For wasm we
-generate a tiny `SDL2Config.cmake` in the build directory that points to
-Emscripten's internal SDL2.
-
-Why GHC?
-`tools/pas2c` is written in Haskell and requires `ghc` to build. Cabal alone
-is not enough. Options:
-- Install GHC (via ghcup or Stack) and re-run configure.
-- Or temporarily disable pas2c if you only want non-C engine builds.
-
-Rust mapgen (hwengine_future)
-- We now link the Rust land generator into the WASM build as a static library.
-- Rust target `wasm32-unknown-emscripten` must be installed:
-  - `rustup target add wasm32-unknown-emscripten`
-- Corrosion is used to build the Rust crate and copy `libhwengine_future.a`
-  into the build output.
-
-WebGL compatibility (GL2)
-- `BUILD_ENGINE_JS` forces `GL2=ON`.
-- We disabled the fixed-function validation block in `uMatrix.pas` for WEBGL
-  because WebGL2 doesn't support `glPushMatrix`/`glLoadMatrixf`/`glMultMatrixf`.
-
-Web build runtime notes
-- The engine now runs under `emscripten_set_main_loop` and keeps resources alive.
-  This avoids early cleanup that caused WebGL texture deletion errors.
-- The shell includes a boot overlay canvas so you always see "Booting..." before
-  the wasm runtime starts.
-- We serve from `build/wasm8/bin` and use port 8001 by default (port 8000 was
-  returning empty replies on this machine).
-
-Stubs for browser builds
-- SDL_net is stubbed for local play (no server/IPC).
-- SDL_mixer is stubbed (audio optional). Rendering and textures load via SDL2_image.
-
-Current Issues (Warnings to Fix)
-- ABI mismatch between Pascal and Rust AI functions:
-  - `ai_add_team_hedgehog` expects f64 in C but f32 in Rust.
-  - `ai_have_plan` signature mismatch.
-- SDL2 signatures:
-  - `SDL_DestroyWindow` return type mismatch.
-  - `SDL_SetWindowFullscreen` return type mismatch.
-
-Local autostart (WEBGL)
-- We inject a default local match configuration in `hedgewars/hwengine.pas` when
-  running in WEBGL. This includes default ammo scheme strings from
-  `frontend-qt6/weapons.h`. If you see "Incomplete or missing ammo scheme set",
-  the strings are the wrong length.
-
-Next Step
-Run `build.ps1` to configure the wasm build dir, then:
-```powershell
-& "C:\\Users\\andre\\emsdk\\emsdk_env.ps1" | Out-Null
-ninja -C build/wasm8 -j 1
-```
-
-Serve and run
 ```powershell
 .\serve.ps1
 ```
-Open `http://localhost:8001/hwengine.html`
+
+Open **http://localhost:8080/web-frontend/** in your browser.
+
+The serve script auto-detects the best directory:
+- `build/wasm8/bin` if engine is built (full experience)
+- Project root as fallback (dev mode, frontend only)
+
+### 3. Dev mode (frontend only, no engine)
+
+If you just want to iterate on the frontend without building the engine:
+
+```powershell
+.\serve.ps1 -Dir .
+```
+
+Open **http://localhost:8080/web-frontend/**. The frontend works fully but
+"Start Game" will fail since there's no engine.
+
+Web Frontend
+------------
+
+A canvas-based JavaScript frontend in `web-frontend/` that replaces the old
+HTML form in `shell.html`. It provides a retained-mode scene graph UI styled
+to match the original Hedgewars look and feel.
+
+### Features
+- Main menu with Hedgewars logo, clouds background, theme music
+- Local Game setup: map type/theme/seed, team selection, scheme & weapon set
+- Team Editor: name, difficulty, hat/flag/grave selection with previews, 8 hog names
+- Scheme Editor: all game settings (sliders/dropdowns) and modifier flags
+- Weapon Editor: weapon icons from sprite sheet, ammo count and delay per weapon
+- Settings: music/SFX volume, fullscreen toggle
+- Controls: key binding configuration with conflict detection
+- All data persisted to localStorage
+
+### Architecture
+```
+web-frontend/
+├── index.html              # Entry point
+├── main.js                 # Bootstrap, asset loading, audio init
+├── assets.js               # Asset loader (auto-detects build vs dev paths)
+├── ui/                     # Scene graph, widgets, theme
+├── pages/                  # All UI pages
+├── data/                   # Storage, defaults, schemes, weapons, config builder
+└── util/                   # Input, audio, math helpers
+```
+
+### Game Launch Flow
+1. User configures game in Local Game page
+2. Frontend builds engine config text (matching IPC protocol)
+3. Config is base64-encoded and stored in `localStorage['hw-wasm-webcfg64']`
+4. Browser navigates to `/hwengine.html`
+5. Engine shell reads config, passes `--webcfg64` chunks to `Module.callMain()`
+6. Engine starts the match
+
+### Config Builder (`data/config-builder.js`)
+Generates the same line-based config the Qt frontend sends via IPC:
+- Map: `mapgen`, `theme`, `seed`
+- Scheme: `turntime`, `sd_turns`, `damagepct`, `gmflags`, etc.
+- Ammo: `ammloadt`, `ammprob`, `ammdelay`, `ammreinf` (one char per weapon in TAmmoType order)
+- Teams: `addteam`, `grave`, `fort`, `flag`, `voicepack`, `addhh`, `hat`
+
+Build Scripts
+-------------
+
+### `build.ps1` — Engine WASM build
+Configures and optionally stages data for the Emscripten engine build.
+
+Key flags:
+- `-StageData` — Copy `Data/` and `web-frontend/` into `build/wasm8/bin/`
+- `-WasmDebug` — Enable SAFE_HEAP + stack overflow checks
+- `-Clean` — Remove build dir before configuring
+- `-SkipRust` — Skip Rust mapgen build
+- `-SkipPas2c` — Skip pas2c rebuild
+
+### `build-qt-wasm.ps1` — Qt WASM frontend (experimental)
+Builds the Qt6 Widgets frontend for WebAssembly. Requires Qt for WASM.
+
+### `serve.ps1` — Development server
+Serves the build output (or project root in dev mode).
+
+```powershell
+.\serve.ps1                    # Auto-detect build dir, port 8080
+.\serve.ps1 -Port 9000        # Custom port
+.\serve.ps1 -Dir .            # Force dev mode (project root)
+.\serve.ps1 -Dir build/wasm8/bin  # Explicit directory
+```
+
+Engine Shell (`project_files/web/shell.html`)
+---------------------------------------------
+Minimal HTML template used by Emscripten's `--shell-file`. It:
+- Reads config from `localStorage['hw-wasm-webcfg64']`
+- Auto-launches the game once WASM data is loaded
+- Handles SDL audio context unlock on first interaction
+- Contains the `{{{ SCRIPT }}}` placeholder for Emscripten
+
+Technical Notes
+---------------
+
+### Emscripten Version
+- Engine build: current/latest emsdk (5.0.0 default in build.ps1)
+- Qt WASM (Qt 6.10.2): requires Emscripten **4.0.7**
+
+### PhysFS
+Built as a minimal static library from `misc/libphysfs` using Emscripten.
+Automated in `build.ps1`. Excludes Windows/LZMA code paths.
+
+### Rust mapgen
+- `wasm32-unknown-emscripten` target required: `rustup target add wasm32-unknown-emscripten`
+- Corrosion builds the Rust crate and produces `libhwengine_future.a`
+
+### WebGL2 Compatibility
+- `BUILD_ENGINE_JS` forces `GL2=ON`
+- Fixed-function GL calls (`glPushMatrix` etc.) disabled for WEBGL in `uMatrix.pas`
+
+### SDL Stubs
+- SDL_net stubbed for local play (no server/IPC)
+- SDL_mixer available via Emscripten ports
+
+### Asset Paths
+The web frontend auto-detects its asset base path:
+- Build layout: `web-frontend/` and `Data/` are siblings in `build/wasm8/bin/`
+- Dev layout: `web-frontend/` uses `../share/hedgewars/Data/`
+
+Current Issues
+--------------
+- ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
+- SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
+
+Qt WASM Frontend (Experimental)
+-------------------------------
+An alternative path using the Qt6 Widgets frontend compiled to WASM.
+
+- Built with asyncify for blocking `QDialog::exec()` calls
+- Curated asset preloading via `qt-preload.json` to avoid `ERR_INSUFFICIENT_RESOURCES`
+- Stages engine artifacts into `build/qt-wasm`
+- Requires larger refactors (network stubs, SDL replacement, engine launch bridge)
+
+```powershell
+$env:QT_WASM = "C:\Qt\6.10.2\wasm_singlethread"
+$env:EMSDK = "C:\Users\andre\emsdk"
+.\build-qt-wasm.ps1
+```
+
+The canvas-based web frontend is the recommended path for browser play.

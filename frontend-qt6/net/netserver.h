@@ -21,7 +21,9 @@
 #define _NETSERVER_INCLUDED
 
 #include <QObject>
+#ifndef HW_WASM
 #include <QProcess>
+#endif
 
 class HWNetServer : public QObject {
   Q_OBJECT
@@ -35,7 +37,9 @@ class HWNetServer : public QObject {
 
  private:
   quint16 ds_port;
+#ifndef HW_WASM
   QProcess process;
+#endif
 };
 
 #endif  // _NETSERVER_INCLUDED

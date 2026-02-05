@@ -43,6 +43,7 @@ class GameCFGWidget : public QGroupBox {
   quint32 getGameFlags() const;
   quint32 getInitHealth() const;
   QByteArray getFullConfig() const;
+  QStringList buildWebCfgLines() const;
   QComboBox* Scripts;
   QComboBox* GameSchemes;
   QComboBox* WeaponsName;

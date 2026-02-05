@@ -14,8 +14,15 @@ project(hedgewars LANGUAGES CXX)
 #pkg_check_modules(SDL2_MIXER REQUIRED IMPORTED_TARGET SDL2_mixer)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network LinguistTools)
-find_package(SDL2 REQUIRED CONFIG)
-find_package(SDL2_mixer REQUIRED)
+
+if(EMSCRIPTEN)
+    message(STATUS "Building Qt frontend for WebAssembly: stubbing SDL/network features")
+    add_compile_definitions(HW_WASM=1)
+    option(HW_WASM_ASYNCIFY "Enable Emscripten asyncify for Qt WASM" OFF)
+else()
+    find_package(SDL2 REQUIRED CONFIG)
+    find_package(SDL2_mixer REQUIRED)
+endif()
 
 # --- Workaround Qt + CMake OpenGL::GL issue -------------------------------
 # Qt's WrapOpenGL target exists, but OpenGL::GL imported target may not.
@@ -325,20 +332,48 @@ target_include_directories(hedgewars PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../misc/libphyslayer
     ${CMAKE_CURRENT_BINARY_DIR}
     ${PHYSFS_INCLUDE_DIR}
-    ${SDL2_INCLUDE_DIRS}
-    ${SDL2_MIXER_INCLUDE_DIRS}
 )
 
-target_link_libraries(hedgewars
-    PRIVATE
-        Qt::Core
-        Qt::Widgets
-        Qt::Network
-        SDL2::SDL2
-        ${SDL2_MIXER_LIBRARIES}
-        physfs
-        physlayer
-)
+if(NOT EMSCRIPTEN)
+    target_include_directories(hedgewars PRIVATE
+        ${SDL2_INCLUDE_DIRS}
+        ${SDL2_MIXER_INCLUDE_DIRS}
+    )
+endif()
+
+if(EMSCRIPTEN AND HW_WASM_ASYNCIFY)
+    target_link_options(hedgewars PRIVATE
+        "SHELL:-sASYNCIFY"
+        "SHELL:-Os"
+    )
+endif()
+
+
+if(EMSCRIPTEN)
+    target_link_libraries(hedgewars
+        PRIVATE
+            Qt::Core
+            Qt::Widgets
+            Qt::Network
+    )
+else()
+    target_link_libraries(hedgewars
+        PRIVATE
+            Qt::Core
+            Qt::Widgets
+            Qt::Network
+            physfs
+            physlayer
+    )
+endif()
+
+if(NOT EMSCRIPTEN)
+    target_link_libraries(hedgewars
+        PRIVATE
+            SDL2::SDL2
+            ${SDL2_MIXER_LIBRARIES}
+    )
+endif()
 
 include(GNUInstallDirs)
 

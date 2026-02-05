@@ -3,6 +3,7 @@ param(
   [string]$EmsdkRoot = "",
   [string]$LLVMBin = "C:\\Program Files\\LLVM\\bin",
   [string]$GhcBin = "C:\\Users\\andre\\ghc\\bin",
+  [string]$EmsdkVersion = "5.0.0",
   [switch]$NoServer = $true,
   [switch]$NoVideoRec = $true,
   [switch]$LuaSystemOff = $true,
@@ -10,6 +11,8 @@ param(
   [switch]$BuildEngineJS = $true,
   [switch]$SkipRust,
   [switch]$SkipPas2c,
+  [switch]$WasmDebug,
+  [switch]$StageData,
   [switch]$Clean
 )
 
@@ -39,6 +42,10 @@ function Resolve-Ninja {
 }
 
 $emsdk = Resolve-EmsdkRoot
+Push-Location $emsdk
+& ".\\emsdk" install $EmsdkVersion | Out-Null
+& ".\\emsdk" activate $EmsdkVersion | Out-Null
+Pop-Location
 & "$emsdk\\emsdk_env.ps1" | Out-Null
 
 $ninja = Resolve-Ninja
@@ -161,6 +168,7 @@ $cmakeArgs = @(
   "-S", ".",
   "-B", $buildDirFull,
   "-G", "Ninja",
+  "-DCMAKE_MAKE_PROGRAM=$ninja",
   "-DCMAKE_BUILD_TYPE=Release",
   "-DBUILD_ENGINE_C=1",
   "-DBUILD_ENGINE_JS=$($BuildEngineJS.IsPresent.ToString().ToUpper())",
@@ -173,7 +181,8 @@ $cmakeArgs = @(
   "-DPHYSFS_INCLUDE_DIR=$physfsSrcFull",
   "-DSDL2_DIR=$buildDirFull",
   "-DCMAKE_PREFIX_PATH=$buildDirFull",
-  "-DCARGO_FLAGS=--target=wasm32-unknown-emscripten"
+  "-DCARGO_FLAGS=--target=wasm32-unknown-emscripten",
+  "-DHW_WASM_DEBUG=$($WasmDebug.IsPresent.ToString().ToUpper())"
 )
 
 if (-not $BuildEngineC) { $cmakeArgs += "-DBUILD_ENGINE_C=0" }
@@ -182,5 +191,35 @@ if (-not $LuaSystemOff) { $cmakeArgs += "-DLUA_SYSTEM=ON" }
 if (-not $NoVideoRec) { $cmakeArgs += "-DNOVIDEOREC=OFF" }
 
 emcmake cmake @cmakeArgs
+
+if ($StageData) {
+  $binDir = Join-Path $buildDirFull "bin"
+  $dataSrc = Join-Path $PSScriptRoot "share\\hedgewars\\Data"
+  $dataDst = Join-Path $binDir "Data"
+  if (Test-Path $binDir) {
+    if (Test-Path $dataDst) {
+      Remove-Item -Recurse -Force $dataDst
+    }
+    if (Test-Path $dataSrc) {
+      Copy-Item $dataSrc -Destination $dataDst -Recurse
+      Write-Host "Staged Data to $dataDst"
+    } else {
+      Write-Warning "Data source not found at $dataSrc"
+    }
+
+    # Stage web frontend
+    $frontendSrc = Join-Path $PSScriptRoot "web-frontend"
+    $frontendDst = Join-Path $binDir "web-frontend"
+    if (Test-Path $frontendSrc) {
+      if (Test-Path $frontendDst) {
+        Remove-Item -Recurse -Force $frontendDst
+      }
+      Copy-Item $frontendSrc -Destination $frontendDst -Recurse
+      Write-Host "Staged web-frontend to $frontendDst"
+    }
+  } else {
+    Write-Warning "Build bin directory not found yet: $binDir (run build first)"
+  }
+}
 
 Write-Host "Configured in $BuildDir. Next: emmake cmake --build $BuildDir -j"
