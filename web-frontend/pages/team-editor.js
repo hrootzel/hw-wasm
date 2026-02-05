@@ -9,10 +9,13 @@ import { audio } from '../util/audio.js';
 import { core } from '../ui/core.js';
 import { Node } from '../ui/scene.js';
 
+import { IconPicker } from '../ui/icon-picker.js';
+
 const DIFFICULTIES = ['Human', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
-const COMMON_HATS = ['NoHat', 'cap_blue', 'cap_red', 'crown', 'chef', 'constructor', 'dwarf', 'Elvis', 'knight', 'lambda', 'pirate_hat', 'Santa', 'Skull', 'Viking', 'WizardHat'];
-const COMMON_FLAGS = ['hedgewars', 'cm_balls', 'cm_binary', 'cm_birdy', 'cm_earth', 'cm_hw', 'united_states', 'united_kingdom', 'germany', 'france', 'spain', 'italy', 'japan', 'china', 'brazil', 'canada'];
-const COMMON_GRAVES = ['Grave', 'Bone', 'coffin', 'Flower', 'Rip', 'skull', 'Simple', 'cross', 'heart'];
+const ALL_HATS = ['NoHat', '4gsuif', 'AkuAku', 'Bandit', 'Coonskin3', 'Cowboy', 'Dan', 'Dauber', 'DayAndNight', 'Disguise', 'Dragon', 'Einstein', 'Elvis', 'Eva_00b', 'Eva_00y', 'Evil', 'Gasmask', 'Glasses', 'HogInTheHat', 'IndianChief', 'InfernalHorns', 'Jason', 'Joker', 'Laminaria', 'MegaHogX', 'Meteorhelmet', 'Moustache', 'Moustache_glasses', 'Mummy', 'NinjaFull', 'NinjaStraight', 'NinjaTriangle', 'OldMan', 'Pantsu', 'Plunger', 'RSR', 'Rain', 'Rambo', 'RamboClean', 'RobinHood', 'Samurai', 'Santa', 'ShaggyYeti', 'ShortHair_Black', 'ShortHair_Brown', 'ShortHair_Grey', 'ShortHair_Red', 'ShortHair_Yellow', 'Skull', 'Sleepwalker', 'Sniper', 'SparkleSuperFun', 'StrawHat', 'StrawHatEyes', 'StrawHatFacial', 'SunWukong', 'Sunglasses', 'TeamHeadband', 'TeamSoldier', 'TeamTophat', 'TeamWheatley', 'Terminator_Glasses', 'Viking', 'WhySoSerious', 'WizardHat', 'Zombi', 'android', 'angel', 'anzac', 'barrelhider', 'bb_bob', 'bb_bub', 'bb_cororon', 'bb_kululun', 'beefeater', 'beefeaterhat', 'bishop', 'bobby', 'bobby2v', 'bubble', 'bushhider', 'cap_blue', 'cap_green', 'cap_junior', 'cap_red', 'cap_team', 'cap_thinking', 'cap_yellow', 'car', 'chef', 'chuckl', 'clown', 'clown-copper', 'clown-crossed', 'constructor', 'cratehider', 'crown', 'cyborg1', 'cyborg2', 'cyclops'];
+const ALL_FLAGS = ['hedgewars', 'cm_balls', 'cm_binary', 'cm_birdy', 'cm_earth', 'cm_hw', 'afghanistan', 'albania', 'algeria', 'andorra', 'angola', 'argentina', 'armenia', 'australia', 'austria', 'azerbaijan', 'bahamas', 'bahrain', 'bangladesh', 'barbados', 'belarus', 'belgium', 'belize', 'benin', 'bhutan', 'bolivia', 'bosnia_and_herzegovina', 'botswana', 'brazil', 'brunei', 'bulgaria', 'burkina_faso', 'burundi', 'cambodia', 'cameroon', 'canada', 'cape_verde', 'central_african_republic', 'chad', 'chile', 'china', 'colombia', 'comoros', 'congo', 'costa_rica', 'croatia', 'cuba', 'cyprus', 'czech_republic', 'denmark', 'djibouti', 'dominica', 'dominican_republic', 'ecuador', 'egypt', 'el_salvador', 'equatorial_guinea', 'eritrea', 'estonia', 'ethiopia', 'fiji', 'finland', 'france', 'gabon', 'gambia', 'georgia', 'germany', 'ghana', 'greece', 'grenada', 'guatemala', 'guinea', 'guinea_bissau', 'guyana', 'haiti', 'honduras', 'hungary', 'iceland', 'india', 'indonesia', 'iran', 'iraq', 'ireland', 'israel', 'italy', 'jamaica', 'japan', 'jordan', 'kazakhstan', 'kenya', 'kiribati', 'kuwait', 'kyrgyzstan', 'laos', 'latvia', 'lebanon', 'lesotho', 'liberia', 'libya', 'liechtenstein', 'lithuania', 'luxembourg', 'macedonia', 'madagascar', 'malawi', 'malaysia', 'maldives', 'mali', 'malta', 'mauritania', 'mauritius', 'mexico', 'moldova', 'monaco', 'mongolia', 'montenegro', 'morocco', 'mozambique', 'myanmar', 'namibia', 'nepal', 'netherlands', 'new_zealand', 'nicaragua', 'niger', 'nigeria', 'norway', 'oman', 'pakistan', 'palau', 'palestine', 'panama', 'papua_new_guinea', 'paraguay', 'peru', 'philippines', 'poland', 'portugal', 'qatar', 'romania', 'russia', 'rwanda', 'samoa', 'san_marino', 'saudi_arabia', 'senegal', 'serbia', 'seychelles', 'sierra_leone', 'singapore', 'slovakia', 'slovenia', 'somalia', 'south_africa', 'south_korea', 'south_sudan', 'spain', 'sri_lanka', 'sudan', 'suriname', 'swaziland', 'sweden', 'switzerland', 'syria', 'taiwan', 'tajikistan', 'tanzania', 'thailand', 'togo', 'tonga', 'trinidad_and_tobago', 'tunisia', 'turkey', 'turkmenistan', 'tuvalu', 'uganda', 'ukraine', 'united_kingdom', 'united_states', 'uruguay', 'uzbekistan', 'vanuatu', 'vatican_city', 'venezuela', 'vietnam', 'yemen', 'zambia', 'zimbabwe'];
+const ALL_GRAVES = ['Grave', 'Badger', 'Bone', 'Cherry', 'Clover', 'Duck2', 'Earth', 'Egg', 'Flower', 'Ghost', 'Mushroom', 'Old_Apple', 'Plinko', 'Rip', 'Rubberduck', 'Simple', 'Simple_reversed', 'Statue', 'TV', 'Teapot', 'Whisky', 'Yin_and_Yang', 'bp2', 'bubble', 'chest', 'coffin', 'deadhog', 'dragonball', 'eyecross', 'heart', 'money', 'mouton1', 'octopus', 'pi', 'plant2', 'plant3', 'pokeball', 'pyramid', 'ring', 'skull', 'star'];
+const VOICES = ['Default', 'British', 'Classic', 'HillBilly', 'Mobster', 'Pirate', 'Robot', 'Russian', 'Singer', 'Surfer'];
 
 // Image preview widget that loads on demand
 class ImagePreview extends Node {
@@ -101,50 +104,62 @@ export class TeamEditorPage extends BasePage {
 
     // Hat
     this._addLabel('Hat', ex, y);
-    this.hatPreview = new ImagePreview(getHatPath, 40);
+    this.hatPreview = new ImagePreview(getHatPath, 32);
     this.hatPreview.x = ex + 120; this.hatPreview.y = y;
     this.addChild(this.hatPreview);
-    this.hatDropdown = new Dropdown(COMMON_HATS, 0, (i) => {
-      if (this.selectedTeam) {
-        this.selectedTeam.hat = COMMON_HATS[i];
-        this.hatPreview.setItem(COMMON_HATS[i]);
-        this.dirty = true;
-      }
-    });
-    this.hatDropdown.x = ex + 170; this.hatDropdown.y = y + 5; this.hatDropdown.width = 150;
-    this.addChild(this.hatDropdown);
+    
+    this.hatLabel = new Label('', 'small');
+    this.hatLabel.x = ex + 160; this.hatLabel.y = y; this.hatLabel.width = 150; this.hatLabel.height = 30;
+    this.addChild(this.hatLabel);
+    
+    const hatBtn = new Button('Select...', () => this._showHatPicker());
+    hatBtn.x = ex + 320; hatBtn.y = y; hatBtn.width = 100; hatBtn.height = 30;
+    hatBtn.fontSize = 14;
+    this.addChild(hatBtn);
     y += 50;
 
     // Flag
     this._addLabel('Flag', ex, y);
-    this.flagPreview = new ImagePreview(getFlagPath, 40);
+    this.flagPreview = new ImagePreview(getFlagPath, 32);
     this.flagPreview.x = ex + 120; this.flagPreview.y = y;
     this.addChild(this.flagPreview);
-    this.flagDropdown = new Dropdown(COMMON_FLAGS, 0, (i) => {
-      if (this.selectedTeam) {
-        this.selectedTeam.flag = COMMON_FLAGS[i];
-        this.flagPreview.setItem(COMMON_FLAGS[i]);
-        this.dirty = true;
-      }
-    });
-    this.flagDropdown.x = ex + 170; this.flagDropdown.y = y + 5; this.flagDropdown.width = 150;
-    this.addChild(this.flagDropdown);
+    
+    this.flagLabel = new Label('', 'small');
+    this.flagLabel.x = ex + 160; this.flagLabel.y = y; this.flagLabel.width = 150; this.flagLabel.height = 30;
+    this.addChild(this.flagLabel);
+    
+    const flagBtn = new Button('Select...', () => this._showFlagPicker());
+    flagBtn.x = ex + 320; flagBtn.y = y; flagBtn.width = 100; flagBtn.height = 30;
+    flagBtn.fontSize = 14;
+    this.addChild(flagBtn);
     y += 50;
 
     // Grave
     this._addLabel('Grave', ex, y);
-    this.gravePreview = new ImagePreview(getGravePath, 40);
+    this.gravePreview = new ImagePreview(getGravePath, 32);
     this.gravePreview.x = ex + 120; this.gravePreview.y = y;
     this.addChild(this.gravePreview);
-    this.graveDropdown = new Dropdown(COMMON_GRAVES, 0, (i) => {
+    
+    this.graveLabel = new Label('', 'small');
+    this.graveLabel.x = ex + 160; this.graveLabel.y = y; this.graveLabel.width = 150; this.graveLabel.height = 30;
+    this.addChild(this.graveLabel);
+    
+    const graveBtn = new Button('Select...', () => this._showGravePicker());
+    graveBtn.x = ex + 320; graveBtn.y = y; graveBtn.width = 100; graveBtn.height = 30;
+    graveBtn.fontSize = 14;
+    this.addChild(graveBtn);
+    y += 50;
+
+    // Voice
+    this._addLabel('Voice', ex, y);
+    this.voiceDropdown = new Dropdown(VOICES, 0, (i) => {
       if (this.selectedTeam) {
-        this.selectedTeam.grave = COMMON_GRAVES[i];
-        this.gravePreview.setItem(COMMON_GRAVES[i]);
+        this.selectedTeam.voice = VOICES[i];
         this.dirty = true;
       }
     });
-    this.graveDropdown.x = ex + 170; this.graveDropdown.y = y + 5; this.graveDropdown.width = 150;
-    this.addChild(this.graveDropdown);
+    this.voiceDropdown.x = ex + 120; this.voiceDropdown.y = y + 5; this.voiceDropdown.width = 150;
+    this.addChild(this.voiceDropdown);
     y += 55;
 
     // Hedgehog names
@@ -193,6 +208,109 @@ export class TeamEditorPage extends BasePage {
     this.addChild(l);
   }
 
+  _showHatPicker() {
+    if (!this.selectedTeam) return;
+    
+    const picker = new IconPicker(ALL_HATS, getHatPath, null);
+    picker.setSelected(this.selectedTeam.hat || 'NoHat');
+    
+    const pickerPage = new BasePage('Select Hat');
+    pickerPage.addTitle('Select Hat');
+    picker.x = 362; picker.y = 100;
+    pickerPage.addChild(picker);
+    
+    const okBtn = new Button('OK', () => {
+      const hat = ALL_HATS[picker.selectedIndex];
+      this.selectedTeam.hat = hat;
+      this.hatPreview.setItem(hat);
+      this.hatLabel.text = hat;
+      this.dirty = true;
+      core.popPage();
+      audio.playClick();
+    });
+    okBtn.x = 362; okBtn.y = 520; okBtn.width = 120; okBtn.height = 40;
+    pickerPage.addChild(okBtn);
+    pickerPage.addBackButton(() => core.popPage());
+    
+    pickerPage.onMouseWheel = (e) => {
+      if (picker.hitTest(e.x, e.y)) picker.onMouseWheel(e);
+    };
+    
+    core.pushPage(pickerPage);
+    audio.playClick();
+  }
+
+  _showFlagPicker() {
+    if (!this.selectedTeam) return;
+    
+    const picker = new IconPicker(ALL_FLAGS, getFlagPath, null);
+    picker.setSelected(this.selectedTeam.flag || 'hedgewars');
+    
+    // Create a simple page to hold the picker
+    const pickerPage = new BasePage('Select Flag');
+    pickerPage.addTitle('Select Flag');
+    picker.x = 362; // Center
+    picker.y = 100;
+    pickerPage.addChild(picker);
+    
+    // OK button
+    const okBtn = new Button('OK', () => {
+      const flag = ALL_FLAGS[picker.selectedIndex];
+      this.selectedTeam.flag = flag;
+      this.flagPreview.setItem(flag);
+      this.flagLabel.text = flag;
+      this.dirty = true;
+      core.popPage();
+      audio.playClick();
+    });
+    okBtn.x = 362; okBtn.y = 520; okBtn.width = 120; okBtn.height = 40;
+    pickerPage.addChild(okBtn);
+    
+    pickerPage.addBackButton(() => core.popPage());
+    
+    // Route wheel events to picker
+    pickerPage.onMouseWheel = (e) => {
+      if (picker.hitTest(e.x, e.y)) {
+        picker.onMouseWheel(e);
+      }
+    };
+    
+    core.pushPage(pickerPage);
+    audio.playClick();
+  }
+
+  _showGravePicker() {
+    if (!this.selectedTeam) return;
+    
+    const picker = new IconPicker(ALL_GRAVES, getGravePath, null);
+    picker.setSelected(this.selectedTeam.grave || 'Grave');
+    
+    const pickerPage = new BasePage('Select Grave');
+    pickerPage.addTitle('Select Grave');
+    picker.x = 362; picker.y = 100;
+    pickerPage.addChild(picker);
+    
+    const okBtn = new Button('OK', () => {
+      const grave = ALL_GRAVES[picker.selectedIndex];
+      this.selectedTeam.grave = grave;
+      this.gravePreview.setItem(grave);
+      this.graveLabel.text = grave;
+      this.dirty = true;
+      core.popPage();
+      audio.playClick();
+    });
+    okBtn.x = 362; okBtn.y = 520; okBtn.width = 120; okBtn.height = 40;
+    pickerPage.addChild(okBtn);
+    pickerPage.addBackButton(() => core.popPage());
+    
+    pickerPage.onMouseWheel = (e) => {
+      if (picker.hitTest(e.x, e.y)) picker.onMouseWheel(e);
+    };
+    
+    core.pushPage(pickerPage);
+    audio.playClick();
+  }
+
   _selectTeam(idx) {
     if (this.dirty) this._saveTeam();
     this.teamList.selectedIndex = idx;
@@ -206,18 +324,26 @@ export class TeamEditorPage extends BasePage {
       this.nameInput.cursorPos = this.selectedTeam.name.length;
       this.diffDropdown.selectedIndex = this.selectedTeam.difficulty || 0;
       
-      // Hat/Flag/Grave
-      const hatIdx = COMMON_HATS.indexOf(this.selectedTeam.hat);
-      this.hatDropdown.selectedIndex = hatIdx >= 0 ? hatIdx : 0;
-      this.hatPreview.setItem(this.selectedTeam.hat || COMMON_HATS[0]);
+      // Hat
+      this.hatPreview.setItem(this.selectedTeam.hat || 'NoHat');
+      this.hatLabel.text = this.selectedTeam.hat || 'NoHat';
       
-      const flagIdx = COMMON_FLAGS.indexOf(this.selectedTeam.flag);
-      this.flagDropdown.selectedIndex = flagIdx >= 0 ? flagIdx : 0;
-      this.flagPreview.setItem(this.selectedTeam.flag || COMMON_FLAGS[0]);
+      // Flag
+      this.flagPreview.setItem(this.selectedTeam.flag || 'hedgewars');
+      this.flagLabel.text = this.selectedTeam.flag || 'hedgewars';
       
-      const graveIdx = COMMON_GRAVES.indexOf(this.selectedTeam.grave);
-      this.graveDropdown.selectedIndex = graveIdx >= 0 ? graveIdx : 0;
-      this.gravePreview.setItem(this.selectedTeam.grave || COMMON_GRAVES[0]);
+      // Grave
+      this.gravePreview.setItem(this.selectedTeam.grave || 'Grave');
+      this.graveLabel.text = this.selectedTeam.grave || 'Grave';
+      this.flagLabel.text = this.selectedTeam.flag || 'hedgewars';
+      
+      // Grave
+      this.gravePreview.setItem(this.selectedTeam.grave || 'Grave');
+      this.graveLabel.text = this.selectedTeam.grave || 'Grave';
+      
+      // Voice
+      const voiceIdx = VOICES.indexOf(this.selectedTeam.voice || 'Default');
+      this.voiceDropdown.selectedIndex = voiceIdx >= 0 ? voiceIdx : 0;
       
       this.hogCountLabel.text = String(this.selectedTeam.hogCount);
       
