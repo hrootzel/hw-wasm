@@ -9,6 +9,7 @@ import { ControlsPage } from './controls.js';
 import { TeamEditorPage } from './team-editor.js';
 import { SchemeEditorPage } from './scheme-editor.js';
 import { WeaponEditorPage } from './weapon-editor.js';
+import { LocalGamePage } from './local-game.js';
 
 export class MainMenuPage extends Page {
   constructor() {
@@ -33,7 +34,7 @@ export class MainMenuPage extends Page {
     const sp = 55;
 
     const buttons = [
-      ['Local Game', () => console.log('TODO: LocalGamePage')],
+      ['Local Game', () => core.pushPage(new LocalGamePage())],
       ['Settings', () => core.pushPage(new SettingsPage())],
       ['Controls', () => core.pushPage(new ControlsPage())],
       ['Edit Teams', () => core.pushPage(new TeamEditorPage())],

@@ -2,6 +2,7 @@
 import { core } from './ui/core.js';
 import { assets, CORE_ASSETS } from './assets.js';
 import { audio } from './util/audio.js';
+import { storage } from './data/storage.js';
 import { MainMenuPage } from './pages/main-menu.js';
 
 async function init() {
@@ -11,6 +12,11 @@ async function init() {
   // Initialize core systems
   core.init(canvas);
   await audio.init();
+
+  // Load settings and apply audio volumes (convert from 0-100 to 0-1)
+  const settings = storage.getSettings();
+  audio.setMusicVolume(settings.musicVolume / 100);
+  audio.setSfxVolume(settings.sfxVolume / 100);
 
   // Load core assets
   loadingEl.textContent = 'Loading assets...';

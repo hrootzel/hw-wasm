@@ -324,27 +324,27 @@ theme = {
 
 ## Implementation Phases
 
-### Phase 1: Core Framework
-- [ ] Canvas setup, scaling, event handling
-- [ ] Scene graph (Node, Container, Page)
-- [ ] Page stack with transitions
-- [ ] Basic widgets: Button, Label
-- [ ] Asset loader (images, sounds)
-- [ ] Audio system (Web Audio)
-- [ ] Main menu page (static, buttons work)
+### Phase 1: Core Framework ✅
+- [x] Canvas setup, scaling, event handling
+- [x] Scene graph (Node, Container, Page)
+- [x] Page stack with transitions
+- [x] Basic widgets: Button, Label
+- [x] Asset loader (images, sounds)
+- [x] Audio system (Web Audio)
+- [x] Main menu page (static, buttons work)
 
-### Phase 2: Settings & Teams
-- [ ] Remaining widgets: Checkbox, Slider, TextInput, Dropdown, ScrollList
-- [ ] localStorage wrapper
-- [ ] Settings page (audio, language)
-- [ ] Controls page (key bindings)
-- [ ] Team editor page
-- [ ] Item grids (hats, flags, graves, forts)
+### Phase 2: Settings & Teams ✅
+- [x] Remaining widgets: Checkbox, Slider, TextInput, Dropdown, ScrollList
+- [x] localStorage wrapper
+- [x] Settings page (audio, language)
+- [x] Controls page (key bindings)
+- [x] Team editor page
+- [x] Item grids (hats, flags, graves, forts)
 
-### Phase 3: Game Configuration
-- [ ] Scheme editor page
-- [ ] Weapon editor page (weapon grid widget)
-- [ ] Local game page (map selection, team picker)
+### Phase 3: Game Configuration ✅
+- [x] Scheme editor page
+- [x] Weapon editor page (weapon grid widget)
+- [x] Local game page (map selection, team picker)
 - [ ] Config builder
 - [ ] Engine launch integration
 

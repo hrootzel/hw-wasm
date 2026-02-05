@@ -74,7 +74,11 @@ export class Button extends Node {
     ctx.stroke();
 
     // Text
-    applyFont(ctx, theme.fonts.button);
+    if (this.fontSize) {
+      ctx.font = `bold ${this.fontSize}px sans-serif`;
+    } else {
+      applyFont(ctx, theme.fonts.button);
+    }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
