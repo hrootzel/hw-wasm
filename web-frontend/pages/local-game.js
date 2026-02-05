@@ -6,9 +6,16 @@ import { storage } from '../data/storage.js';
 import { audio } from '../util/audio.js';
 import { core } from '../ui/core.js';
 import { Node } from '../ui/scene.js';
+import { buildConfig, buildArgs } from '../data/config-builder.js';
 
 const MAP_TYPES = ['Random', 'Maze', 'Drawn'];
-const THEMES = ['Nature', 'Desert', 'Snow', 'Island', 'Cave', 'Castle', 'Hell', 'Olympics', 'Bamboo', 'EarthRise', 'Fruit'];
+const THEMES = [
+  'Art', 'Bamboo', 'Bath', 'Beach', 'Blox', 'Brick', 'Cake', 'Castle', 'Cave',
+  'Cheese', 'Christmas', 'City', 'Compost', 'CrazyMission', 'Deepspace', 'Desert',
+  'Digital', 'EarthRise', 'Eyes', 'Freeway', 'Fruit', 'Golf', 'Halloween', 'Hell',
+  'Hoggywood', 'Island', 'Jungle', 'Nature', 'Olympics', 'Planes', 'Sheep', 'Snow',
+  'Stage', 'Underwater'
+];
 
 // Team selector widget
 class TeamSelector extends Node {
@@ -116,7 +123,7 @@ export class LocalGamePage extends BasePage {
     y += 45;
 
     this._addLabel('Theme:', leftX, y);
-    this.themeDropdown = new Dropdown(THEMES, 0, () => {});
+    this.themeDropdown = new Dropdown(THEMES, THEMES.indexOf('Nature'), () => {});
     this.themeDropdown.x = leftX + 80;
     this.themeDropdown.y = y;
     this.themeDropdown.width = 150;
@@ -204,15 +211,35 @@ export class LocalGamePage extends BasePage {
       return;
     }
 
-    console.log('Starting game with:', {
-      mapType: MAP_TYPES[this.mapTypeDropdown.selectedIndex],
-      theme: THEMES[this.themeDropdown.selectedIndex],
-      scheme: this.schemes[this.schemeDropdown.selectedIndex].name,
-      weapons: this.weaponSets[this.weaponDropdown.selectedIndex].name,
-      teams: this.selectedTeams.map(t => t.name)
+    const mapType = MAP_TYPES[this.mapTypeDropdown.selectedIndex];
+    const theme = THEMES[this.themeDropdown.selectedIndex];
+    const seed = this.seedInput.text || '';
+    const scheme = this.schemes[this.schemeDropdown.selectedIndex];
+    const weaponSet = this.weaponSets[this.weaponDropdown.selectedIndex];
+
+    const cfgText = buildConfig({
+      mapType, theme, seed, scheme, weaponSet,
+      teams: this.selectedTeams
     });
 
-    // TODO: Build config and launch engine
+    console.log('[local-game] config:\n' + cfgText);
+
+    const args = buildArgs(cfgText);
+    console.log('[local-game] args:', args);
+
+    // Launch engine if available
+    if (typeof Module !== 'undefined' && Module.callMain) {
+      Module.arguments = args;
+      Module.callMain(args);
+    } else {
+      // Store config for engine page to pick up
+      localStorage.setItem('hw-wasm-webcfg64', btoa(cfgText));
+      console.log('[local-game] Config stored in localStorage. Navigate to engine page to launch.');
+      // If hwengine.html exists alongside, redirect
+      const engineUrl = window.location.pathname.replace(/web-frontend\/.*/, 'project_files/web/hwengine.html');
+      console.log('[local-game] Engine URL would be:', engineUrl);
+    }
+
     audio.playClick();
   }
 }
