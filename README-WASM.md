@@ -3,7 +3,7 @@ WASM Build Environment
 
 Status
 ------
-- Emscripten + CMake pipeline: pas2c → C → Emscripten → WASM
+- Emscripten + CMake pipeline: pas2c -> C -> Emscripten -> WASM
 - WebGL2 engine runs in-browser with packed assets
 - **Canvas-based web frontend** replaces the old shell.html menu
 - Local autostart works via `--webcfg64` config injection
@@ -38,12 +38,12 @@ Quick Start
 .\build.ps1 -StageData
 
 # Build
-emmake cmake --build build/wasm8 -j
+emmake cmake --build build/wasm -j
 ```
 
 `build.ps1` automatically finds emsdk, installs/activates the correct version,
 and sources the environment. The `-StageData` flag copies both
-`share/hedgewars/Data` and `web-frontend/` into `build/wasm8/bin/`.
+`share/hedgewars/Data`, `web-frontend/`, and `index.html` into `build/wasm/bin/`.
 
 ### 2. Serve and play
 
@@ -51,10 +51,10 @@ and sources the environment. The `-StageData` flag copies both
 .\serve.ps1
 ```
 
-Open **http://localhost:8080/web-frontend/** in your browser.
+Open **http://localhost:8080/** in your browser (redirects to the frontend).
 
 The serve script auto-detects the best directory:
-- `build/wasm8/bin` if engine is built (full experience)
+- `build/wasm/bin` if engine is built (full experience)
 - Project root as fallback (dev mode, frontend only)
 
 ### 3. Dev mode (frontend only, no engine)
@@ -88,15 +88,14 @@ to match the original Hedgewars look and feel.
 ### Architecture
 ```
 web-frontend/
-├── index.html              # Entry point
-├── main.js                 # Bootstrap, asset loading, audio init
-├── assets.js               # Asset loader (auto-detects build vs dev paths)
-├── ui/                     # Scene graph, widgets, theme
-├── pages/                  # All UI pages
-├── data/                   # Storage, defaults, schemes, weapons, config builder
-└── util/                   # Input, audio, math helpers
+|-- index.html   # Entry point
+|-- main.js      # Bootstrap, asset loading, audio init
+|-- assets.js    # Asset loader (auto-detects build vs dev paths)
+|-- ui/          # Scene graph, widgets, theme
+|-- pages/       # All UI pages
+|-- data/        # Storage, defaults, schemes, weapons, config builder
+`-- util/        # Input, audio, math helpers
 ```
-
 ### Game Launch Flow
 1. User configures game in Local Game page
 2. Frontend builds engine config text (matching IPC protocol)
@@ -115,25 +114,46 @@ Generates the same line-based config the Qt frontend sends via IPC:
 Build Scripts
 -------------
 
-### `build.ps1` — Engine WASM build
+### `build.ps1` - Engine WASM build
 Configures and optionally stages data for the Emscripten engine build.
 
 Key flags:
-- `-StageData` — Copy `Data/` and `web-frontend/` into `build/wasm8/bin/`
-- `-WasmDebug` — Enable SAFE_HEAP + stack overflow checks
-- `-Clean` — Remove build dir before configuring
-- `-SkipRust` — Skip Rust mapgen build
-- `-SkipPas2c` — Skip pas2c rebuild
+- `-StageData` - Copy `Data/` and `web-frontend/` into `build/wasm/bin/`
+- `-Build` - Build immediately after configure
+- `-Rebuild` - Clean + configure + build
+- `-Debug` / `-Release` - Set build type
+- `-WasmDebug` - Enable SAFE_HEAP + stack overflow checks
+- `-Clean` - Remove build dir before configuring
+- `-SkipRust` - Skip Rust mapgen build
+- `-SkipPas2c` - Skip pas2c rebuild
 
+### `build-was-docker.sh` - Linux Docker build
+Builds in a Linux container and writes outputs to host `build/`.
 
-### `serve.ps1` — Development server
+```bash
+# Build image + configure + compile + stage assets
+./build-was-docker.sh
+
+# Debug build type
+BUILD_TYPE=Debug ./build-was-docker.sh
+
+# Reconfigure from a clean build dir
+CLEAN=1 ./build-was-docker.sh
+```
+
+Container inputs/outputs:
+- Project root mounted at `/workspace`
+- Host `build/` mounted at `/workspace/build`
+- Expected output at `build/wasm/bin/hwengine.html`
+
+### `serve.ps1` - Development server
 Serves the build output (or project root in dev mode).
 
 ```powershell
 .\serve.ps1                    # Auto-detect build dir, port 8080
 .\serve.ps1 -Port 9000        # Custom port
 .\serve.ps1 -Dir .            # Force dev mode (project root)
-.\serve.ps1 -Dir build/wasm8/bin  # Explicit directory
+.\serve.ps1 -Dir build/wasm/bin  # Explicit directory
 ```
 
 Engine Shell (`project_files/web/shell.html`)
@@ -168,11 +188,17 @@ Automated in `build.ps1`. Excludes Windows/LZMA code paths.
 
 ### Asset Paths
 The web frontend auto-detects its asset base path:
-- Build layout: `web-frontend/` and `Data/` are siblings in `build/wasm8/bin/`
+- Build layout: `web-frontend/` and `Data/` are siblings in `build/wasm/bin/`
 - Dev layout: `web-frontend/` uses `../share/hedgewars/Data/`
 
 Current Issues
 --------------
 - ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
 - SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
+
+
+
+
+
+
 

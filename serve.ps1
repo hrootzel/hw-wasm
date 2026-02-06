@@ -28,10 +28,12 @@ Write-Host "Hedgewars Web Frontend"
 Write-Host "======================"
 if ($isBuild) {
   Write-Host "Serving build output: $fullDir"
+  Write-Host "Root:     http://localhost:$Port/ (redirects to frontend)"
   Write-Host "Frontend: http://localhost:$Port/web-frontend/"
   Write-Host "Engine:   http://localhost:$Port/hwengine.html"
 } else {
   Write-Host "Dev mode (no build output found)"
+  Write-Host "Root:     http://localhost:$Port/ (redirects to frontend)"
   Write-Host "Frontend: http://localhost:$Port/web-frontend/"
   Write-Host "Note: Engine launch requires a build (.\build.ps1 -StageData)"
 }

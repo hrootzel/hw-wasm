@@ -4,6 +4,10 @@ param(
   [string]$LLVMBin = "C:\\Program Files\\LLVM\\bin",
   [string]$GhcBin = "C:\\Users\\andre\\ghc\\bin",
   [string]$EmsdkVersion = "5.0.0",
+  [ValidateSet("Debug","Release","RelWithDebInfo")]
+  [string]$Config = "Release",
+  [switch]$Debug,
+  [switch]$Release,
   [switch]$NoServer = $true,
   [switch]$NoVideoRec = $true,
   [switch]$LuaSystemOff = $true,
@@ -13,10 +17,19 @@ param(
   [switch]$SkipPas2c,
   [switch]$WasmDebug,
   [switch]$StageData,
-  [switch]$Clean
+  [switch]$Clean,
+  [switch]$Build,
+  [switch]$Rebuild
 )
 
 $ErrorActionPreference = "Stop"
+
+if ($Debug -and $Release) {
+  throw "Use only one of -Debug or -Release."
+}
+if ($Debug) { $Config = "Debug" }
+if ($Release) { $Config = "Release" }
+if ($Rebuild) { $Clean = $true; $Build = $true }
 
 function Resolve-EmsdkRoot {
   if ($EmsdkRoot -and (Test-Path $EmsdkRoot)) { return $EmsdkRoot }
@@ -169,7 +182,7 @@ $cmakeArgs = @(
   "-B", $buildDirFull,
   "-G", "Ninja",
   "-DCMAKE_MAKE_PROGRAM=$ninja",
-  "-DCMAKE_BUILD_TYPE=$(if ($WasmDebug) { 'RelWithDebInfo' } else { 'Release' })",
+  "-DCMAKE_BUILD_TYPE=$Config",
   "-DBUILD_ENGINE_C=1",
   "-DBUILD_ENGINE_JS=$($BuildEngineJS.IsPresent.ToString().ToUpper())",
   "-DNOSERVER=ON",
@@ -217,9 +230,22 @@ if ($StageData) {
       Copy-Item $frontendSrc -Destination $frontendDst -Recurse
       Write-Host "Staged web-frontend to $frontendDst"
     }
+
+    # Stage root index (redirects to frontend)
+    $rootIndexSrc = Join-Path $PSScriptRoot "index.html"
+    $rootIndexDst = Join-Path $binDir "index.html"
+    if (Test-Path $rootIndexSrc) {
+      Copy-Item $rootIndexSrc -Destination $rootIndexDst -Force
+      Write-Host "Staged index.html to $rootIndexDst"
+    }
   } else {
     Write-Warning "Build bin directory not found yet: $binDir (run build first)"
   }
 }
 
-Write-Host "Configured in $BuildDir. Next: emmake cmake --build $BuildDir -j"
+if ($Build) {
+  Write-Host "Building in $BuildDir..."
+  emmake cmake --build $BuildDir -j
+} else {
+  Write-Host "Configured in $BuildDir. Next: emmake cmake --build $BuildDir -j"
+}

@@ -1,0 +1,41 @@
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG EMSDK_VERSION=5.0.0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    cabal-install \
+    clang \
+    cmake \
+    curl \
+    g++ \
+    gcc \
+    ghc \
+    git \
+    lld \
+    llvm \
+    make \
+    ninja-build \
+    pkg-config \
+    python3 \
+    python3-pip \
+    rustup \
+    xz-utils \
+    zip \
+    unzip \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV EMSDK=/opt/emsdk
+RUN git clone https://github.com/emscripten-core/emsdk.git "${EMSDK}" \
+  && cd "${EMSDK}" \
+  && ./emsdk install "${EMSDK_VERSION}" \
+  && ./emsdk activate "${EMSDK_VERSION}"
+
+ENV RUSTUP_HOME=/root/.rustup
+ENV CARGO_HOME=/root/.cargo
+RUN rustup default stable \
+  && rustup target add wasm32-unknown-emscripten
+
+WORKDIR /workspace
