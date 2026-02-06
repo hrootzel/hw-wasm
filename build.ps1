@@ -195,7 +195,8 @@ $sources = Get-ChildItem -Recurse -Path $physfsSrc -Filter *.c |
 
 foreach ($s in $sources) {
   $outObj = Join-Path $physfsOut ((Split-Path $s -Leaf) + ".o")
-  emcc -O2 -c $s -I$physfsSrcFull -DPHYSFS_NO_CDROM_SUPPORT=1 -D__unix__=1 -o $outObj
+  $physfsOpt = if ($Config -eq "Release" -or $Config -eq "RelWithDebInfo") { "-O3" } else { "-O0" }
+  emcc $physfsOpt -c $s -I$physfsSrcFull -DPHYSFS_NO_CDROM_SUPPORT=1 -D__unix__=1 -o $outObj
   if ($LASTEXITCODE -ne 0) { throw "emcc failed for $s" }
 }
 

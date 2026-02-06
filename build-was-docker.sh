@@ -117,9 +117,14 @@ EOF
     mkdir -p "${physfs_out}"
     find "${physfs_out}" -type f -name "*.o" -delete
 
+    physfs_opt="-O0"
+    if [[ "${build_type}" == "Release" || "${build_type}" == "RelWithDebInfo" ]]; then
+      physfs_opt="-O3"
+    fi
+
     while IFS= read -r src; do
       out_obj="${physfs_out}/$(basename "${src}").o"
-      emcc -O2 -c "${src}" -I"${physfs_src}" -DPHYSFS_NO_CDROM_SUPPORT=1 -D__unix__=1 -o "${out_obj}"
+      emcc ${physfs_opt} -c "${src}" -I"${physfs_src}" -DPHYSFS_NO_CDROM_SUPPORT=1 -D__unix__=1 -o "${out_obj}"
     done < <(
       find "${physfs_src}" -type f -name "*.c" \
         ! -name "platform_windows.c" \
