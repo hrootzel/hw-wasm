@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Hedgewars Engine</title>
+    <style>
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0a0e14; }
+      #canvas { width: 100vw; height: 100vh; display: block; }
+      #status {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        color: #9fd7ff; font: 600 20px system-ui, sans-serif; text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status">Loading engine...</div>
+    <canvas id="canvas"></canvas>
+    <script>
+      var statusEl = document.getElementById('status');
+
+      // Read config from URL param or localStorage
+      var cfgParam = new URLSearchParams(window.location.search).get('cfg');
+      var cfgB64 = cfgParam || localStorage.getItem('hw-wasm-webcfg64') || '';
+
+      if (!cfgB64) {
+        statusEl.textContent = 'No game configuration provided.';
+      }
+
+      function buildArgs(encodedCfg) {
+        var args = ['--prefix', '/Data', '--user-prefix', '/'];
+        var chunkSize = 200;
+        for (var i = 0; i < encodedCfg.length; i += chunkSize) {
+          args.push('--webcfg64');
+          args.push(encodedCfg.slice(i, i + chunkSize));
+        }
+        return args;
+      }
+
+      var Module = {
+        canvas: document.getElementById('canvas'),
+        noInitialRun: true,
+        arguments: ['--prefix', '/Data', '--user-prefix', '/'],
+        print: function(t) { console.log(t); },
+        printErr: function(t) { console.error(t); },
+        setStatus: function(t) {
+          statusEl.textContent = t || '';
+          if (!t) statusEl.style.display = 'none';
+        },
+        monitorRunDependencies: function(left) {
+          if (left) {
+            Module.setStatus('Loading data...');
+          } else {
+            Module.setStatus('');
+          }
+        },
+        onRuntimeInitialized: function() {
+          Module.setStatus('');
+          if (cfgB64) {
+            var args = buildArgs(cfgB64);
+            console.log('[engine] launching with', args.length, 'args');
+            Module.callMain(args);
+          }
+        }
+      };
+
+      // Unlock audio on first interaction
+      function unlockAudio() {
+        try {
+          if (Module.SDL2 && Module.SDL2.audioContext && Module.SDL2.audioContext.state === 'suspended') {
+            Module.SDL2.audioContext.resume();
+          }
+        } catch (e) {}
+        window.removeEventListener('pointerdown', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+      }
+      window.addEventListener('pointerdown', unlockAudio);
+      window.addEventListener('keydown', unlockAudio);
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>

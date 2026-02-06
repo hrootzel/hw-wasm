@@ -1093,11 +1093,11 @@ function  SDL_CreateWindow(title: PChar; x,y,w,h: LongInt; flags: LongWord): PSD
 procedure SDL_SetWindowIcon(window: PSDL_Window; icon: PSDL_Surface); cdecl; external SDLLibName;
 
 function  SDL_CreateRenderer(window: PSDL_Window; index: LongInt; flags: LongWord): PSDL_Renderer; cdecl; external SDLLibName;
-function  SDL_DestroyWindow(window: PSDL_Window): LongInt; cdecl; external SDLLibName;
+procedure SDL_DestroyWindow(window: PSDL_Window); cdecl; external SDLLibName;
 function  SDL_DestroyRenderer(renderer: PSDL_Renderer): LongInt; cdecl; external SDLLibName;
 procedure SDL_SetWindowPosition(window: PSDL_Window; w, h: LongInt); cdecl; external SDLLibName;
 procedure SDL_SetWindowSize(window: PSDL_Window; w, h: LongInt); cdecl; external SDLLibName;
-procedure SDL_SetWindowFullscreen(window: PSDL_Window; flags: LongWord); cdecl; external SDLLibName;
+function  SDL_SetWindowFullscreen(window: PSDL_Window; flags: LongWord): LongInt; cdecl; external SDLLibName;
 function  SDL_GetCurrentVideoDriver:Pchar; cdecl; external SDLLibName;
 
 function  SDL_GL_CreateContext(window: PSDL_Window): PSDL_GLContext; cdecl; external SDLLibName;
@@ -1237,7 +1237,11 @@ procedure Mix_FreeChunk(chunk: PMixChunk); cdecl; external SDL_MixerLibName;
 procedure Mix_FreeMusic(music: PMixMusic); cdecl; external SDL_MixerLibName;
 
 function  Mix_LoadWAV_RW(src: PSDL_RWops; freesrc: LongInt): PMixChunk; cdecl; external SDL_MixerLibName;
+{$IFDEF WEBGL}
+function  Mix_LoadMUS_RW(src: PSDL_RWops; freesrc: LongInt): PMixMusic; cdecl; external SDL_MixerLibName;
+{$ELSE}
 function  Mix_LoadMUS_RW(src: PSDL_RWops): PMixMusic; cdecl; external SDL_MixerLibName;
+{$ENDIF}
 
 function  Mix_Playing(channel: LongInt): LongInt; cdecl; external SDL_MixerLibName;
 function  Mix_PlayingMusic: LongInt; cdecl; external SDL_MixerLibName;
@@ -1246,8 +1250,13 @@ function  Mix_FadeInMusic(music: PMixMusic; loops: LongInt; ms: LongInt): LongIn
 function  Mix_PlayChannelTimed(channel: LongInt; chunk: PMixChunk; loops: LongInt; ticks: LongInt): LongInt; cdecl; external SDL_MixerLibName;
 function  Mix_PlayMusic(music: PMixMusic; loops: LongInt): LongInt; cdecl; external SDL_MixerLibName;
 function  Mix_PausedMusic(music: PMixMusic): LongInt; cdecl; external SDL_MixerLibName;
+{$IFDEF WEBGL}
+procedure Mix_PauseMusic; cdecl; external SDL_MixerLibName;
+procedure Mix_ResumeMusic; cdecl; external SDL_MixerLibName;
+{$ELSE}
 function  Mix_PauseMusic(music: PMixMusic): LongInt; cdecl; external SDL_MixerLibName;
 function  Mix_ResumeMusic(music: PMixMusic): LongInt; cdecl; external SDL_MixerLibName;
+{$ENDIF}
 function  Mix_HaltChannel(channel: LongInt): LongInt; cdecl; external SDL_MixerLibName;
 function  Mix_HaltMusic: LongInt; cdecl; external SDL_MixerLibName;
 
@@ -1347,4 +1356,3 @@ end;
 {$ENDIF}
 
 end.
-

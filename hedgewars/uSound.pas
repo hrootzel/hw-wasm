@@ -421,6 +421,9 @@ begin
 
     WriteToConsole('Init SDL_mixer... ');
 
+{$IFDEF WEBGL}
+    if SDLCheck(Mix_Init(MIX_INIT_OGG) <> 0, 'Mix_Init', true) then exit;
+{$ELSE}
     if (Mix_Init(MIX_INIT_OGG or MIX_INIT_OPUS) and MIX_INIT_OPUS) = 0 then
     begin
       s:= SDL_GetError();
@@ -428,6 +431,7 @@ begin
 
       if SDLCheck(Mix_Init(MIX_INIT_OGG) <> 0, 'Mix_Init', true) then exit;
     end;
+{$ENDIF}
 
     WriteLnToConsole(msgOK);
 
@@ -859,7 +863,11 @@ begin
     WriteToConsole(msgLoading + s + ' ');
 
     // Load normal music
+{$IFDEF WEBGL}
+    Mus:= Mix_LoadMUS_RW(rwopsOpenRead(s), 1);
+{$ELSE}
     Mus:= Mix_LoadMUS_RW(rwopsOpenRead(s));
+{$ENDIF}
     SDLCheck(Mus <> nil, 'Mix_LoadMUS_RW', false);
     if Mus <> nil then
         WriteLnToConsole(msgOK);
@@ -881,7 +889,11 @@ begin
        if (s <> '') then
            begin
            WriteLnToConsole(msgLoading + s + ' ');
+{$IFDEF WEBGL}
+           Mus:= Mix_LoadMUS_RW(rwopsOpenRead(s), 1);
+{$ELSE}
            Mus:= Mix_LoadMUS_RW(rwopsOpenRead(s));
+{$ENDIF}
            SDLCheck(Mus <> nil, 'Mix_LoadMUS_RW', false);
            if Mus <> nil then
                WriteLnToConsole(msgOK)
@@ -984,7 +996,11 @@ begin
         exit;
 
     if Mus <> nil then
+{$IFDEF WEBGL}
+        Mix_PauseMusic();
+{$ELSE}
         Mix_PauseMusic(Mus);
+{$ENDIF}
 end;
 
 procedure ResumeMusic;
@@ -993,7 +1009,11 @@ begin
         exit;
 
     if Mus <> nil then
+{$IFDEF WEBGL}
+        Mix_ResumeMusic();
+{$ELSE}
         Mix_ResumeMusic(Mus);
+{$ENDIF}
 end;
 
 procedure ChangeMusic(musicname: shortstring);
@@ -1077,4 +1097,3 @@ begin
 end;
 
 end.
-

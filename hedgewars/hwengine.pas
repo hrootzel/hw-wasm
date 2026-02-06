@@ -44,6 +44,7 @@ uses {$IFDEF IPHONEOS}cmem, {$ENDIF} SDLh, uMisc, uConsole, uGame, uConsts, uLan
 
 {$IFDEF HWLIBRARY}
 function RunEngine(argc: LongInt; argv: PPChar): LongInt; cdecl; export;
+procedure MainLoop; cdecl; export;
 
 procedure preInitEverything();
 procedure initEverything(complete:boolean);
@@ -171,6 +172,13 @@ begin
 end;
 
 ///////////////////////////////////////////////////////////////////////////////
+{$IFDEF WEBGL}
+var wasmPrevTime: LongWord = 0;
+var wasmInitialized: boolean = false;
+var wasmIsTerminated: boolean = false;
+var wasmPreviousGameState: TGameState = gsStart;
+{$ENDIF}
+
 procedure MainLoop;
 var event: TSDL_Event;
     PrevTime, CurrTime: LongWord;
@@ -178,11 +186,30 @@ var event: TSDL_Event;
     previousGameState: TGameState;
     wheelEvent: boolean;
 begin
+{$IFDEF WEBGL}
+    if not wasmInitialized then
+        begin
+        wasmPreviousGameState:= gsStart;
+        wasmIsTerminated:= false;
+        wasmPrevTime:= SDL_GetTicks;
+        wasmInitialized:= true;
+        end;
+    if (wasmIsTerminated) or (not allOK) then
+        exit;
+    PrevTime:= wasmPrevTime;
+    previousGameState:= wasmPreviousGameState;
+{$ELSE}
     previousGameState:= gsStart;
     isTerminated:= false;
     PrevTime:= SDL_GetTicks;
+{$ENDIF}
+
+{$IFDEF WEBGL}
+    begin
+{$ELSE}
     while (not isTerminated) and allOK do
     begin
+{$ENDIF}
         wheelEvent:= false;
         SDL_PumpEvents();
 
@@ -287,7 +314,11 @@ game to freeze if one online player minimizes Hedgewars. *)
                 SDL_JOYBUTTONUP:
                     ControllerButtonEvent(event.jbutton.which, event.jbutton.button, false);
                 SDL_QUITEV:
+{$IFDEF WEBGL}
+                    wasmIsTerminated:= true
+{$ELSE}
                     isTerminated:= true
+{$ENDIF}
             end; //end case event.type_ of
         end; //end while SDL_PollEvent(@event) <> 0 do
 
@@ -324,13 +355,22 @@ game to freeze if one online player minimizes Hedgewars. *)
         CurrTime:= SDL_GetTicks();
         if PrevTime + longword(cTimerInterval) <= CurrTime then
         begin
+{$IFDEF WEBGL}
+            wasmIsTerminated:= wasmIsTerminated or DoTimer(CurrTime - PrevTime);
+{$ELSE}
             isTerminated:= isTerminated or DoTimer(CurrTime - PrevTime);
+{$ENDIF}
             PrevTime:= CurrTime;
         end
         else SDL_Delay(1);
         IPCCheckSock();
 
     end;
+
+{$IFDEF WEBGL}
+    wasmPrevTime:= PrevTime;
+    wasmPreviousGameState:= previousGameState;
+{$ENDIF}
 end;
 
 {$IFDEF USE_VIDEO_RECORDING}
@@ -374,6 +414,10 @@ end;
 procedure GameRoutine;
 var s: shortstring;
     i: LongInt;
+{$IFDEF WEBGL}
+    cfgLine: shortstring;
+    cfgChar: char;
+{$ENDIF}
 begin
 {$IFDEF PAS2C}
     AddFileLog('Generated using pas2c');
@@ -436,6 +480,64 @@ begin
     AddProgress();
     LoadDefaultClanColors(cPathz[ptConfig] + '/settings.ini');
 
+{$IFDEF WEBGL}
+    if WasmAutoStart then
+        begin
+        // Local config to start a playable match without frontend IPC.
+        GameType:= gmtLocal;
+        WriteLnToConsole('WASM autostart: parsing web config');
+        if WasmConfigLen > 0 then
+            begin
+            WriteLnToConsole('WASM webcfg64 bytes: ' + inttostr(WasmConfigLen));
+            cfgLine:= '';
+            for i:= 0 to Pred(WasmConfigLen) do
+                begin
+                cfgChar:= WasmConfigBuf[i];
+                if (cfgChar = #10) or (cfgChar = #13) then
+                    begin
+                    if (Length(cfgLine) > 0) and (cfgLine[1] <> '#') then
+                        ParseCommand(cfgLine, true);
+                    cfgLine:= '';
+                    end
+                else
+                    cfgLine:= cfgLine + cfgChar;
+                end;
+            if (Length(cfgLine) > 0) and (cfgLine[1] <> '#') then
+                ParseCommand(cfgLine, true);
+            end
+        else
+            begin
+            WriteLnToConsole('WASM webcfg64 missing; using defaults');
+            ParseCommand('mapgen 0', true);
+            ParseCommand('theme Nature', true);
+            ParseCommand('seed wasm', true);
+
+            // Default ammo scheme (from frontend defaults).
+            ParseCommand('ammloadt 939192942219912103223511100120000000021110010101111100010001', true);
+            ParseCommand('ammprob 040504054160065554655446477657666666615551010111541111111073', true);
+            ParseCommand('ammdelay 000000000000020550000004000700400000000022000000060002000000', true);
+            ParseCommand('ammreinf 131111031211111112311411111111111111121111111111111111111111', true);
+            ParseCommand('ammstore', true);
+            ParseCommand('ammstore', true);
+
+            ParseCommand('addteam x 0 TeamA', true);
+            ParseCommand('grave Bone', true);
+            ParseCommand('fort Castle', true);
+            ParseCommand('flag united_states', true);
+            ParseCommand('addhh 0 100 Hog1', true);
+            ParseCommand('hat NoHat', true);
+
+            ParseCommand('addteam x 1 TeamB', true);
+            ParseCommand('grave Bone', true);
+            ParseCommand('fort Castle', true);
+            ParseCommand('flag united_kingdom', true);
+            ParseCommand('addhh 1 100 Hog2', true);
+            ParseCommand('hat NoHat', true);
+            end;
+        WriteLnToConsole('WASM params: mapgen=' + inttostr(ord(cMapGen)) + ' theme=' + shortstring(Theme) + ' seed=' + shortstring(cSeed));
+        end;
+{$ENDIF}
+
     if cTestLua then
         begin
         ParseCommand('script ' + cScriptName, true);
@@ -444,8 +546,20 @@ begin
         begin
         if recordFileName = '' then
             begin
+{$IFDEF WEBGL}
+            if not WasmAutoStart then
+                begin
+                InitIPC;
+                SendIPCAndWaitReply(_S'C');        // ask for game config
+                end
+            else
+                begin
+                // No IPC in WebGL autostart.
+                end;
+{$ELSE}
             InitIPC;
             SendIPCAndWaitReply(_S'C');        // ask for game config
+{$ENDIF}
             end
         else
             LoadRecordFromFile(recordFileName);
@@ -476,7 +590,11 @@ begin
     end;
 {$ENDIF}
 
+{$IFDEF WEBGL}
+    // Main loop is driven by emscripten_set_main_loop in web_main.c.
+{$ELSE}
     MainLoop;
+{$ENDIF}
 end;
 
 procedure Game;
@@ -484,7 +602,11 @@ begin
     initEverything(true);
     GameRoutine;
     // clean up all the memory allocated
+{$IFDEF WEBGL}
+    // Keep resources alive; main loop is driven by emscripten.
+{$ELSE}
     freeEverything(true);
+{$ENDIF}
 end;
 ///////////////////////////////////////////////////////////////////////////////
 // preInitEverything - init variables that are going to be ovewritten by arguments

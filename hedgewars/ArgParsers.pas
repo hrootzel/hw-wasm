@@ -22,6 +22,11 @@ unit ArgParsers;
 interface
 
 procedure GetParams;
+{$IFDEF WEBGL}
+var WasmAutoStart: boolean;
+    WasmConfigBuf: array[0..8191] of char;
+    WasmConfigLen: LongInt;
+{$ENDIF}
 {$IFDEF HWLIBRARY}
 var operatingsystem_parameter_argc: LongInt = 0; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cdecl;{$ENDIF} export;{$ENDIF}
     operatingsystem_parameter_argv: pointer = nil; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cdecl;{$ENDIF} export;{$ENDIF}
@@ -244,14 +249,17 @@ begin
 end;
 
 function parseParameter(cmd:string; arg:string; var paramIndex:LongInt): Boolean;
-const reallyAll: array[0..37] of shortstring = (
+const reallyAll: array[0..38] of shortstring = (
                 '--prefix', '--user-prefix', '--locale', '--fullscreen-width', '--fullscreen-height', '--width',
                 '--height', '--maximized', '--frame-interval', '--volume','--nomusic', '--nosound', '--nodampen',
                 '--fullscreen', '--showfps', '--altdmg', '--low-quality', '--raw-quality', '--stereo', '--nick',
                 '--zoom',
   {internal}    '--internal', '--port', '--recorder', '--landpreview',
-  {misc}        '--stats-only', '--gci', '--help','--protocol', '--no-teamtag','--no-hogtag','--no-healthtag','--translucent-tags','--lua-test','--no-holiday-silliness','--chat-size', '--prefix64', '--user-prefix64');
+  {misc}        '--stats-only', '--gci', '--help','--protocol', '--no-teamtag','--no-hogtag','--no-healthtag','--translucent-tags','--lua-test','--no-holiday-silliness','--chat-size', '--prefix64', '--user-prefix64',
+  {web}         '--webcfg64');
 var cmdIndex: byte;
+    decoded: shortstring;
+    j: LongInt;
 begin
     parseParameter:= false;
     cmdIndex:= 0;
@@ -301,6 +309,19 @@ begin
         {--chat-size}           35 : cDefaultChatScale := 1.0 * getLongIntParameter(arg, paramIndex, parseParameter) / 100;
         {--prefix64}            36: PathPrefix := DecodeBase64(getstringParameter(arg, paramIndex, parseParameter));
         {--user-prefix64}       37: UserPathPrefix := DecodeBase64(getstringParameter(arg, paramIndex, parseParameter));
+{$IFDEF WEBGL}
+        {--webcfg64}            38: begin
+                                      decoded := DecodeBase64(getstringParameter(arg, paramIndex, parseParameter));
+                                      for j := 1 to Length(decoded) do
+                                          if WasmConfigLen < High(WasmConfigBuf) then
+                                              begin
+                                              WasmConfigBuf[WasmConfigLen] := decoded[j];
+                                              inc(WasmConfigLen);
+                                              end;
+                                    end;
+{$ELSE}
+        {--webcfg64}            38: parseParameter := false;
+{$ENDIF}
     else
         begin
         //Assume the first "non parameter" is the demo file, anything else is invalid
@@ -343,11 +364,24 @@ procedure GetParams;
 begin
     isInternal:= (ParamStr(1) = '--internal');
     helpCommandUsed:= false;
+{$IFDEF WEBGL}
+    WasmAutoStart:= false;
+    WasmConfigLen:= 0;
+{$ENDIF}
 
     UserPathPrefix := _S'.';
     PathPrefix     := cDefaultPathPrefix;
     recordFileName := '';
     parseCommandLine();
+{$IFDEF WEBGL}
+    // Force data prefix to the preloaded /Data folder in wasm.
+    if (Length(PathPrefix) = 0) or (PathPrefix[1] <> '/') or ((Length(PathPrefix) >= 2) and (PathPrefix[1] = 'C') and (PathPrefix[2] = ':')) then
+        PathPrefix := _S'/Data';
+    if (Length(UserPathPrefix) = 0) or (UserPathPrefix[1] <> '/') or ((Length(UserPathPrefix) >= 2) and (UserPathPrefix[1] = 'C') and (UserPathPrefix[2] = ':')) then
+        UserPathPrefix := _S'/';
+    if recordFileName = './this.program' then
+        recordFileName := '';
+{$ENDIF}
 
     if (isInternal) and (ParamCount<=1) then
         begin
@@ -358,8 +392,12 @@ begin
     if (not helpCommandUsed) then
         if (not cTestLua) and (not isInternal) and (recordFileName = '') then
             begin
+{$IFDEF WEBGL}
+            WasmAutoStart:= true;
+{$ELSE}
             WriteLn(stderr, 'You must specify a demo file.');
             GameType := gmtBadSyntax;
+{$ENDIF}
             end
         else if (recordFileName <> '') then
             WriteLn(stdout, 'Attempting to play demo file "' + recordFilename + '".');
@@ -370,4 +408,3 @@ begin
 end;
 
 end.
-

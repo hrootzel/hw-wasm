@@ -7,6 +7,7 @@ import Data.Maybe
 import Data.Char
 import Text.Parsec.Prim hiding (State)
 import Control.Monad.State
+import Control.Monad (liftM, liftM2, void, unless, guard)
 import System.IO
 import PascalPreprocessor
 import Control.Exception
@@ -1266,4 +1267,3 @@ op2C "<>" = "!="
 op2C "=" = "=="
 op2C "/" = "/(float)"
 op2C a = a
-

@@ -110,6 +110,12 @@ See the `INSTALL.md` file.
 
 Or see our wiki at <https://hedgewars.org/kb/BuildingHedgewars>.
 
+WebAssembly (Experimental)
+--------------------------
+We maintain a work-in-progress WebAssembly/WebGL port and build notes in
+`README-WASM.md`. This includes Emscripten setup, current build scripts, and
+runtime notes specific to the browser build.
+
 Source code
 -----------
 Our main repository is located at <https://hg.hedgewars.org/hedgewars/> using
@@ -146,4 +152,3 @@ Contact
 * Homepage        - https://hedgewars.org/
 * IRC channel     - irc://irc.libera.chat/hedgewars
 * Community forum - https://hedgewars.org/forum
-

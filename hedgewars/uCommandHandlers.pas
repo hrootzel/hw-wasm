@@ -555,22 +555,34 @@ end;
 
 procedure chSetTheme(var s: shortstring);
 begin
-if isDeveloperMode then
-    begin
+{$IFDEF WEBGL}
     cPathz[ptCurrTheme]:= cPathz[ptThemes] + '/' + s;
     Theme:= s;
     InitStepsFlags:= InitStepsFlags or cifTheme
-    end
+{$ELSE}
+    if isDeveloperMode then
+        begin
+        cPathz[ptCurrTheme]:= cPathz[ptThemes] + '/' + s;
+        Theme:= s;
+        InitStepsFlags:= InitStepsFlags or cifTheme
+        end
+{$ENDIF}
 end;
 
 procedure chSetSeed(var s: shortstring);
 begin
-if isDeveloperMode then
-    begin
+{$IFDEF WEBGL}
     SetRandomSeed(s, true);
     cSeed:= s;
     InitStepsFlags:= InitStepsFlags or cifRandomize
-    end
+{$ELSE}
+    if isDeveloperMode then
+        begin
+        SetRandomSeed(s, true);
+        cSeed:= s;
+        InitStepsFlags:= InitStepsFlags or cifRandomize
+        end
+{$ENDIF}
 end;
 
 procedure chAmmoMenu(var s: shortstring);
