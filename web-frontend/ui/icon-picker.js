@@ -1,6 +1,7 @@
 // Scrollable icon picker widget for hats/flags/graves
 import { Node } from './scene.js';
 import { assets } from '../assets.js';
+import { getVerticalScrollMetrics, drawVerticalScrollbar, isPointInTrack, scrollFromPointerY } from './scrollbar.js';
 
 export class IconPicker extends Node {
   constructor(items, getPath, onSelect, iconSize = 32, frameSize = null) {
@@ -21,6 +22,21 @@ export class IconPicker extends Node {
     
     // Preload visible icons
     this._loadVisibleIcons();
+  }
+
+  _scrollMetrics() {
+    const listY = 88; // Preview height + padding
+    const listHeight = this.height - listY;
+    return getVerticalScrollMetrics({
+      scroll: this.scrollOffset,
+      contentSize: this.items.length * this.rowHeight,
+      viewSize: listHeight,
+      trackX: this.width - 10,
+      trackY: listY,
+      trackW: 8,
+      trackH: listHeight,
+      minThumb: 20
+    });
   }
 
   _loadVisibleIcons() {
@@ -112,13 +128,14 @@ export class IconPicker extends Node {
     ctx.restore();
 
     // Scrollbar
-    const totalHeight = this.items.length * this.rowHeight;
-    if (totalHeight > listHeight) {
-      const barHeight = Math.max(20, (listHeight / totalHeight) * listHeight);
-      const barY = (this.scrollOffset / (totalHeight - listHeight)) * (listHeight - barHeight);
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.fillRect(this.x + this.width - 8, listY + barY, 6, barHeight);
-    }
+    const m = this._scrollMetrics();
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    drawVerticalScrollbar(ctx, m, {
+      trackColor: 'rgba(255,255,255,0.12)',
+      thumbColor: 'rgba(255,255,255,0.35)'
+    });
+    ctx.restore();
   }
 
   hitTest(gx, gy) {
@@ -129,18 +146,14 @@ export class IconPicker extends Node {
   onMouseDown(e) {
     const local = this.globalToLocal(e.x, e.y);
     const listY = 88; // Preview height + padding
+    const m = this._scrollMetrics();
     
     // Check if clicking scrollbar
-    if (local.x >= this.width - 10) {
-      const listHeight = this.height - 88;
-      const totalHeight = this.items.length * this.rowHeight;
-      if (totalHeight > listHeight) {
-        this.draggingScrollbar = true;
-        const maxScroll = totalHeight - listHeight;
-        const clickRatio = (local.y - listY) / listHeight;
-        this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
-        this._loadVisibleIcons();
-      }
+    if (isPointInTrack(local.x, local.y, m)) {
+      if (!m.enabled) return;
+      this.draggingScrollbar = true;
+      this.scrollOffset = scrollFromPointerY(local.y, m);
+      this._loadVisibleIcons();
       return;
     }
     
@@ -156,12 +169,9 @@ export class IconPicker extends Node {
     if (!this.draggingScrollbar) return;
     
     const local = this.globalToLocal(e.x, e.y);
-    const listY = 88;
-    const listHeight = this.height - 88;
-    const totalHeight = this.items.length * this.rowHeight;
-    const maxScroll = totalHeight - listHeight;
-    const clickRatio = (local.y - listY) / listHeight;
-    this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
+    const m = this._scrollMetrics();
+    if (!m.enabled) return;
+    this.scrollOffset = scrollFromPointerY(local.y, m);
     this._loadVisibleIcons();
   }
 

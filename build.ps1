@@ -31,6 +31,11 @@ if ($Debug) { $Config = "Debug" }
 if ($Release) { $Config = "Release" }
 if ($Rebuild) { $Clean = $true; $Build = $true }
 
+function Normalize-CMakePath([string]$Path) {
+  if (-not $Path) { return "" }
+  return ($Path.Trim() -replace "\\", "/").ToLowerInvariant()
+}
+
 function Resolve-EmsdkRoot {
   if ($EmsdkRoot -and (Test-Path $EmsdkRoot)) { return $EmsdkRoot }
   if ($env:EMSDK -and (Test-Path $env:EMSDK)) { return $env:EMSDK }
@@ -86,6 +91,29 @@ New-Item -ItemType Directory -Force -Path $BuildDir | Out-Null
 
 # Generate minimal SDL2*Config.cmake stubs for Emscripten.
 $buildDirFull = (Resolve-Path $BuildDir).Path
+$cacheFile = Join-Path $buildDirFull "CMakeCache.txt"
+if (Test-Path $cacheFile) {
+  $cacheText = Get-Content -Raw $cacheFile
+  $cacheSourceMatch = [regex]::Match($cacheText, "(?m)^CMAKE_HOME_DIRECTORY:INTERNAL=(.+)$")
+  $cacheBuildMatch = [regex]::Match($cacheText, "(?m)^CMAKE_CACHEFILE_DIR:INTERNAL=(.+)$")
+  $cacheSource = if ($cacheSourceMatch.Success) { $cacheSourceMatch.Groups[1].Value } else { "" }
+  $cacheBuild = if ($cacheBuildMatch.Success) { $cacheBuildMatch.Groups[1].Value } else { "" }
+  $expectedSource = (Resolve-Path $PSScriptRoot).Path
+  $expectedBuild = $buildDirFull
+
+  $isSourceMismatch = (Normalize-CMakePath $cacheSource) -ne (Normalize-CMakePath $expectedSource)
+  $isBuildMismatch = (Normalize-CMakePath $cacheBuild) -ne (Normalize-CMakePath $expectedBuild)
+
+  if ($isSourceMismatch -or $isBuildMismatch) {
+    Write-Host "Detected stale/incompatible CMake cache in $BuildDir; cleaning CMake metadata."
+    Remove-Item -Force $cacheFile
+    $cmakeFilesDir = Join-Path $buildDirFull "CMakeFiles"
+    if (Test-Path $cmakeFilesDir) {
+      Remove-Item -Recurse -Force $cmakeFilesDir
+    }
+  }
+}
+
 $sdl2Config = Join-Path $buildDirFull "SDL2Config.cmake"
 @'
 set(SDL2_INCLUDE_DIRS "${CMAKE_SYSTEM_INCLUDE_PATH}/SDL")
@@ -229,6 +257,23 @@ if ($StageData) {
       }
       Copy-Item $frontendSrc -Destination $frontendDst -Recurse
       Write-Host "Staged web-frontend to $frontendDst"
+    }
+
+    # Stage Qt frontend resources used by the web skin layer
+    $qtResSrc = Join-Path $PSScriptRoot "frontend-qt6\\res"
+    $qtResRootDst = Join-Path $binDir "frontend-qt6"
+    $qtResDst = Join-Path $qtResRootDst "res"
+    if (Test-Path $qtResSrc) {
+      if (-not (Test-Path $qtResRootDst)) {
+        New-Item -ItemType Directory -Path $qtResRootDst | Out-Null
+      }
+      if (Test-Path $qtResDst) {
+        Remove-Item -Recurse -Force $qtResDst
+      }
+      Copy-Item $qtResSrc -Destination $qtResDst -Recurse
+      Write-Host "Staged frontend-qt6 resources to $qtResDst"
+    } else {
+      Write-Warning "Qt resource source not found at $qtResSrc"
     }
 
     # Stage root index (redirects to frontend)

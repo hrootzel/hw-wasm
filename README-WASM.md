@@ -1,5 +1,5 @@
-WASM Build Environment
-======================
+Wedgewars - The WASM Hedgewars build for in browser gaming
+==========================================================
 
 Status
 ------
@@ -7,6 +7,9 @@ Status
 - WebGL2 engine runs in-browser with packed assets
 - **Canvas-based web frontend** replaces the old shell.html menu
 - Local autostart works via `--webcfg64` config injection
+- Engine quit now returns automatically to `/web-frontend/`
+- Engine launch args include Qt-style audio flags (`--volume`, `--nosound`, `--nomusic`)
+- Web control bindings are exported to engine config using `bind` commands
 
 Required Tools
 --------------
@@ -47,11 +50,17 @@ and sources the environment. The `-StageData` flag copies both
 
 ### 2. Serve and play
 
-```powershell
-.\serve.ps1
+```bat
+serve.bat
 ```
 
 Open **http://localhost:8080/** in your browser (redirects to the frontend).
+
+Linux/macOS:
+
+```bash
+./serve.sh
+```
 
 The serve script auto-detects the best directory:
 - `build/wasm/bin` if engine is built (full experience)
@@ -61,8 +70,8 @@ The serve script auto-detects the best directory:
 
 If you just want to iterate on the frontend without building the engine:
 
-```powershell
-.\serve.ps1 -Dir .
+```bat
+serve.bat 8080 .
 ```
 
 Open **http://localhost:8080/web-frontend/**. The frontend works fully but
@@ -81,7 +90,7 @@ to match the original Hedgewars look and feel.
 - Team Editor: name, difficulty, hat/flag/grave selection with previews, 8 hog names
 - Scheme Editor: all game settings (sliders/dropdowns) and modifier flags
 - Weapon Editor: weapon icons from sprite sheet, ammo count and delay per weapon
-- Settings: music/SFX volume, fullscreen toggle
+- Settings: in-game master volume + in-game music/sound toggles, frontend music/SFX volume, fullscreen toggle
 - Controls: key binding configuration with conflict detection
 - All data persisted to localStorage
 
@@ -101,8 +110,10 @@ web-frontend/
 2. Frontend builds engine config text (matching IPC protocol)
 3. Config is base64-encoded and stored in `localStorage['hw-wasm-webcfg64']`
 4. Browser navigates to `/hwengine.html`
-5. Engine shell reads config, passes `--webcfg64` chunks to `Module.callMain()`
-6. Engine starts the match
+5. Engine shell reads config and settings from localStorage
+6. Shell builds engine args (`--prefix`, `--user-prefix`, `--webcfg64`, `--volume`, optional `--nosound`, optional `--nomusic`)
+7. Engine starts the match
+8. On engine exit/abort, shell redirects back to `/web-frontend/`
 
 ### Config Builder (`data/config-builder.js`)
 Generates the same line-based config the Qt frontend sends via IPC:
@@ -110,6 +121,7 @@ Generates the same line-based config the Qt frontend sends via IPC:
 - Scheme: `turntime`, `sd_turns`, `damagepct`, `gmflags`, etc.
 - Ammo: `ammloadt`, `ammprob`, `ammdelay`, `ammreinf` (one char per weapon in TAmmoType order)
 - Teams: `addteam`, `grave`, `fort`, `flag`, `voicepack`, `addhh`, `hat`
+- Binds: per-team `bind <key> <command>` lines generated from web Controls settings
 
 Build Scripts
 -------------
@@ -134,8 +146,14 @@ Builds in a Linux container and writes outputs to host `build/`.
 # Build image + configure + compile + stage assets
 ./build-was-docker.sh
 
-# Debug build type
+# Debug CMake build type
 BUILD_TYPE=Debug ./build-was-docker.sh
+
+# Explicit release build type (default)
+BUILD_TYPE=Release ./build-was-docker.sh
+
+# Enable Emscripten debug checks (separate from CMake build type)
+WASM_DEBUG=ON ./build-was-docker.sh
 
 # Reconfigure from a clean build dir
 CLEAN=1 ./build-was-docker.sh
@@ -146,23 +164,45 @@ Container inputs/outputs:
 - Host `build/` mounted at `/workspace/build`
 - Expected output at `build/wasm/bin/hwengine.html`
 
-### `serve.ps1` - Development server
-Serves the build output (or project root in dev mode).
+Key environment toggles:
+- `BUILD_TYPE=Release|Debug|RelWithDebInfo` (default: `Release`)
+- `WASM_DEBUG=ON|OFF` (default: `OFF`)
+- `CLEAN=1` to remove the build dir before configure
 
-```powershell
-.\serve.ps1                    # Auto-detect build dir, port 8080
-.\serve.ps1 -Port 9000        # Custom port
-.\serve.ps1 -Dir .            # Force dev mode (project root)
-.\serve.ps1 -Dir build/wasm/bin  # Explicit directory
+### `serve.bat` - Windows CMD server
+Equivalent launcher for Command Prompt users.
+
+```bat
+serve.bat
+serve.bat 9000
+serve.bat 8080 build\wasm\bin
+```
+
+### `serve.sh` - Linux/macOS server
+Equivalent launcher for Bash environments.
+
+```bash
+./serve.sh
+./serve.sh 9000
+./serve.sh 8080 build/wasm/bin
 ```
 
 Engine Shell (`project_files/web/shell.html`)
 ---------------------------------------------
 Minimal HTML template used by Emscripten's `--shell-file`. It:
 - Reads config from `localStorage['hw-wasm-webcfg64']`
+- Reads settings from `localStorage['hw.settings']`
 - Auto-launches the game once WASM data is loaded
+- Applies Qt-style audio args:
+  - `--volume floor(engineVolume * 128 / 100)`
+  - `--nosound` when in-game sound is disabled
+  - `--nomusic` when in-game music is disabled
+- Redirects back to `/web-frontend/` when engine exits/aborts
 - Handles SDL audio context unlock on first interaction
 - Contains the `{{{ SCRIPT }}}` placeholder for Emscripten
+
+Important: `shell.html` is baked into generated `hwengine.html`/`hwengine.js` during build.
+Staging frontend files alone does not update it. Rebuild engine output after shell changes.
 
 Technical Notes
 ---------------
@@ -195,10 +235,6 @@ Current Issues
 --------------
 - ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
 - SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
-
-
-
-
 
 
 

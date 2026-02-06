@@ -41,7 +41,11 @@ class AssetManager {
         this.loaded++;
         resolve(null);
       };
-      img.src = this.basePath + path;
+      if (path.startsWith('raw:')) {
+        img.src = path.slice(4);
+      } else {
+        img.src = this.basePath + path;
+      }
     });
   }
 
@@ -75,6 +79,21 @@ export const CORE_ASSETS = {
   'botlevels': 'Graphics/botlevels.png',
   'star': 'Graphics/star.png',
   'logo': 'misc/hedgewars.png',
+  // Qt frontend resource imports (optional, for richer web UI skin)
+  'qt-bg-default': 'raw:../frontend-qt6/res/Background.png',
+  'qt-bg-christmas': 'raw:../frontend-qt6/res/BackgroundChristmas.png',
+  'qt-bg-easter': 'raw:../frontend-qt6/res/BackgroundEaster.png',
+  'qt-bg-birthday': 'raw:../frontend-qt6/res/BackgroundBirthday.png',
+  'qt-dropdown': 'raw:../frontend-qt6/res/dropdown.png',
+  'qt-dropdown-disabled': 'raw:../frontend-qt6/res/dropdown_disabled.png',
+  'qt-checked': 'raw:../frontend-qt6/res/checked.png',
+  'qt-checked-hover': 'raw:../frontend-qt6/res/checkedHover.png',
+  'qt-unchecked': 'raw:../frontend-qt6/res/unchecked.png',
+  'qt-unchecked-hover': 'raw:../frontend-qt6/res/uncheckedHover.png',
+  'qt-title': 'raw:../frontend-qt6/res/HedgewarsTitle.png',
+  'qt-teamicon': 'raw:../frontend-qt6/res/teamicon.png',
+  'qt-panelbg': 'raw:../frontend-qt6/res/panelbg.png',
+  'qt-dice': 'raw:../frontend-qt6/res/dice.png',
 };
 
 // Weapon icon positions in Ammos_base.png (32x32 each, 8 per row)

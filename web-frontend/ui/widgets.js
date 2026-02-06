@@ -2,6 +2,7 @@
 import { Node } from './scene.js';
 import { theme, applyFont, drawTextShadow } from './theme.js';
 import { audio } from '../util/audio.js';
+import { assets } from '../assets.js';
 
 export class Label extends Node {
   constructor(text = '', fontKey = 'body') {
@@ -73,6 +74,21 @@ export class Button extends Node {
     ctx.fill();
     ctx.stroke();
 
+    // Optional Qt panel texture overlay for richer chrome
+    const panel = assets.get('qt-panelbg');
+    if (panel) {
+      ctx.save();
+      this._roundRect(ctx, 0, 0, this.width, this.height, b.cornerRadius);
+      ctx.clip();
+      ctx.globalAlpha = 0.18;
+      const pattern = ctx.createPattern(panel, 'repeat');
+      if (pattern) {
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, this.width, this.height);
+      }
+      ctx.restore();
+    }
+
     // Text
     if (this.fontSize) {
       ctx.font = `bold ${this.fontSize}px sans-serif`;
@@ -85,6 +101,15 @@ export class Button extends Node {
     const textColor = this.state === 'disabled' ? theme.colors.disabled :
                       this.state === 'hover' ? theme.colors.buttonHover :
                       theme.colors.buttonText;
+
+    if (this.iconId) {
+      const icon = assets.get(this.iconId);
+      if (icon) {
+        const iconSize = Math.min(this.height - 10, this.width - 10);
+        ctx.drawImage(icon, (this.width - iconSize) / 2, (this.height - iconSize) / 2, iconSize, iconSize);
+        return;
+      }
+    }
 
     ctx.fillStyle = theme.colors.textShadow;
     ctx.fillText(this.text, this.width / 2 + 2, this.height / 2 + 2);
