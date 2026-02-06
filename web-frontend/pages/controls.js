@@ -20,7 +20,7 @@ export class ControlsPage extends BasePage {
 
     // Instructions
     const instr = new Label('Click a binding to change it, then press a key', 'body');
-    instr.x = 512;
+    instr.x = this.width / 2;
     instr.y = 90;
     instr.width = 600;
     instr.height = 30;
@@ -62,7 +62,7 @@ export class ControlsPage extends BasePage {
 
     // Status label
     this.statusLabel = new Label('', 'body');
-    this.statusLabel.x = 512;
+    this.statusLabel.x = this.width / 2;
     this.statusLabel.y = 660;
     this.statusLabel.width = 600;
     this.statusLabel.height = 30;
@@ -72,8 +72,8 @@ export class ControlsPage extends BasePage {
 
     // Reset button
     const resetBtn = new Button('Reset to Defaults', () => this._resetDefaults());
-    resetBtn.x = 734;
-    resetBtn.y = 700;
+    resetBtn.x = this.width - resetBtn.width - 30;
+    resetBtn.y = this.height - resetBtn.height - 18;
     this.addChild(resetBtn);
 
     // Back button

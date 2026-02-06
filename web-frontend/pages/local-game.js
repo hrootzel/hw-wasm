@@ -180,8 +180,8 @@ export class LocalGamePage extends BasePage {
 
     // Start button
     const startBtn = new Button('Start Game', () => this._startGame());
-    startBtn.x = 734;
-    startBtn.y = 700;
+    startBtn.x = this.width - startBtn.width - 30;
+    startBtn.y = this.height - startBtn.height - 18;
     this.addChild(startBtn);
 
     this.addBackButton(() => core.popPage());

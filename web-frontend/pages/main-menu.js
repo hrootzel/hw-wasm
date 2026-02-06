@@ -23,14 +23,14 @@ export class MainMenuPage extends Page {
 
     // Subtitle under logo
     this.subtitle = new Label('A turn-based strategy game', 'body');
-    this.subtitle.x = 512;
+    this.subtitle.x = this.width / 2;
     this.subtitle.y = 180;
     this.subtitle.width = 400;
     this.subtitle.height = 30;
     this.subtitle.align = 'center';
     this.addChild(this.subtitle);
 
-    const buttonX = (1024 - theme.button.width) / 2;
+    const buttonX = (this.width - theme.button.width) / 2;
     let y = 240;
     const sp = 55;
 
@@ -54,7 +54,7 @@ export class MainMenuPage extends Page {
 
     this.version = new Label('Web Frontend v0.1', 'small');
     this.version.x = 10;
-    this.version.y = 748;
+    this.version.y = this.height - 20;
     this.version.width = 200;
     this.version.height = 20;
     this.version.shadow = false;
@@ -104,13 +104,13 @@ export class MainMenuPage extends Page {
     const logo = assets.get('logo');
     if (logo) {
       const lw = 180, lh = 180;
-      ctx.drawImage(logo, (1024 - lw) / 2, 10, lw, lh);
+      ctx.drawImage(logo, (this.width - lw) / 2, 10, lw, lh);
     } else {
       // Fallback text
       ctx.fillStyle = '#FFDD44';
       ctx.font = 'bold 48px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('HEDGEWARS', 512, 100);
+      ctx.fillText('HEDGEWARS', this.width / 2, 100);
     }
   }
 }

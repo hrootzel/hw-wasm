@@ -57,8 +57,8 @@ export class SchemeEditorPage extends BasePage {
 
     // Save button
     const saveBtn = new Button('Save', () => this._saveScheme());
-    saveBtn.x = 734;
-    saveBtn.y = 700;
+    saveBtn.x = this.width - saveBtn.width - 30;
+    saveBtn.y = this.height - saveBtn.height - 18;
     this.addChild(saveBtn);
 
     this.addBackButton(() => {

@@ -78,7 +78,7 @@ export class SettingsPage extends BasePage {
     const controlsBtn = new Button('Configure Controls', () => {
       core.pushPage(new ControlsPage());
     });
-    controlsBtn.x = (1024 - 260) / 2;
+    controlsBtn.x = (this.width - controlsBtn.width) / 2;
     controlsBtn.y = y;
     this.addChild(controlsBtn);
 
@@ -89,7 +89,7 @@ export class SettingsPage extends BasePage {
       this.settings.fullscreen = v;
       this._toggleFullscreen(v);
     });
-    this.fullscreenCheck.x = (1024 - 200) / 2;
+    this.fullscreenCheck.x = (this.width - this.fullscreenCheck.width) / 2;
     this.fullscreenCheck.y = y;
     this.addChild(this.fullscreenCheck);
 

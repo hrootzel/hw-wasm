@@ -13,7 +13,7 @@ export class BasePage extends Page {
 
   addTitle(text, y = 30) {
     const label = new Label(text, 'title');
-    label.x = 512;
+    label.x = this.width / 2;
     label.y = y;
     label.width = 600;
     label.height = 50;
@@ -26,7 +26,7 @@ export class BasePage extends Page {
   addBackButton(onClick = null) {
     const btn = new Button('Back', onClick || (() => core.popPage()));
     btn.x = 30;
-    btn.y = 700;
+    btn.y = this.height - btn.height - 18;
     this.addChild(btn);
     return btn;
   }
