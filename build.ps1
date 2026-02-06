@@ -259,6 +259,23 @@ if ($StageData) {
       Write-Host "Staged web-frontend to $frontendDst"
     }
 
+    # Stage Qt frontend resources used by the web skin layer
+    $qtResSrc = Join-Path $PSScriptRoot "frontend-qt6\\res"
+    $qtResRootDst = Join-Path $binDir "frontend-qt6"
+    $qtResDst = Join-Path $qtResRootDst "res"
+    if (Test-Path $qtResSrc) {
+      if (-not (Test-Path $qtResRootDst)) {
+        New-Item -ItemType Directory -Path $qtResRootDst | Out-Null
+      }
+      if (Test-Path $qtResDst) {
+        Remove-Item -Recurse -Force $qtResDst
+      }
+      Copy-Item $qtResSrc -Destination $qtResDst -Recurse
+      Write-Host "Staged frontend-qt6 resources to $qtResDst"
+    } else {
+      Write-Warning "Qt resource source not found at $qtResSrc"
+    }
+
     # Stage root index (redirects to frontend)
     $rootIndexSrc = Join-Path $PSScriptRoot "index.html"
     $rootIndexDst = Join-Path $binDir "index.html"

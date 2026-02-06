@@ -246,7 +246,8 @@ export class TeamEditorPage extends BasePage {
       this.addChild(input);
       this.hogInputs.push(input);
 
-      const diceBtn = new Button('🎲', () => this._randomSingleHogName(i));
+      const diceBtn = new Button('', () => this._randomSingleHogName(i));
+      diceBtn.iconId = 'qt-dice';
       diceBtn.x = input.x + input.width + 5;
       diceBtn.y = input.y;
       diceBtn.width = 30;

@@ -2,6 +2,7 @@
 import { Node } from './scene.js';
 import { theme, applyFont } from './theme.js';
 import { audio } from '../util/audio.js';
+import { assets } from '../assets.js';
 
 export class Checkbox extends Node {
   constructor(label = '', checked = false, onChange = null) {
@@ -18,23 +19,29 @@ export class Checkbox extends Node {
 
   drawSelf(ctx) {
     const bs = this.boxSize;
-    
-    // Box background
-    ctx.fillStyle = this.hovered ? 'rgba(80,110,160,0.9)' : 'rgba(60,80,120,0.8)';
-    ctx.strokeStyle = '#88AADD';
-    ctx.lineWidth = 2;
-    ctx.fillRect(0, (this.height - bs) / 2, bs, bs);
-    ctx.strokeRect(0, (this.height - bs) / 2, bs, bs);
-    
-    // Checkmark
-    if (this.checked) {
-      ctx.strokeStyle = '#FFDD44';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(4, (this.height - bs) / 2 + bs / 2);
-      ctx.lineTo(bs / 3, (this.height - bs) / 2 + bs - 4);
-      ctx.lineTo(bs - 4, (this.height - bs) / 2 + 4);
-      ctx.stroke();
+    const boxY = (this.height - bs) / 2;
+    const checkedImg = assets.get(this.hovered ? 'qt-checked-hover' : 'qt-checked');
+    const uncheckedImg = assets.get(this.hovered ? 'qt-unchecked-hover' : 'qt-unchecked');
+
+    if ((this.checked && checkedImg) || (!this.checked && uncheckedImg)) {
+      const img = this.checked ? checkedImg : uncheckedImg;
+      ctx.drawImage(img, 0, boxY, bs, bs);
+    } else {
+      // Fallback primitive rendering
+      ctx.fillStyle = this.hovered ? 'rgba(80,110,160,0.9)' : 'rgba(60,80,120,0.8)';
+      ctx.strokeStyle = '#88AADD';
+      ctx.lineWidth = 2;
+      ctx.fillRect(0, boxY, bs, bs);
+      ctx.strokeRect(0, boxY, bs, bs);
+      if (this.checked) {
+        ctx.strokeStyle = '#FFDD44';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(4, boxY + bs / 2);
+        ctx.lineTo(bs / 3, boxY + bs - 4);
+        ctx.lineTo(bs - 4, boxY + 4);
+        ctx.stroke();
+      }
     }
     
     // Label
@@ -247,21 +254,28 @@ export class Dropdown extends Node {
     ctx.textBaseline = 'middle';
     ctx.fillText(this.selectedOption || '', 10, this.height / 2);
     
-    // Arrow
-    ctx.fillStyle = '#FFDD44';
-    ctx.beginPath();
-    const ax = this.width - 20;
-    const ay = this.height / 2;
-    if (this.open) {
-      ctx.moveTo(ax - 6, ay + 3);
-      ctx.lineTo(ax + 6, ay + 3);
-      ctx.lineTo(ax, ay - 5);
+    // Arrow / Qt dropdown glyph
+    const dd = assets.get('qt-dropdown');
+    if (dd) {
+      const iconW = 14;
+      const iconH = 10;
+      ctx.drawImage(dd, this.width - 22, (this.height - iconH) / 2, iconW, iconH);
     } else {
-      ctx.moveTo(ax - 6, ay - 3);
-      ctx.lineTo(ax + 6, ay - 3);
-      ctx.lineTo(ax, ay + 5);
+      ctx.fillStyle = '#FFDD44';
+      ctx.beginPath();
+      const ax = this.width - 20;
+      const ay = this.height / 2;
+      if (this.open) {
+        ctx.moveTo(ax - 6, ay + 3);
+        ctx.lineTo(ax + 6, ay + 3);
+        ctx.lineTo(ax, ay - 5);
+      } else {
+        ctx.moveTo(ax - 6, ay - 3);
+        ctx.lineTo(ax + 6, ay - 3);
+        ctx.lineTo(ax, ay + 5);
+      }
+      ctx.fill();
     }
-    ctx.fill();
   }
 
   // Draw dropdown list on top of everything
@@ -387,6 +401,21 @@ export class ScrollList extends Node {
     ctx.roundRect(0, 0, this.width, this.height, 4);
     ctx.fill();
     ctx.stroke();
+
+    const panel = assets.get('qt-panelbg');
+    if (panel) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(0, 0, this.width, this.height, 4);
+      ctx.clip();
+      ctx.globalAlpha = 0.14;
+      const pattern = ctx.createPattern(panel, 'repeat');
+      if (pattern) {
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, this.width, this.height);
+      }
+      ctx.restore();
+    }
     
     // Clip content
     ctx.save();
@@ -524,6 +553,21 @@ export class ItemGrid extends Node {
     ctx.roundRect(0, 0, this.width, this.height, 4);
     ctx.fill();
     ctx.stroke();
+
+    const panel = assets.get('qt-panelbg');
+    if (panel) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(0, 0, this.width, this.height, 4);
+      ctx.clip();
+      ctx.globalAlpha = 0.14;
+      const pattern = ctx.createPattern(panel, 'repeat');
+      if (pattern) {
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, this.width, this.height);
+      }
+      ctx.restore();
+    }
     
     ctx.save();
     ctx.beginPath();
