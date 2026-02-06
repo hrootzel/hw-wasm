@@ -11,8 +11,6 @@ if (-not $Dir) {
     $Dir = "build/wasm/bin"
   } elseif (Test-Path "build/wasm8/bin/hwengine.html") {
     $Dir = "build/wasm8/bin"
-  } elseif (Test-Path "build/qt-wasm/hedgewars.js") {
-    $Dir = "build/qt-wasm"
   } else {
     # Dev mode: serve from project root so web-frontend/ and share/ paths both work
     $Dir = "."

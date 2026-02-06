@@ -7,7 +7,6 @@ Status
 - WebGL2 engine runs in-browser with packed assets
 - **Canvas-based web frontend** replaces the old shell.html menu
 - Local autostart works via `--webcfg64` config injection
-- Qt WASM frontend available as experimental alternative
 
 Required Tools
 --------------
@@ -126,8 +125,6 @@ Key flags:
 - `-SkipRust` — Skip Rust mapgen build
 - `-SkipPas2c` — Skip pas2c rebuild
 
-### `build-qt-wasm.ps1` — Qt WASM frontend (experimental)
-Builds the Qt6 Widgets frontend for WebAssembly. Requires Qt for WASM.
 
 ### `serve.ps1` — Development server
 Serves the build output (or project root in dev mode).
@@ -152,7 +149,6 @@ Technical Notes
 
 ### Emscripten Version
 - Engine build: current/latest emsdk (5.0.0 default in build.ps1)
-- Qt WASM (Qt 6.10.2): requires Emscripten **4.0.7**
 
 ### PhysFS
 Built as a minimal static library from `misc/libphysfs` using Emscripten.
@@ -180,19 +176,3 @@ Current Issues
 - ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
 - SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
 
-Qt WASM Frontend (Experimental)
--------------------------------
-An alternative path using the Qt6 Widgets frontend compiled to WASM.
-
-- Built with asyncify for blocking `QDialog::exec()` calls
-- Curated asset preloading via `qt-preload.json` to avoid `ERR_INSUFFICIENT_RESOURCES`
-- Stages engine artifacts into `build/qt-wasm`
-- Requires larger refactors (network stubs, SDL replacement, engine launch bridge)
-
-```powershell
-$env:QT_WASM = "C:\Qt\6.10.2\wasm_singlethread"
-$env:EMSDK = "C:\Users\andre\emsdk"
-.\build-qt-wasm.ps1
-```
-
-The canvas-based web frontend is the recommended path for browser play.

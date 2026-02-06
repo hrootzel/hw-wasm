@@ -112,8 +112,8 @@ Or see our wiki at <https://hedgewars.org/kb/BuildingHedgewars>.
 
 WebAssembly (Experimental)
 --------------------------
-We maintain a work-in-progress WebAssembly/WebGL/Qt WASM port and build notes in
-`README-WASM.md`. This includes Emscripten/Qt setup, current build scripts, and
+We maintain a work-in-progress WebAssembly/WebGL port and build notes in
+`README-WASM.md`. This includes Emscripten setup, current build scripts, and
 runtime notes specific to the browser build.
 
 Source code
