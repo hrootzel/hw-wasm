@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=web-frontend/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hedgewars WASM</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    a { color: #1a73e8; }
-  </style>
-</head>
-<body>
-  <p>Redirecting to the Hedgewars web frontend...</p>
-  <p>If you are not redirected, open <a href="web-frontend/">web-frontend/</a>.</p>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="refresh" content="0; url=release/index.html" />
+    <title>Wedgewars</title>
+    <script>
+      // Prefer a real redirect so query/hash are preserved if present.
+      (function () {
+        var target = 'release/index.html' + window.location.search + window.location.hash;
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to <a href="release/index.html">release/index.html</a>...</p>
+  </body>
 </html>
+
