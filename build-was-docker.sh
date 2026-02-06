@@ -8,6 +8,10 @@ BUILD_DIR="${BUILD_DIR:-build/wasm}"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
 JOBS="${JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)}"
 STAGE_DATA="${STAGE_DATA:-1}"
+SPLIT_DATA_PACK="${SPLIT_DATA_PACK:-0}"
+DATA_CHUNK_MB="${DATA_CHUNK_MB:-50}"
+CLEANUP_BUILD="${CLEANUP_BUILD:-0}"
+KEEP_ORIGINAL_DATA_PACK="${KEEP_ORIGINAL_DATA_PACK:-0}"
 SKIP_RUST="${SKIP_RUST:-OFF}"
 SKIP_PAS2C="${SKIP_PAS2C:-OFF}"
 WASM_DEBUG="${WASM_DEBUG:-OFF}"
@@ -24,6 +28,10 @@ docker run --rm -t \
   -e BUILD_TYPE="${BUILD_TYPE}" \
   -e JOBS="${JOBS}" \
   -e STAGE_DATA="${STAGE_DATA}" \
+  -e SPLIT_DATA_PACK="${SPLIT_DATA_PACK}" \
+  -e DATA_CHUNK_MB="${DATA_CHUNK_MB}" \
+  -e CLEANUP_BUILD="${CLEANUP_BUILD}" \
+  -e KEEP_ORIGINAL_DATA_PACK="${KEEP_ORIGINAL_DATA_PACK}" \
   -e SKIP_RUST="${SKIP_RUST}" \
   -e SKIP_PAS2C="${SKIP_PAS2C}" \
   -e WASM_DEBUG="${WASM_DEBUG}" \
@@ -37,6 +45,10 @@ docker run --rm -t \
     build_type="${BUILD_TYPE:-Release}"
     jobs="${JOBS:-4}"
     stage_data="${STAGE_DATA:-1}"
+    split_data_pack="${SPLIT_DATA_PACK:-0}"
+    data_chunk_mb="${DATA_CHUNK_MB:-50}"
+    cleanup_build="${CLEANUP_BUILD:-0}"
+    keep_original_data_pack="${KEEP_ORIGINAL_DATA_PACK:-0}"
     skip_rust="${SKIP_RUST:-OFF}"
     skip_pas2c="${SKIP_PAS2C:-OFF}"
     wasm_debug="${WASM_DEBUG:-OFF}"
@@ -117,9 +129,14 @@ EOF
     mkdir -p "${physfs_out}"
     find "${physfs_out}" -type f -name "*.o" -delete
 
+    physfs_opt="-O0"
+    if [[ "${build_type}" == "Release" || "${build_type}" == "RelWithDebInfo" ]]; then
+      physfs_opt="-O3"
+    fi
+
     while IFS= read -r src; do
       out_obj="${physfs_out}/$(basename "${src}").o"
-      emcc -O2 -c "${src}" -I"${physfs_src}" -DPHYSFS_NO_CDROM_SUPPORT=1 -D__unix__=1 -o "${out_obj}"
+      emcc ${physfs_opt} -c "${src}" -I"${physfs_src}" -DPHYSFS_NO_CDROM_SUPPORT=1 -D__unix__=1 -o "${out_obj}"
     done < <(
       find "${physfs_src}" -type f -name "*.c" \
         ! -name "platform_windows.c" \
@@ -156,6 +173,27 @@ EOF
 
     emmake cmake --build "${build_dir_full}" -j"${jobs}"
 
+    py_exec="python3"
+    if ! command -v "${py_exec}" >/dev/null 2>&1; then
+      py_exec="python"
+    fi
+
+    if [[ "${split_data_pack}" == "1" ]]; then
+      bin_dir="${build_dir_full}/bin"
+      if [[ -d "${bin_dir}" ]]; then
+        for f in "${bin_dir}"/hwengine*.data; do
+          if [[ -f "${f}" && ! -f "${f}.part0" ]]; then
+            echo "Splitting data pack: ${f} -> ${data_chunk_mb} MB parts"
+            split_args=(/workspace/tools/split_wasm_data_pack.py --input "${f}" --chunk-mb "${data_chunk_mb}")
+            if [[ "${keep_original_data_pack}" != "1" ]]; then
+              split_args+=(--delete-original)
+            fi
+            "${py_exec}" "${split_args[@]}"
+          fi
+        done
+      fi
+    fi
+
     if [[ "${stage_data}" == "1" ]]; then
       bin_dir="${build_dir_full}/bin"
       mkdir -p "${bin_dir}"
@@ -166,6 +204,29 @@ EOF
       cp -a "frontend-qt6/res" "${bin_dir}/frontend-qt6/res"
       if [[ -f "index.html" ]]; then
         cp "index.html" "${bin_dir}/index.html"
+      fi
+    fi
+
+    if [[ "${cleanup_build}" == "1" ]]; then
+      bin_dir="${build_dir_full}/bin"
+      echo "Cleaning build outputs (keep runtime only) in ${build_dir_full}"
+      # Remove everything but bin/
+      find "${build_dir_full}" -mindepth 1 -maxdepth 1 ! -name "bin" -exec rm -rf {} +
+      # In bin/, keep only runtime essentials
+      find "${bin_dir}" -mindepth 1 -maxdepth 1 \
+        ! -name "Data" \
+        ! -name "web-frontend" \
+        ! -name "frontend-qt6" \
+        ! -name "index.html" \
+        ! -name "hwengine*" \
+        -exec rm -rf {} +
+
+      # Trim staged UI assets to deployment-friendly size.
+      trim_script="/workspace/tools/trim_wasm_web_runtime_assets.py"
+      if [[ -f "${trim_script}" ]]; then
+        "${py_exec}" "${trim_script}" --bin-dir "${bin_dir}" --repo-root /workspace
+      else
+        echo "Warning: missing trim script (${trim_script}); skipping UI asset trim."
       fi
     fi
 

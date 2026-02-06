@@ -1,9 +1,8 @@
 Hedgewars - a turn-based strategy game
 ======================================
-[![Build Status](https://travis-ci.org/hedgewars/hw.svg)](https://travis-ci.org/hedgewars/hw)
 
-> Fork note: This repository is **Wedgewars - The WASM Hedgewars build for in browser gaming**.  
-> For fork-specific WebAssembly/browser details, read `README-WASM.md`.
+This repository is **Wedgewars - The WASM Hedgewars build for in browser gaming**.  
+For fork-specific WebAssembly/browser details, read [README-WASM.md](./README-WASM.md).
 
 Description
 -----------

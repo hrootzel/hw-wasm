@@ -3,6 +3,9 @@ import { core } from './ui/core.js';
 import { assets, CORE_ASSETS } from './assets.js';
 import { audio } from './util/audio.js';
 import { storage } from './data/storage.js';
+import { DEFAULT_SCHEMES } from './data/schemes.js';
+import { DEFAULT_WEAPON_SETS } from './data/weapons.js';
+import { DEFAULT_TEAMS, DEFAULT_BINDINGS } from './data/defaults.js';
 import { MainMenuPage } from './pages/main-menu.js';
 
 async function init() {
@@ -17,6 +20,13 @@ async function init() {
   const settings = storage.getSettings();
   audio.setMusicVolume(settings.musicVolume / 100);
   audio.setSfxVolume(settings.sfxVolume / 100);
+
+  // Ensure first-run defaults exist (Local Game assumes these are present).
+  if (!storage.getTeams().length) storage.saveTeams(JSON.parse(JSON.stringify(DEFAULT_TEAMS)));
+  if (!storage.getSchemes().length) storage.saveSchemes(JSON.parse(JSON.stringify(DEFAULT_SCHEMES)));
+  if (!storage.getWeaponSets().length) storage.saveWeaponSets(JSON.parse(JSON.stringify(DEFAULT_WEAPON_SETS)));
+  const bindings = storage.getBindings();
+  if (!bindings || !Object.keys(bindings).length) storage.saveBindings({ ...DEFAULT_BINDINGS });
 
   // Load core assets
   loadingEl.textContent = 'Loading assets...';
