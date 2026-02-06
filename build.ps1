@@ -64,6 +64,13 @@ function Resolve-Ninja {
   throw "ninja.exe not found. Install Ninja (winget install Ninja-build.Ninja)."
 }
 
+function Invoke-PythonScript([string[]]$PyArgs) {
+  & python @PyArgs
+  if ($LASTEXITCODE -eq 0) { return }
+  & py -3 @PyArgs
+  if ($LASTEXITCODE -ne 0) { throw "Python script failed: $($PyArgs -join ' ')" }
+}
+
 function Cleanup-WasmRuntime([string]$BuildDirFull) {
   if (-not (Test-Path $BuildDirFull)) {
     throw "Build directory not found: $BuildDirFull"
@@ -98,6 +105,16 @@ function Cleanup-WasmRuntime([string]$BuildDirFull) {
 
     Remove-Item -Force -LiteralPath $_.FullName
   }
+
+  # Trim staged UI assets to deployment-friendly size:
+  # - `Data/` is already packaged into hwengine.data for the engine; web UI only needs a small subset.
+  # - `frontend-qt6/res` is only used for a small set of "skin" images referenced by web-frontend/assets.js.
+  $trimScript = Join-Path $PSScriptRoot "tools\\trim_wasm_web_runtime_assets.py"
+  if (Test-Path $trimScript) {
+    Invoke-PythonScript -PyArgs @($trimScript, "--bin-dir", $binDir, "--repo-root", $PSScriptRoot)
+  } else {
+    Write-Host "Warning: missing trim script ($trimScript); skipping UI asset trim."
+  }
 }
 
 # Allow a fast cleanup-only run without emsdk/cmake overhead.
@@ -106,13 +123,6 @@ if ($CleanupBuild -and -not $Build -and -not $StageData -and -not $SplitDataPack
   Cleanup-WasmRuntime $buildDirFull
   Write-Host "CleanupBuild complete: kept runtime files in $buildDirFull\\bin"
   exit 0
-}
-
-function Invoke-PythonScript([string[]]$PyArgs) {
-  & python @PyArgs
-  if ($LASTEXITCODE -eq 0) { return }
-  & py -3 @PyArgs
-  if ($LASTEXITCODE -ne 0) { throw "Python script failed: $($PyArgs -join ' ')" }
 }
 
 function Split-WasmDataPacks([string]$BuildDirFull) {
