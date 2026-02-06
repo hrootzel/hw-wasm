@@ -23,14 +23,14 @@ export class MainMenuPage extends Page {
 
     // Subtitle under logo
     this.subtitle = new Label('A turn-based strategy game', 'body');
-    this.subtitle.x = 512;
+    this.subtitle.x = this.width / 2;
     this.subtitle.y = 180;
     this.subtitle.width = 400;
     this.subtitle.height = 30;
     this.subtitle.align = 'center';
     this.addChild(this.subtitle);
 
-    const buttonX = (1024 - theme.button.width) / 2;
+    const buttonX = (this.width - theme.button.width) / 2;
     let y = 240;
     const sp = 55;
 
@@ -54,7 +54,7 @@ export class MainMenuPage extends Page {
 
     this.version = new Label('Web Frontend v0.1', 'small');
     this.version.x = 10;
-    this.version.y = 748;
+    this.version.y = this.height - 20;
     this.version.width = 200;
     this.version.height = 20;
     this.version.shadow = false;
@@ -82,13 +82,26 @@ export class MainMenuPage extends Page {
   }
 
   _drawBackground(ctx) {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    let bg = assets.get('qt-bg-default');
+    if (month === 12) bg = assets.get('qt-bg-christmas') || bg;
+    else if (month === 4) bg = assets.get('qt-bg-easter') || bg;
+    else if (month === 9) bg = assets.get('qt-bg-birthday') || bg;
+
+    if (bg) {
+      ctx.drawImage(bg, 0, 0, this.width, this.height);
+      ctx.fillStyle = 'rgba(12, 18, 32, 0.2)';
+      ctx.fillRect(0, 0, this.width, this.height);
+    }
+
     // Background gradient
     const grad = ctx.createLinearGradient(0, 0, 0, this.height);
     grad.addColorStop(0, '#1a3a5c');
     grad.addColorStop(0.4, '#2d5a7b');
     grad.addColorStop(0.7, '#4a7a9a');
     grad.addColorStop(1, '#2d5a7b');
-    ctx.fillStyle = grad;
+    ctx.fillStyle = bg ? 'rgba(26,58,92,0.22)' : grad;
     ctx.fillRect(0, 0, this.width, this.height);
 
     // Clouds - fill bottom half
@@ -101,16 +114,30 @@ export class MainMenuPage extends Page {
     }
 
     // Logo
-    const logo = assets.get('logo');
-    if (logo) {
-      const lw = 180, lh = 180;
-      ctx.drawImage(logo, (1024 - lw) / 2, 10, lw, lh);
+    const title = assets.get('qt-title');
+    if (title) {
+      const tw = Math.min(560, this.width - 120);
+      const th = Math.floor((title.height / title.width) * tw);
+      ctx.drawImage(title, (this.width - tw) / 2, 26, tw, th);
     } else {
-      // Fallback text
-      ctx.fillStyle = '#FFDD44';
-      ctx.font = 'bold 48px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('HEDGEWARS', 512, 100);
+      const logo = assets.get('logo');
+      if (logo) {
+        const lw = 180, lh = 180;
+        ctx.drawImage(logo, (this.width - lw) / 2, 10, lw, lh);
+      } else {
+        // Fallback text
+        ctx.fillStyle = '#FFDD44';
+        ctx.font = 'bold 48px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('HEDGEWARS', this.width / 2, 100);
+      }
+    }
+
+    const teamIcon = assets.get('qt-teamicon');
+    if (teamIcon) {
+      ctx.globalAlpha = 0.12;
+      ctx.drawImage(teamIcon, this.width - 136, 18, 120, 120);
+      ctx.globalAlpha = 1;
     }
   }
 }

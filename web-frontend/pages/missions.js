@@ -56,60 +56,76 @@ export class MissionsPage extends BasePage {
   _buildUI() {
     this.addTitle('Missions & Campaigns');
 
+    // Center the two-column layout for better widescreen use.
+    const contentW = 980;
+    const contentX = Math.round((this.width - contentW) / 2);
+    const colW = 440;
+    const gap = 60;
+    const leftX = contentX;
+    const rightX = contentX + colW + gap;
+
     // Training section
-    const trainingLabel = new Label('Training Missions', 'title');
-    trainingLabel.x = 100;
+    const trainingLabel = new Label('Training Missions', 'section');
+    trainingLabel.x = leftX;
     trainingLabel.y = 120;
+    trainingLabel.width = colW;
+    trainingLabel.height = 34;
+    trainingLabel.color = '#FFDD44';
     this.addChild(trainingLabel);
 
     this.trainingList = new ScrollList(
       TRAINING_MISSIONS.map(m => m.name),
       (i) => this._startTraining(i)
     );
-    this.trainingList.x = 100;
+    this.trainingList.x = leftX;
     this.trainingList.y = 160;
-    this.trainingList.width = 350;
+    this.trainingList.width = colW;
     this.trainingList.height = 400;
     this.addChild(this.trainingList);
 
     // Campaigns section
-    const campaignLabel = new Label('Campaigns', 'title');
-    campaignLabel.x = 500;
+    const campaignLabel = new Label('Campaigns', 'section');
+    campaignLabel.x = rightX;
     campaignLabel.y = 120;
+    campaignLabel.width = colW;
+    campaignLabel.height = 34;
+    campaignLabel.color = '#FFDD44';
     this.addChild(campaignLabel);
 
     this.campaignList = new ScrollList(
       Object.keys(CAMPAIGNS),
       (i) => this._selectCampaign(Object.keys(CAMPAIGNS)[i])
     );
-    this.campaignList.x = 500;
+    this.campaignList.x = rightX;
     this.campaignList.y = 160;
-    this.campaignList.width = 350;
+    this.campaignList.width = colW;
     this.campaignList.height = 150;
     this.addChild(this.campaignList);
 
     // Campaign missions list (initially hidden)
     this.missionLabel = new Label('', 'body');
-    this.missionLabel.x = 500;
+    this.missionLabel.x = rightX;
     this.missionLabel.y = 320;
+    this.missionLabel.width = colW;
     this.addChild(this.missionLabel);
 
     this.missionList = new ScrollList([], () => {});
-    this.missionList.x = 500;
+    this.missionList.x = rightX;
     this.missionList.y = 350;
-    this.missionList.width = 350;
+    this.missionList.width = colW;
     this.missionList.height = 210;
     this.missionList.visible = false;
     this.addChild(this.missionList);
 
     // Info label
     const infoLabel = new Label('Training missions work. Campaigns are experimental.', 'small');
-    infoLabel.x = 100;
+    infoLabel.x = contentX;
     infoLabel.y = 580;
-    infoLabel.width = 750;
+    infoLabel.width = contentW;
     this.addChild(infoLabel);
 
-    this.addBackButton(() => core.popPage());
+    const backBtn = this.addBackButton(() => core.popPage());
+    backBtn.x = contentX;
   }
 
   _selectCampaign(campaignName) {
@@ -138,13 +154,15 @@ export class MissionsPage extends BasePage {
       scheme: schemes[0],
       weaponSet: weaponSets[0],
       teams: teams.slice(0, 1), // Single team for training
-      mission: mission.file + '.lua'
+      mission: mission.file + '.lua',
+      bindings: storage.getBindings()
     });
     
     // Store config and launch
     const configB64 = btoa(config);
     localStorage.setItem('hw-wasm-webcfg64', configB64);
-    window.location.href = '/hwengine.html';
+    const base = window.location.pathname.replace(/\/web-frontend\/.*/, '');
+    window.location.href = base + '/hwengine.html';
     
     audio.playClick();
   }
@@ -163,13 +181,15 @@ export class MissionsPage extends BasePage {
       scheme: schemes[0],
       weaponSet: weaponSets[0],
       teams: teams.slice(0, 1),
-      mission: mission.file + '.lua'
+      mission: mission.file + '.lua',
+      bindings: storage.getBindings()
     });
     
     // Store config and launch
     const configB64 = btoa(config);
     localStorage.setItem('hw-wasm-webcfg64', configB64);
-    window.location.href = '/hwengine.html';
+    const base = window.location.pathname.replace(/\/web-frontend\/.*/, '');
+    window.location.href = base + '/hwengine.html';
     
     audio.playClick();
   }

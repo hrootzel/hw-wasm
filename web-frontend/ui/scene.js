@@ -110,7 +110,7 @@ export class Container extends Node {
 export class Page extends Container {
   constructor() {
     super();
-    this.width = 1024;
+    this.width = 1366;
     this.height = 768;
   }
 

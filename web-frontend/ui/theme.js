@@ -2,6 +2,7 @@
 export const theme = {
   fonts: {
     title: { family: 'Arial, sans-serif', size: 48, weight: 'bold' },
+    section: { family: 'Arial, sans-serif', size: 30, weight: 'bold' },
     button: { family: 'Arial, sans-serif', size: 28, weight: 'bold' },
     body: { family: 'Arial, sans-serif', size: 18, weight: 'normal' },
     small: { family: 'Arial, sans-serif', size: 14, weight: 'normal' },

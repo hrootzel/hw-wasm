@@ -5,7 +5,7 @@ class Core {
   constructor() {
     this.canvas = null;
     this.ctx = null;
-    this.width = 1024;
+    this.width = 1366;
     this.height = 768;
     this.scale = 1;
     this.offsetX = 0;

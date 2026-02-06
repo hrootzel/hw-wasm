@@ -49,13 +49,31 @@ function getHatDict(hatname) {
   return 'generic';
 }
 
+function getTeamHogCount(team) {
+  const fromTeam = Number(team?.hogCount);
+  if (Number.isInteger(fromTeam) && fromTeam > 0) {
+    return Math.min(fromTeam, 8);
+  }
+  const fromArray = team?.hedgehogs?.length || 0;
+  return Math.min(Math.max(fromArray, 1), 8);
+}
+
+function ensureHedgehog(team, index) {
+  if (!team.hedgehogs) team.hedgehogs = [];
+  while (team.hedgehogs.length <= index) {
+    team.hedgehogs.push({ name: `Hedgehog ${team.hedgehogs.length + 1}` });
+  }
+}
+
 // Generate random hedgehog names for a team
 export async function randomHogNames(team) {
   const usedNames = new Set();
   const dictName = getHatDict(team.hat || 'NoHat');
   const names = getNames(dictName);
+  const hogCount = getTeamHogCount(team);
   
-  for (let i = 0; i < team.hogCount; i++) {
+  for (let i = 0; i < hogCount; i++) {
+    ensureHedgehog(team, i);
     let availableNames = names.filter(n => !usedNames.has(n));
     if (availableNames.length === 0) {
       availableNames = names;
@@ -79,8 +97,10 @@ export function randomHogNamesSync(team) {
   const usedNames = new Set();
   const dictName = getHatDict(team.hat || 'NoHat');
   const names = getNames(dictName);
+  const hogCount = getTeamHogCount(team);
   
-  for (let i = 0; i < team.hogCount; i++) {
+  for (let i = 0; i < hogCount; i++) {
+    ensureHedgehog(team, i);
     let availableNames = names.filter(n => !usedNames.has(n));
     if (availableNames.length === 0) {
       availableNames = names;
@@ -91,5 +111,31 @@ export function randomHogNamesSync(team) {
     usedNames.add(name);
   }
   
+  return team;
+}
+
+export function randomHogNameSync(team, hogIndex) {
+  const hogCount = getTeamHogCount(team);
+  if (!Number.isInteger(hogIndex) || hogIndex < 0 || hogIndex >= hogCount) {
+    return team;
+  }
+
+  ensureHedgehog(team, hogIndex);
+
+  const dictName = getHatDict(team.hat || 'NoHat');
+  const names = getNames(dictName);
+  const usedNames = new Set();
+
+  for (let i = 0; i < hogCount; i++) {
+    if (i === hogIndex) continue;
+    const existing = team.hedgehogs?.[i]?.name;
+    if (existing) usedNames.add(existing);
+  }
+
+  let availableNames = names.filter(n => !usedNames.has(n));
+  if (availableNames.length === 0) {
+    availableNames = names;
+  }
+  team.hedgehogs[hogIndex].name = availableNames[Math.floor(Math.random() * availableNames.length)];
   return team;
 }

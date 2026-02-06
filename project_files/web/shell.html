@@ -27,8 +27,89 @@
         statusEl.textContent = 'No game configuration provided.';
       }
 
+      function frontendUrl() {
+        var base = window.location.pathname.replace(/\/hwengine\.html$/, '');
+        return base + '/web-frontend/';
+      }
+
+      var didRequestFrontendReturn = false;
+      function returnToFrontend(reason) {
+        if (didRequestFrontendReturn) return;
+        didRequestFrontendReturn = true;
+        console.log('[engine] returning to frontend:', reason || 'exit');
+        window.location.href = frontendUrl();
+      }
+
+      function getEngineAudioArgs() {
+        var defaults = {
+          engineVolume: 100,
+          engineSoundEnabled: true,
+          engineMusicEnabled: true,
+          musicVolume: 70,
+          sfxVolume: 80
+        };
+        var settings = defaults;
+
+        try {
+          var raw = localStorage.getItem('hw.settings');
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            settings = Object.assign({}, defaults, parsed || {});
+          }
+        } catch (e) {}
+
+        function clampPercent(v, fallback) {
+          var n = Number(v);
+          if (!Number.isFinite(n)) return fallback;
+          return Math.max(0, Math.min(100, Math.round(n)));
+        }
+
+        // Qt parity:
+        // volume = slider(0..100) * 128 / 100, with separate nosound/nomusic.
+        var master = clampPercent(
+          settings.engineVolume,
+          Math.max(
+            clampPercent(settings.musicVolume, defaults.musicVolume),
+            clampPercent(settings.sfxVolume, defaults.sfxVolume)
+          )
+        );
+        var soundEnabled = settings.engineSoundEnabled !== false;
+        var musicEnabled = settings.engineMusicEnabled !== false;
+
+        var args = ['--volume', String(Math.floor(master * 128 / 100))];
+        if (!musicEnabled) args.push('--nomusic');
+        if (!soundEnabled) args.push('--nosound');
+        return args;
+      }
+
+      var engineAudioArgs = getEngineAudioArgs();
+
+      function shouldStartInFullscreen() {
+        try {
+          var raw = localStorage.getItem('hw.settings');
+          if (!raw) return false;
+          var s = JSON.parse(raw);
+          return s && s.startInFullscreen === true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function maybeEnterFullscreen() {
+        if (!shouldStartInFullscreen()) return;
+        if (document.fullscreenElement) return;
+        var canvas = document.getElementById('canvas');
+        if (!canvas || !canvas.requestFullscreen) return;
+        canvas.requestFullscreen().then(function() {
+          window.removeEventListener('pointerdown', maybeEnterFullscreen);
+          window.removeEventListener('keydown', maybeEnterFullscreen);
+        }).catch(function() {
+          // Keep listener so the user can retry on the next gesture.
+        });
+      }
+
       function buildArgs(encodedCfg) {
-        var args = ['--prefix', '/Data', '--user-prefix', '/'];
+        var args = ['--prefix', '/Data', '--user-prefix', '/'].concat(engineAudioArgs);
         var chunkSize = 200;
         for (var i = 0; i < encodedCfg.length; i += chunkSize) {
           args.push('--webcfg64');
@@ -40,7 +121,7 @@
       var Module = {
         canvas: document.getElementById('canvas'),
         noInitialRun: true,
-        arguments: ['--prefix', '/Data', '--user-prefix', '/'],
+        arguments: ['--prefix', '/Data', '--user-prefix', '/'].concat(engineAudioArgs),
         print: function(t) { console.log(t); },
         printErr: function(t) { console.error(t); },
         setStatus: function(t) {
@@ -53,6 +134,14 @@
           } else {
             Module.setStatus('');
           }
+        },
+        onExit: function(status) {
+          console.log('[engine] onExit status=', status);
+          returnToFrontend('onExit');
+        },
+        onAbort: function(reason) {
+          console.error('[engine] abort:', reason);
+          returnToFrontend('onAbort');
         },
         onRuntimeInitialized: function() {
           Module.setStatus('');
@@ -76,6 +165,10 @@
       }
       window.addEventListener('pointerdown', unlockAudio);
       window.addEventListener('keydown', unlockAudio);
+
+      // If the user enabled "start game in fullscreen", enter fullscreen on first gesture.
+      window.addEventListener('pointerdown', maybeEnterFullscreen);
+      window.addEventListener('keydown', maybeEnterFullscreen);
     </script>
     {{{ SCRIPT }}}
   </body>

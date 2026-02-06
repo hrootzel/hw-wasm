@@ -48,6 +48,17 @@ docker run --rm -t \
     mkdir -p "${build_dir}"
     build_dir_full="$(cd "${build_dir}" && pwd)"
 
+    # If this build dir was configured on the host (for example Windows paths),
+    # CMake will reject it in the container. Drop stale cache metadata only.
+    cache_file="${build_dir_full}/CMakeCache.txt"
+    if [[ -f "${cache_file}" ]]; then
+      if grep -Eq "C:/|[A-Za-z]:\\\\\\\\|C:\\\\Users\\\\" "${cache_file}"; then
+        echo "Detected host-generated CMake cache. Cleaning stale CMake metadata..."
+        rm -f "${build_dir_full}/CMakeCache.txt"
+        rm -rf "${build_dir_full}/CMakeFiles"
+      fi
+    fi
+
     cat > "${build_dir_full}/SDL2Config.cmake" <<'\''EOF'\''
 set(SDL2_INCLUDE_DIRS "${CMAKE_SYSTEM_INCLUDE_PATH}/SDL")
 set(SDL2_LIBRARIES "")
@@ -148,9 +159,11 @@ EOF
     if [[ "${stage_data}" == "1" ]]; then
       bin_dir="${build_dir_full}/bin"
       mkdir -p "${bin_dir}"
-      rm -rf "${bin_dir}/Data" "${bin_dir}/web-frontend"
+      rm -rf "${bin_dir}/Data" "${bin_dir}/web-frontend" "${bin_dir}/frontend-qt6/res"
       cp -a "share/hedgewars/Data" "${bin_dir}/Data"
       cp -a "web-frontend" "${bin_dir}/web-frontend"
+      mkdir -p "${bin_dir}/frontend-qt6"
+      cp -a "frontend-qt6/res" "${bin_dir}/frontend-qt6/res"
       if [[ -f "index.html" ]]; then
         cp "index.html" "${bin_dir}/index.html"
       fi

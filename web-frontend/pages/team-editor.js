@@ -9,7 +9,7 @@ import { audio } from '../util/audio.js';
 import { core } from '../ui/core.js';
 import { Node } from '../ui/scene.js';
 import { IconPicker } from '../ui/icon-picker.js';
-import { randomHogNamesSync } from '../util/namegen.js';
+import { randomHogNamesSync, randomHogNameSync } from '../util/namegen.js';
 
 // Display labels: Level 1 = easiest, Level 5 = hardest (matches Qt frontend)
 // Internal values: 0 = human, 5 = easiest bot, 1 = hardest bot
@@ -81,21 +81,25 @@ export class TeamEditorPage extends BasePage {
   _buildUI() {
     this.addTitle('Edit Teams');
 
+    // Center the editor layout for widescreen.
+    const contentW = 1120;
+    const contentX = Math.round((this.width - contentW) / 2);
+
     // Team list
     this.teamList = new ScrollList(this.teams.map(t => t.name), (i) => this._selectTeam(i));
-    this.teamList.x = 30; this.teamList.y = 100;
+    this.teamList.x = contentX; this.teamList.y = 100;
     this.teamList.width = 180; this.teamList.height = 480;
     this.addChild(this.teamList);
 
     // New/Delete
     const newBtn = new Button('New', () => this._newTeam());
-    newBtn.x = 30; newBtn.y = 600; newBtn.width = 85;
+    newBtn.x = contentX; newBtn.y = 600; newBtn.width = 85;
     this.addChild(newBtn);
     const delBtn = new Button('Delete', () => this._deleteTeam());
-    delBtn.x = 125; delBtn.y = 600; delBtn.width = 85;
+    delBtn.x = contentX + 95; delBtn.y = 600; delBtn.width = 85;
     this.addChild(delBtn);
 
-    const ex = 240;
+    const ex = contentX + 210;
     let y = 100;
 
     // Team name
@@ -219,7 +223,7 @@ export class TeamEditorPage extends BasePage {
     minusBtn.x = ex + 210; minusBtn.y = y; minusBtn.width = 30; minusBtn.height = 30;
     this.addChild(minusBtn);
     
-    this.hogCountLabel = new Label('8', 'body');
+    this.hogCountLabel = new Label('4', 'body');
     this.hogCountLabel.x = ex + 245; this.hogCountLabel.y = y;
     this.hogCountLabel.width = 30; this.hogCountLabel.height = 30;
     this.hogCountLabel.align = 'center';
@@ -231,30 +235,64 @@ export class TeamEditorPage extends BasePage {
     
     y += 40;
     this.hogInputs = [];
+    this.hogDiceButtons = [];
     for (let i = 0; i < 8; i++) {
       const input = new TextInput(`Hog ${i + 1}`, (v) => {
-        if (this.selectedTeam) { this.selectedTeam.hedgehogs[i].name = v; this.dirty = true; }
+        if (!this.selectedTeam) return;
+        this._ensureHedgehogEntry(i);
+        this.selectedTeam.hedgehogs[i].name = v;
+        this.dirty = true;
       });
       input.x = ex + (i % 2) * 200;
       input.y = y + Math.floor(i / 2) * 40;
-      input.width = 180;
+      input.width = 145;
       input.maxLength = 20;
       this.addChild(input);
       this.hogInputs.push(input);
+
+      const diceBtn = new Button('', () => this._randomSingleHogName(i));
+      diceBtn.iconId = 'qt-dice';
+      diceBtn.x = input.x + input.width + 5;
+      diceBtn.y = input.y;
+      diceBtn.width = 30;
+      diceBtn.height = 30;
+      diceBtn.fontSize = 14;
+      this.addChild(diceBtn);
+      this.hogDiceButtons.push(diceBtn);
     }
 
     // Save
     const saveBtn = new Button('Save', () => this._saveTeam());
-    saveBtn.x = 734; saveBtn.y = 700;
+    saveBtn.x = contentX + contentW - saveBtn.width;
+    saveBtn.y = this.height - saveBtn.height - 18;
     this.addChild(saveBtn);
 
-    this.addBackButton(() => { if (this.dirty) this._saveTeam(); core.popPage(); });
+    const backBtn = this.addBackButton(() => { if (this.dirty) this._saveTeam(); core.popPage(); });
+    backBtn.x = contentX;
   }
 
   _addLabel(text, x, y) {
     const l = new Label(text, 'body');
     l.x = x; l.y = y; l.width = 110; l.height = 30;
     this.addChild(l);
+  }
+
+  _getCurrentHogCount() {
+    if (!this.selectedTeam) return 4;
+    const count = Number(this.selectedTeam.hogCount);
+    if (Number.isInteger(count) && count > 0) return Math.min(count, 8);
+    if (Array.isArray(this.selectedTeam.hedgehogs) && this.selectedTeam.hedgehogs.length > 0) {
+      return Math.min(this.selectedTeam.hedgehogs.length, 8);
+    }
+    return 4;
+  }
+
+  _ensureHedgehogEntry(index) {
+    if (!this.selectedTeam) return;
+    if (!Array.isArray(this.selectedTeam.hedgehogs)) this.selectedTeam.hedgehogs = [];
+    while (this.selectedTeam.hedgehogs.length <= index) {
+      this.selectedTeam.hedgehogs.push({ name: `Hedgehog ${this.selectedTeam.hedgehogs.length + 1}` });
+    }
   }
 
   _showHatPicker() {
@@ -332,7 +370,7 @@ export class TeamEditorPage extends BasePage {
     if (!this.selectedTeam) return;
     
     const picker = new IconPicker(ALL_GRAVES, getGravePath, null);
-    picker.setSelected(this.selectedTeam.grave || 'Grave');
+    picker.setSelected(this.selectedTeam.grave || 'Statue');
     
     const pickerPage = new BasePage('Select Grave');
     pickerPage.addTitle('Select Grave');
@@ -364,7 +402,7 @@ export class TeamEditorPage extends BasePage {
     if (!this.selectedTeam) return;
     
     const picker = new IconPicker(ALL_FORTS, getFortPath, null);
-    picker.setSelected(this.selectedTeam.fort || 'Castle');
+    picker.setSelected(this.selectedTeam.fort || 'Plane');
     
     const pickerPage = new BasePage('Select Fort');
     pickerPage.addTitle('Select Fort');
@@ -431,7 +469,8 @@ export class TeamEditorPage extends BasePage {
     if (this.selectedTeam) {
       // Ensure hedgehogs array exists and has hogCount property
       if (!this.selectedTeam.hedgehogs) this.selectedTeam.hedgehogs = [];
-      if (!this.selectedTeam.hogCount) this.selectedTeam.hogCount = this.selectedTeam.hedgehogs.length || 8;
+      if (!this.selectedTeam.hogCount) this.selectedTeam.hogCount = this.selectedTeam.hedgehogs.length || 4;
+      this.selectedTeam.hogCount = Math.max(1, Math.min(8, this.selectedTeam.hogCount));
       
       this.nameInput.text = this.selectedTeam.name;
       this.nameInput.cursorPos = this.selectedTeam.name.length;
@@ -449,27 +488,25 @@ export class TeamEditorPage extends BasePage {
       this.flagLabel.text = this.selectedTeam.flag || 'hedgewars';
       
       // Grave
-      this.gravePreview.setItem(this.selectedTeam.grave || 'Grave');
-      this.graveLabel.text = this.selectedTeam.grave || 'Grave';
-      this.flagLabel.text = this.selectedTeam.flag || 'hedgewars';
-      
-      // Grave
-      this.gravePreview.setItem(this.selectedTeam.grave || 'Grave');
-      this.graveLabel.text = this.selectedTeam.grave || 'Grave';
+      this.gravePreview.setItem(this.selectedTeam.grave || 'Statue');
+      this.graveLabel.text = this.selectedTeam.grave || 'Statue';
       
       // Fort
-      this.fortPreview.setItem(this.selectedTeam.fort || 'Castle');
-      this.fortLabel.text = this.selectedTeam.fort || 'Castle';
+      this.fortPreview.setItem(this.selectedTeam.fort || 'Plane');
+      this.fortLabel.text = this.selectedTeam.fort || 'Plane';
       
       // Voice
       this.voiceLabel.text = this.selectedTeam.voice || 'Default';
       
       this.hogCountLabel.text = String(this.selectedTeam.hogCount);
       
+      const hogCount = this._getCurrentHogCount();
       for (let i = 0; i < 8; i++) {
-        const visible = i < this.selectedTeam.hogCount;
+        const visible = i < hogCount;
         this.hogInputs[i].visible = visible;
+        this.hogDiceButtons[i].visible = visible;
         if (visible) {
+          this._ensureHedgehogEntry(i);
           this.hogInputs[i].text = this.selectedTeam.hedgehogs[i]?.name || '';
           this.hogInputs[i].cursorPos = this.hogInputs[i].text.length;
         }
@@ -480,7 +517,7 @@ export class TeamEditorPage extends BasePage {
 
   _adjustHogCount(delta) {
     if (!this.selectedTeam) return;
-    const newCount = Math.max(1, Math.min(8, (this.selectedTeam.hogCount || 8) + delta));
+    const newCount = Math.max(1, Math.min(8, this._getCurrentHogCount() + delta));
     if (newCount === this.selectedTeam.hogCount) return;
     
     this.selectedTeam.hogCount = newCount;
@@ -493,6 +530,7 @@ export class TeamEditorPage extends BasePage {
     this.hogCountLabel.text = String(newCount);
     for (let i = 0; i < 8; i++) {
       this.hogInputs[i].visible = i < newCount;
+      this.hogDiceButtons[i].visible = i < newCount;
     }
     
     this.dirty = true;
@@ -502,10 +540,22 @@ export class TeamEditorPage extends BasePage {
   _randomHogNames() {
     if (!this.selectedTeam) return;
     randomHogNamesSync(this.selectedTeam);
-    for (let i = 0; i < this.selectedTeam.hogCount; i++) {
+    const hogCount = this._getCurrentHogCount();
+    for (let i = 0; i < hogCount; i++) {
+      this._ensureHedgehogEntry(i);
       this.hogInputs[i].text = this.selectedTeam.hedgehogs[i].name;
       this.hogInputs[i].cursorPos = this.selectedTeam.hedgehogs[i].name.length;
     }
+    this.dirty = true;
+    audio.playClick();
+  }
+
+  _randomSingleHogName(index) {
+    if (!this.selectedTeam) return;
+    randomHogNameSync(this.selectedTeam, index);
+    this._ensureHedgehogEntry(index);
+    this.hogInputs[index].text = this.selectedTeam.hedgehogs[index].name;
+    this.hogInputs[index].cursorPos = this.selectedTeam.hedgehogs[index].name.length;
     this.dirty = true;
     audio.playClick();
   }

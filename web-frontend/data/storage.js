@@ -128,10 +128,14 @@ class Storage {
   // Settings
   getSettings() {
     return this.get('settings', {
+      engineVolume: 100,
+      engineSoundEnabled: true,
+      engineMusicEnabled: true,
       musicVolume: 70,
       sfxVolume: 80,
       language: 'en',
       fullscreen: false,
+      startInFullscreen: false,
     });
   }
 
