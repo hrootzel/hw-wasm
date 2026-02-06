@@ -84,6 +84,30 @@
 
       var engineAudioArgs = getEngineAudioArgs();
 
+      function shouldStartInFullscreen() {
+        try {
+          var raw = localStorage.getItem('hw.settings');
+          if (!raw) return false;
+          var s = JSON.parse(raw);
+          return s && s.startInFullscreen === true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function maybeEnterFullscreen() {
+        if (!shouldStartInFullscreen()) return;
+        if (document.fullscreenElement) return;
+        var canvas = document.getElementById('canvas');
+        if (!canvas || !canvas.requestFullscreen) return;
+        canvas.requestFullscreen().then(function() {
+          window.removeEventListener('pointerdown', maybeEnterFullscreen);
+          window.removeEventListener('keydown', maybeEnterFullscreen);
+        }).catch(function() {
+          // Keep listener so the user can retry on the next gesture.
+        });
+      }
+
       function buildArgs(encodedCfg) {
         var args = ['--prefix', '/Data', '--user-prefix', '/'].concat(engineAudioArgs);
         var chunkSize = 200;
@@ -141,6 +165,10 @@
       }
       window.addEventListener('pointerdown', unlockAudio);
       window.addEventListener('keydown', unlockAudio);
+
+      // If the user enabled "start game in fullscreen", enter fullscreen on first gesture.
+      window.addEventListener('pointerdown', maybeEnterFullscreen);
+      window.addEventListener('keydown', maybeEnterFullscreen);
     </script>
     {{{ SCRIPT }}}
   </body>

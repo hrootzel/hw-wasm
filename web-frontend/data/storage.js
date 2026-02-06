@@ -135,6 +135,7 @@ class Storage {
       sfxVolume: 80,
       language: 'en',
       fullscreen: false,
+      startInFullscreen: false,
     });
   }
 

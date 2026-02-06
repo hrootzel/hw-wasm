@@ -14,6 +14,7 @@ export class SettingsPage extends BasePage {
     if (typeof this.settings.engineVolume !== 'number') this.settings.engineVolume = 100;
     if (typeof this.settings.engineSoundEnabled !== 'boolean') this.settings.engineSoundEnabled = true;
     if (typeof this.settings.engineMusicEnabled !== 'boolean') this.settings.engineMusicEnabled = true;
+    if (typeof this.settings.startInFullscreen !== 'boolean') this.settings.startInFullscreen = false;
     this._buildUI();
   }
 
@@ -142,6 +143,14 @@ export class SettingsPage extends BasePage {
     this.fullscreenStatus.height = 24;
     this.fullscreenStatus.color = 'rgba(255,255,255,0.7)';
     this.addChild(this.fullscreenStatus);
+
+    this.startInFullscreenCheck = new Checkbox('Start game in fullscreen', this.settings.startInFullscreen, (v) => {
+      this.settings.startInFullscreen = v;
+    });
+    this.startInFullscreenCheck.x = contentX;
+    this.startInFullscreenCheck.y = y + 34;
+    this.startInFullscreenCheck.width = 260;
+    this.addChild(this.startInFullscreenCheck);
 
     this.fullscreenBtn = new Button('Enter Fullscreen', () => this._toggleFullscreen());
     this.fullscreenBtn.x = contentX + contentW - this.fullscreenBtn.width;
