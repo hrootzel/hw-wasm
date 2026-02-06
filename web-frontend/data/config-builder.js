@@ -116,8 +116,8 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mi
       const team = teams[i];
       lines.push('ammstore');
       lines.push('addteam x ' + (team.color ?? i) + ' ' + team.name);
-      lines.push('grave ' + (team.grave || 'Grave'));
-      lines.push('fort ' + (team.fort || 'Castle'));
+      lines.push('grave ' + (team.grave || 'Statue'));
+      lines.push('fort ' + (team.fort || 'Plane'));
       lines.push('flag ' + (team.flag || 'hedgewars'));
       lines.push('voicepack ' + (team.voice || 'Default'));
 
