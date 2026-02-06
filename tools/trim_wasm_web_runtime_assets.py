@@ -43,6 +43,10 @@ def _should_keep_data_file(rel_posix: str) -> bool:
         "Data/Graphics/Hedgehog.png",
         "Data/Graphics/botlevels.png",
         "Data/Graphics/star.png",
+        # Optional UI audio (loaded by web-frontend/main.js, but non-fatal if missing).
+        "Data/Sounds/roperelease.ogg",
+        "Data/Sounds/steps.ogg",
+        "Data/Music/main_theme.ogg",
     }
 
     if rel_posix in keep_exact:
@@ -184,4 +188,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

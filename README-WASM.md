@@ -172,6 +172,11 @@ Key environment toggles:
 - `BUILD_TYPE=Release|Debug|RelWithDebInfo` (default: `Release`)
 - `WASM_DEBUG=ON|OFF` (default: `OFF`)
 - `CLEAN=1` to remove the build dir before configure
+- `STAGE_DATA=1|0` (default: `1`) to copy `Data/`, `web-frontend/`, and `frontend-qt6/res` into `build/wasm/bin/`
+- `SPLIT_DATA_PACK=1|0` (default: `0`) to split `hwengine.data` into `.partN` chunks after build
+- `DATA_CHUNK_MB=50` (default: `50`) size of each `.partN` chunk
+- `KEEP_ORIGINAL_DATA_PACK=1|0` (default: `0`) keep the unsplit `hwengine.data` (not recommended for size-limited hosts)
+- `CLEANUP_BUILD=1|0` (default: `0`) remove non-runtime outputs and trim staged UI assets (requires `STAGE_DATA=1`)
 
 ### `serve.bat` - Windows CMD server
 Equivalent launcher for Command Prompt users.
@@ -224,15 +229,15 @@ so hosting can store multiple smaller files instead of one huge file.
 
 How it works:
 - Build step splits `hwengine.data` into `hwengine.data.part0`, `hwengine.data.part1`, ...
-- Runtime loader hook in `project_files/web/pre.js` makes Emscripten fetch all parts and
-  concatenate them in-memory before mounting `/Data`.
+- Runtime loader hook in `project_files/web/shell.html` intercepts `fetch('hwengine.data')` and
+  streams `hwengine.data.part0`, `part1`, ... sequentially as a single response body.
 
 Notes:
 - The engine still needs the full pack before starting. Splitting helps with hosting
   limits, not startup time or total download size.
-- The split-pack loader is defined in `project_files/web/shell.html` (so it runs before
-  `hwengine.js`), and also in `project_files/web/pre.js` (as a fallback for non-shell uses).
-  Changing either requires rebuilding engine output (staging alone is not enough).
+- The split-pack loader must run before `hwengine.js`. In this repo it lives in
+  `project_files/web/shell.html` and is baked into `build/wasm/bin/hwengine.html` at build time.
+  Changing it requires rebuilding engine output (staging alone is not enough).
 
 #### Split Pack (Windows PowerShell)
 ```powershell
@@ -247,6 +252,13 @@ Notes:
 ```bash
 # Split the engine data pack after build (deletes the original .data)
 SPLIT_DATA_PACK=1 DATA_CHUNK_MB=50 ./build-was-docker.sh
+
+# Stage web runtime assets into build output (default is already STAGE_DATA=1)
+STAGE_DATA=1 ./build-was-docker.sh
+
+# Keep only runtime files and trim staged UI assets (useful for deployment bundles)
+# Note: requires STAGE_DATA=1, since it operates on build/wasm/bin/Data and build/wasm/bin/frontend-qt6/res
+STAGE_DATA=1 CLEANUP_BUILD=1 ./build-was-docker.sh
 ```
 
 ### PhysFS
