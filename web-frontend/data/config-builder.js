@@ -2,6 +2,7 @@
 import { WEAPONS } from './weapons.js';
 import { SCHEME_FLAGS } from './schemes.js';
 import { DEFAULT_BINDINGS } from './defaults.js';
+import { DEFAULT_WEAPON_SETS, createDefaultWeaponSet } from './weapons.js';
 
 // Scheme flag bit values matching uConsts.pas gf* constants
 const FLAG_BITS = {
@@ -126,6 +127,16 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mi
   const lines = [];
   const mergedBindings = bindings ? { ...DEFAULT_BINDINGS, ...bindings } : null;
 
+  // Local Game can be entered before the weapon editor ever seeded storage.
+  // The Emscripten loader expects ammo lines to always exist, so fall back safely.
+  const effectiveWeaponSet =
+    (weaponSet && weaponSet.ammo && weaponSet.prob && weaponSet.delay && weaponSet.crate)
+      ? weaponSet
+      : (DEFAULT_WEAPON_SETS?.[0] || createDefaultWeaponSet('Default'));
+  if (effectiveWeaponSet !== weaponSet) {
+    console.warn('[config] weaponSet missing/invalid; falling back to Default weapon set');
+  }
+
   // Mission script (if provided)
   if (mission) {
     lines.push('setmissteam'); // Initialize mission team
@@ -182,10 +193,10 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mi
   }
 
   // Ammo
-  const ammloadt = buildAmmoString(weaponSet, 'ammo');
-  const ammprob = buildAmmoString(weaponSet, 'prob');
-  const ammdelay = buildAmmoString(weaponSet, 'delay');
-  const ammreinf = buildAmmoString(weaponSet, 'crate');
+  const ammloadt = buildAmmoString(effectiveWeaponSet, 'ammo');
+  const ammprob = buildAmmoString(effectiveWeaponSet, 'prob');
+  const ammdelay = buildAmmoString(effectiveWeaponSet, 'delay');
+  const ammreinf = buildAmmoString(effectiveWeaponSet, 'crate');
   
   console.log('[config] ammo string lengths:', {
     ammloadt: ammloadt.length,

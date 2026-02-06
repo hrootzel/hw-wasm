@@ -133,6 +133,7 @@ Key flags:
 - `-StageData` - Copy `Data/` and `web-frontend/` into `build/wasm/bin/`
 - `-Build` - Build immediately after configure
 - `-Rebuild` - Clean + configure + build
+- `-CleanupBuild` - Delete non-runtime build outputs (keep only files needed to serve/run from `build/wasm/bin/`)
 - `-Debug` / `-Release` - Set build type
 - `-WasmDebug` - Enable SAFE_HEAP + stack overflow checks
 - `-Clean` - Remove build dir before configuring
@@ -157,6 +158,9 @@ WASM_DEBUG=ON ./build-was-docker.sh
 
 # Reconfigure from a clean build dir
 CLEAN=1 ./build-was-docker.sh
+
+# Keep only runtime files under build output (deployment cleanup)
+CLEANUP_BUILD=1 ./build-was-docker.sh
 ```
 
 Container inputs/outputs:
@@ -168,6 +172,11 @@ Key environment toggles:
 - `BUILD_TYPE=Release|Debug|RelWithDebInfo` (default: `Release`)
 - `WASM_DEBUG=ON|OFF` (default: `OFF`)
 - `CLEAN=1` to remove the build dir before configure
+- `STAGE_DATA=1|0` (default: `1`) to copy `Data/`, `web-frontend/`, and `frontend-qt6/res` into `build/wasm/bin/`
+- `SPLIT_DATA_PACK=1|0` (default: `0`) to split `hwengine.data` into `.partN` chunks after build
+- `DATA_CHUNK_MB=50` (default: `50`) size of each `.partN` chunk
+- `KEEP_ORIGINAL_DATA_PACK=1|0` (default: `0`) keep the unsplit `hwengine.data` (not recommended for size-limited hosts)
+- `CLEANUP_BUILD=1|0` (default: `0`) remove non-runtime outputs and trim staged UI assets (requires `STAGE_DATA=1`)
 
 ### `serve.bat` - Windows CMD server
 Equivalent launcher for Command Prompt users.
@@ -210,6 +219,48 @@ Technical Notes
 ### Emscripten Version
 - Engine build: current/latest emsdk (5.0.0 default in build.ps1)
 
+### Data Pack And Static Hosting Limits
+The WASM engine build uses Emscripten `--preload-file` to bundle `share/hedgewars/Data`
+into a single data package (typically `hwengine.data`). Some static hosts have per-file
+size limits, which can make a single large `.data` file impractical.
+
+This fork supports splitting the `.data` package into smaller chunks (for example 50 MB)
+so hosting can store multiple smaller files instead of one huge file.
+
+How it works:
+- Build step splits `hwengine.data` into `hwengine.data.part0`, `hwengine.data.part1`, ...
+- Runtime loader hook in `project_files/web/shell.html` intercepts `fetch('hwengine.data')` and
+  streams `hwengine.data.part0`, `part1`, ... sequentially as a single response body.
+
+Notes:
+- The engine still needs the full pack before starting. Splitting helps with hosting
+  limits, not startup time or total download size.
+- The split-pack loader must run before `hwengine.js`. In this repo it lives in
+  `project_files/web/shell.html` and is baked into `build/wasm/bin/hwengine.html` at build time.
+  Changing it requires rebuilding engine output (staging alone is not enough).
+
+#### Split Pack (Windows PowerShell)
+```powershell
+# Configure + build + split data pack into 50 MB parts (deletes the original .data by default)
+.\build.ps1 -Build -SplitDataPack -DataPackChunkMB 50
+
+# Keep the original .data as well (not recommended for size-limited hosts)
+.\build.ps1 -Build -SplitDataPack -DataPackChunkMB 50 -KeepOriginalDataPack
+```
+
+#### Split Pack (Docker build)
+```bash
+# Split the engine data pack after build (deletes the original .data)
+SPLIT_DATA_PACK=1 DATA_CHUNK_MB=50 ./build-was-docker.sh
+
+# Stage web runtime assets into build output (default is already STAGE_DATA=1)
+STAGE_DATA=1 ./build-was-docker.sh
+
+# Keep only runtime files and trim staged UI assets (useful for deployment bundles)
+# Note: requires STAGE_DATA=1, since it operates on build/wasm/bin/Data and build/wasm/bin/frontend-qt6/res
+STAGE_DATA=1 CLEANUP_BUILD=1 ./build-was-docker.sh
+```
+
 ### PhysFS
 Built as a minimal static library from `misc/libphysfs` using Emscripten.
 Automated in `build.ps1`. Excludes Windows/LZMA code paths.
@@ -235,6 +286,3 @@ Current Issues
 --------------
 - ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
 - SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
-
-
-

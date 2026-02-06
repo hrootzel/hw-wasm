@@ -35,7 +35,7 @@ if "%IS_BUILD%"=="1" (
 echo.
 echo Press Ctrl+C to stop
 
-python -m http.server %PORT% -d "%FULLDIR%" 2>nul
+python -m http.server %PORT% -d "%FULLDIR%"
 if errorlevel 1 (
   py -3 -m http.server %PORT% -d "%FULLDIR%"
 )
