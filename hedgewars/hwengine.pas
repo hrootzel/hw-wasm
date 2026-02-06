@@ -44,11 +44,19 @@ uses {$IFDEF IPHONEOS}cmem, {$ENDIF} SDLh, uMisc, uConsole, uGame, uConsts, uLan
 
 {$IFDEF HWLIBRARY}
 function RunEngine(argc: LongInt; argv: PPChar): LongInt; cdecl; export;
+{$IFDEF WEBGL}
+function MainLoop: LongInt; cdecl; export;
+{$ELSE}
 procedure MainLoop; cdecl; export;
+{$ENDIF}
 
 procedure preInitEverything();
 procedure initEverything(complete:boolean);
+{$IFDEF WEBGL}
+procedure freeEverything(complete:boolean); cdecl; export;
+{$ELSE}
 procedure freeEverything(complete:boolean);
+{$ENDIF}
 {$IFNDEF PAS2C}
 procedure catchUnhandledException(Obj: TObject; Addr: Pointer; FrameCount: Longint; Frames: PPointer);
 {$ENDIF}
@@ -179,7 +187,11 @@ var wasmIsTerminated: boolean = false;
 var wasmPreviousGameState: TGameState = gsStart;
 {$ENDIF}
 
+{$IFDEF WEBGL}
+function MainLoop: LongInt;
+{$ELSE}
 procedure MainLoop;
+{$ENDIF}
 var event: TSDL_Event;
     PrevTime, CurrTime: LongWord;
     isTerminated: boolean;
@@ -187,6 +199,7 @@ var event: TSDL_Event;
     wheelEvent: boolean;
 begin
 {$IFDEF WEBGL}
+    MainLoop:= 0;
     if not wasmInitialized then
         begin
         wasmPreviousGameState:= gsStart;
@@ -195,7 +208,10 @@ begin
         wasmInitialized:= true;
         end;
     if (wasmIsTerminated) or (not allOK) then
+        begin
+        MainLoop:= 1;
         exit;
+        end;
     PrevTime:= wasmPrevTime;
     previousGameState:= wasmPreviousGameState;
 {$ELSE}

@@ -6,6 +6,7 @@ import { DEFAULT_BINDINGS } from './defaults.js';
 // Scheme flag bit values matching uConsts.pas gf* constants
 const FLAG_BITS = {
   oneClanMode: 0x00000001, // For missions - game doesn't end with one clan
+  // 0x00000002 is gfMultiWeapon (target practice); not currently exposed in web UI.
   fortsMode: 0x00000000, // forts mode is handled via mapgen=4
   dividedTeams: 0x00000010,
   solidLand: 0x00000004,
@@ -17,6 +18,7 @@ const FLAG_BITS = {
   vampirism: 0x00000200,
   karma: 0x00000400,
   artillery: 0x00000800,
+  switchHog: 0x00001000,
   randomOrder: 0x00002000,
   king: 0x00004000,
   placeHogs: 0x00008000,
@@ -151,7 +153,8 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mi
     lines.push('damagepct ' + (scheme.damageMod ?? 100));
     lines.push('inithealth ' + (scheme.initialHealth ?? 100));
     lines.push('casefreq ' + (scheme.crateDropTurns ?? 5));
-    lines.push('minestime ' + (scheme.minesTime ?? 3));
+    // Engine expects mine timer in milliseconds; Qt frontend sends seconds * 1000.
+    lines.push('minestime ' + ((scheme.minesTime ?? 3) * 1000));
     lines.push('minesnum ' + (scheme.minesCount ?? 4));
     lines.push('minedudpct ' + (scheme.mineDudPct ?? 0));
     lines.push('explosives ' + (scheme.explosives ?? 2));
@@ -159,7 +162,10 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mi
     lines.push('healthprob ' + (scheme.healthCratePct ?? 35));
     lines.push('hcaseamount ' + (scheme.healthCrateHP ?? 25));
     lines.push('sentries ' + (scheme.sentryCount ?? 0));
+    lines.push('ropepct ' + (scheme.ropePct ?? scheme.ropePercent ?? scheme.ropeModifier ?? 100));
+    lines.push('getawaytime ' + (scheme.getawayTime ?? scheme.getAwayTime ?? 100));
     lines.push('worldedge ' + (scheme.worldEdge ?? 0));
+    lines.push('scriptparam ' + String(scheme.scriptParam ?? scheme.scriptparam ?? ''));
 
     // Game flags bitmask
     let flags = 0;
