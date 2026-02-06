@@ -11,19 +11,69 @@ export class SettingsPage extends BasePage {
   constructor() {
     super('Settings');
     this.settings = storage.getSettings();
+    if (typeof this.settings.engineVolume !== 'number') this.settings.engineVolume = 100;
+    if (typeof this.settings.engineSoundEnabled !== 'boolean') this.settings.engineSoundEnabled = true;
+    if (typeof this.settings.engineMusicEnabled !== 'boolean') this.settings.engineMusicEnabled = true;
     this._buildUI();
   }
 
   _buildUI() {
     this.addTitle('Settings');
-    
+
+    // Center the settings panel on widescreen.
+    const contentW = 820;
+    const contentX = Math.round((this.width - contentW) / 2);
+
     let y = 120;
-    const leftX = 200;
-    const rightX = 450;
+    const leftX = contentX;
+    const rightX = contentX + 260;
     const spacing = 60;
 
-    // Music Volume
-    const musicLabel = new Label('Music Volume', 'body');
+    // Engine master volume (Qt parity)
+    const engineLabel = new Label('Game Volume', 'body');
+    engineLabel.x = leftX;
+    engineLabel.y = y;
+    engineLabel.width = 200;
+    engineLabel.height = 30;
+    this.addChild(engineLabel);
+
+    this.engineSlider = new Slider(0, 100, this.settings.engineVolume, (v) => {
+      this.settings.engineVolume = v;
+    });
+    this.engineSlider.x = rightX;
+    this.engineSlider.y = y;
+    this.engineSlider.width = 300;
+    this.addChild(this.engineSlider);
+
+    this.engineValue = new Label(this.settings.engineVolume + '%', 'body');
+    this.engineValue.x = rightX + 320;
+    this.engineValue.y = y;
+    this.engineValue.width = 60;
+    this.engineValue.height = 30;
+    this.addChild(this.engineValue);
+
+    y += spacing;
+
+    this.engineSoundCheck = new Checkbox('In-Game Sound', this.settings.engineSoundEnabled, (v) => {
+      this.settings.engineSoundEnabled = v;
+    });
+    this.engineSoundCheck.x = leftX;
+    this.engineSoundCheck.y = y;
+    this.engineSoundCheck.width = 220;
+    this.addChild(this.engineSoundCheck);
+
+    this.engineMusicCheck = new Checkbox('In-Game Music', this.settings.engineMusicEnabled, (v) => {
+      this.settings.engineMusicEnabled = v;
+    });
+    this.engineMusicCheck.x = rightX;
+    this.engineMusicCheck.y = y;
+    this.engineMusicCheck.width = 220;
+    this.addChild(this.engineMusicCheck);
+
+    y += spacing;
+
+    // Frontend music volume
+    const musicLabel = new Label('Frontend Music', 'body');
     musicLabel.x = leftX;
     musicLabel.y = y;
     musicLabel.width = 200;
@@ -48,8 +98,8 @@ export class SettingsPage extends BasePage {
 
     y += spacing;
 
-    // SFX Volume
-    const sfxLabel = new Label('Sound Effects', 'body');
+    // Frontend SFX volume
+    const sfxLabel = new Label('Frontend Sound', 'body');
     sfxLabel.x = leftX;
     sfxLabel.y = y;
     sfxLabel.width = 200;
@@ -84,23 +134,44 @@ export class SettingsPage extends BasePage {
 
     y += 80;
 
-    // Fullscreen checkbox
-    this.fullscreenCheck = new Checkbox('Fullscreen Mode', this.settings.fullscreen, (v) => {
-      this.settings.fullscreen = v;
-      this._toggleFullscreen(v);
-    });
-    this.fullscreenCheck.x = (this.width - this.fullscreenCheck.width) / 2;
-    this.fullscreenCheck.y = y;
-    this.addChild(this.fullscreenCheck);
+    // Fullscreen is a user-gesture-driven browser feature, so present it as a button.
+    this.fullscreenStatus = new Label('', 'small');
+    this.fullscreenStatus.x = contentX;
+    this.fullscreenStatus.y = y + 8;
+    this.fullscreenStatus.width = 260;
+    this.fullscreenStatus.height = 24;
+    this.fullscreenStatus.color = 'rgba(255,255,255,0.7)';
+    this.addChild(this.fullscreenStatus);
+
+    this.fullscreenBtn = new Button('Enter Fullscreen', () => this._toggleFullscreen());
+    this.fullscreenBtn.x = contentX + contentW - this.fullscreenBtn.width;
+    this.fullscreenBtn.y = y;
+    this.addChild(this.fullscreenBtn);
+
+    this._onFullscreenChange = () => {
+      const enabled = !!document.fullscreenElement;
+      this.settings.fullscreen = enabled;
+      this._syncFullscreenUi();
+    };
+    document.addEventListener('fullscreenchange', this._onFullscreenChange);
+    this._syncFullscreenUi();
 
     // Back button
-    this.addBackButton(() => {
+    const backBtn = this.addBackButton(() => {
       storage.saveSettings(this.settings);
       core.popPage();
     });
+    backBtn.x = contentX;
   }
 
-  _toggleFullscreen(enable) {
+  _syncFullscreenUi() {
+    const enabled = !!document.fullscreenElement;
+    this.fullscreenBtn.text = enabled ? 'Exit Fullscreen' : 'Enter Fullscreen';
+    this.fullscreenStatus.text = enabled ? 'Fullscreen enabled' : 'Fullscreen disabled';
+  }
+
+  _toggleFullscreen() {
+    const enable = !document.fullscreenElement;
     if (enable) {
       document.documentElement.requestFullscreen?.();
     } else {
@@ -110,11 +181,16 @@ export class SettingsPage extends BasePage {
 
   update(dt) {
     super.update(dt);
+    this.engineValue.text = this.settings.engineVolume + '%';
     this.musicValue.text = this.settings.musicVolume + '%';
     this.sfxValue.text = this.settings.sfxVolume + '%';
   }
 
   onExit() {
     storage.saveSettings(this.settings);
+    if (this._onFullscreenChange) {
+      document.removeEventListener('fullscreenchange', this._onFullscreenChange);
+      this._onFullscreenChange = null;
+    }
   }
 }

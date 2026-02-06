@@ -87,6 +87,10 @@ export class ControlsPage extends BasePage {
   _buildUI() {
     this.addTitle('Key Bindings');
 
+    // Center the bindings panel for widescreen layouts.
+    const contentW = 860;
+    const contentX = Math.round((this.width - contentW) / 2);
+
     // Instructions
     const instr = new Label('Click a binding to change it, then press a key', 'body');
     instr.x = this.width / 2;
@@ -102,13 +106,13 @@ export class ControlsPage extends BasePage {
     this.listHeight = 500;
     this.rowSpacing = 36;
     this.scrollY = 0;
-    this.leftX = 150;
-    this.rightX = 550;
+    this.leftX = contentX + 30;
+    this.rightX = contentX + 430;
 
     this.bindingsViewport = new BindingsViewport(this);
-    this.bindingsViewport.x = 120;
+    this.bindingsViewport.x = contentX;
     this.bindingsViewport.y = this.listTop - 10;
-    this.bindingsViewport.width = 660;
+    this.bindingsViewport.width = contentW;
     this.bindingsViewport.height = this.listHeight + 20;
     this.addChild(this.bindingsViewport);
 
@@ -148,15 +152,16 @@ export class ControlsPage extends BasePage {
 
     // Reset button
     const resetBtn = new Button('Reset to Defaults', () => this._resetDefaults());
-    resetBtn.x = this.width - resetBtn.width - 30;
+    resetBtn.x = contentX + contentW - resetBtn.width;
     resetBtn.y = this.height - resetBtn.height - 18;
     this.addChild(resetBtn);
 
     // Back button
-    this.addBackButton(() => {
+    const backBtn = this.addBackButton(() => {
       storage.saveBindings(this.bindings);
       core.popPage();
     });
+    backBtn.x = contentX;
   }
 
   _formatKey(code) {
@@ -252,7 +257,9 @@ export class ControlsPage extends BasePage {
     const max = this._maxScroll();
     if (max <= 0) return;
 
-    this._setScroll(this.scrollY + Math.sign(e.deltaY) * 28);
+    // Support trackpads and mouse wheels consistently.
+    const delta = Math.max(-120, Math.min(120, e.deltaY));
+    this._setScroll(this.scrollY + delta * 0.6);
     e.original?.preventDefault();
   }
 

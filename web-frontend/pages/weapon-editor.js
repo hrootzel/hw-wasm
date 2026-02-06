@@ -8,15 +8,17 @@ import { assets, drawWeaponIcon } from '../assets.js';
 import { audio } from '../util/audio.js';
 import { core } from '../ui/core.js';
 import { Node } from '../ui/scene.js';
+import { getVerticalScrollMetrics, drawVerticalScrollbar, isPointInTrack, scrollFromPointerY } from '../ui/scrollbar.js';
 
 // Custom weapon row widget with icon
 class WeaponRow extends Node {
-  constructor(weapon, onAmmoChange, onDelayChange) {
+  constructor(weapon, layout, onAmmoChange, onDelayChange) {
     super();
     this.weapon = weapon;
+    this.layout = layout;
     this.onAmmoChange = onAmmoChange;
     this.onDelayChange = onDelayChange;
-    this.width = 500;
+    this.width = layout.rowW;
     this.height = 36;
     this.ammo = 2;
     this.delay = 0;
@@ -25,50 +27,46 @@ class WeaponRow extends Node {
   }
 
   draw(ctx) {
-    // Draw at origin since container already translates to our position
+    const l = this.layout;
+
+    // Background striping for readability.
+    ctx.fillStyle = l.striped ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0)';
+    ctx.fillRect(0, 0, this.width, this.height);
+
     // Icon
-    drawWeaponIcon(ctx, this.weapon.icon, 0, 2, 32);
-    
+    drawWeaponIcon(ctx, this.weapon.icon, l.iconX, 2, l.iconSize);
+
     // Name
     ctx.fillStyle = '#fff';
     ctx.font = '14px sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText(this.weapon.name, 40, 18);
-    
-    // Ammo slider track
-    const ammoX = 200, sliderW = 100;
+    ctx.fillText(this.weapon.name, l.nameX, 18);
+
+    // Ammo
     ctx.fillStyle = '#333';
-    ctx.fillRect(ammoX, 14, sliderW, 8);
-    // Ammo handle
-    const ammoPos = (this.ammo / 9) * sliderW;
+    ctx.fillRect(l.ammoX, 14, l.ammoW, 8);
+    const ammoPos = (this.ammo / 9) * l.ammoW;
     ctx.fillStyle = '#4a9';
-    ctx.fillRect(ammoX + ammoPos - 4, 10, 8, 16);
-    // Ammo value
+    ctx.fillRect(l.ammoX + ammoPos - 4, 10, 8, 16);
     ctx.fillStyle = '#fff';
-    ctx.fillText(this.ammo === 9 ? '∞' : this.ammo, ammoX + sliderW + 10, 18);
-    
-    // Delay slider track
-    const delayX = 350;
+    ctx.fillText(this.ammo === 9 ? 'inf' : String(this.ammo), l.ammoX + l.ammoW + 10, 18);
+
+    // Delay
     ctx.fillStyle = '#333';
-    ctx.fillRect(delayX, 14, 80, 8);
-    // Delay handle
-    const delayPos = (this.delay / 8) * 80;
+    ctx.fillRect(l.delayX, 14, l.delayW, 8);
+    const delayPos = (this.delay / 8) * l.delayW;
     ctx.fillStyle = '#a94';
-    ctx.fillRect(delayX + delayPos - 4, 10, 8, 16);
-    // Delay value
+    ctx.fillRect(l.delayX + delayPos - 4, 10, 8, 16);
     ctx.fillStyle = '#fff';
-    ctx.fillText(String(this.delay), delayX + 90, 18);
+    ctx.fillText(String(this.delay), l.delayX + l.delayW + 10, 18);
   }
 
   onMouseDown(e) {
     const lx = e.x;
-    console.log('[WeaponRow] mousedown at', lx, 'for', this.weapon.name);
-    if (lx >= 200 && lx < 310) this.dragging = 'ammo';
-    else if (lx >= 350 && lx < 440) this.dragging = 'delay';
-    if (this.dragging) {
-      console.log('[WeaponRow] started dragging', this.dragging);
-      this._updateFromMouse(e);
-    }
+    const l = this.layout;
+    if (lx >= l.ammoX && lx < l.ammoX + l.ammoW + 36) this.dragging = 'ammo';
+    else if (lx >= l.delayX && lx < l.delayX + l.delayW + 36) this.dragging = 'delay';
+    if (this.dragging) this._updateFromMouse(e);
   }
 
   onMouseMove(e) {
@@ -79,11 +77,12 @@ class WeaponRow extends Node {
 
   _updateFromMouse(e) {
     const lx = e.x;
+    const l = this.layout;
     if (this.dragging === 'ammo') {
-      const v = Math.round(Math.max(0, Math.min(9, ((lx - 200) / 100) * 9)));
+      const v = Math.round(Math.max(0, Math.min(9, ((lx - l.ammoX) / l.ammoW) * 9)));
       if (v !== this.ammo) { this.ammo = v; this.onAmmoChange(v); }
     } else if (this.dragging === 'delay') {
-      const v = Math.round(Math.max(0, Math.min(8, ((lx - 350) / 80) * 8)));
+      const v = Math.round(Math.max(0, Math.min(8, ((lx - l.delayX) / l.delayW) * 8)));
       if (v !== this.delay) { this.delay = v; this.onDelayChange(v); }
     }
   }
@@ -109,149 +108,208 @@ export class WeaponEditorPage extends BasePage {
   _buildUI() {
     this.addTitle('Edit Weapon Sets');
 
+    // Center the editor layout for widescreen.
+    const contentW = 1120;
+    const contentX = Math.round((this.width - contentW) / 2);
+
     // Set list
     this.setList = new ScrollList(this.weaponSets.map(w => w.name), (i) => this._selectSet(i));
-    this.setList.x = 30; this.setList.y = 100;
-    this.setList.width = 160; this.setList.height = 500;
+    this.setList.x = contentX;
+    this.setList.y = 100;
+    this.setList.width = 160;
+    this.setList.height = 500;
     this.addChild(this.setList);
 
     // New/Delete
     const newBtn = new Button('New', () => this._newSet());
-    newBtn.x = 30; newBtn.y = 620; newBtn.width = 75;
+    newBtn.x = contentX;
+    newBtn.y = 620;
+    newBtn.width = 75;
     this.addChild(newBtn);
+
     const delBtn = new Button('Delete', () => this._deleteSet());
-    delBtn.x = 115; delBtn.y = 620; delBtn.width = 75;
+    delBtn.x = contentX + 85;
+    delBtn.y = 620;
+    delBtn.width = 75;
     this.addChild(delBtn);
+
+    const mainX = contentX + 190;
 
     // Name
     this.nameInput = new TextInput('', (v) => {
       if (this.selectedSet) { this.selectedSet.name = v; this.dirty = true; this._updateList(); }
     });
-    this.nameInput.x = 210; this.nameInput.y = 100; this.nameInput.width = 200;
+    this.nameInput.x = mainX;
+    this.nameInput.y = 100;
+    this.nameInput.width = 240;
     this.addChild(this.nameInput);
 
+    // Scrollable container for weapon rows
+    this.rowH = 36;
+    this.weaponContainer = new Node();
+    this.weaponContainer.x = mainX;
+    this.weaponContainer.y = 165;
+    this.weaponContainer.width = contentX + contentW - mainX;
+    this.weaponContainer.height = 520;
+    this.weaponContainer.interactive = true;
+
+    this.scrollOffset = 0;
+    this.draggingScrollbar = false;
+
+    this.weaponRowLayout = {
+      rowW: this.weaponContainer.width - 18,
+      iconX: 8,
+      iconSize: 32,
+      nameX: 48,
+      ammoX: 420,
+      ammoW: 160,
+      delayX: 650,
+      delayW: 140
+    };
+
     // Column headers
-    const headers = [['Weapon', 210], ['Ammo', 410], ['Delay', 560]];
+    const headers = [
+      ['Weapon', mainX],
+      ['Ammo', mainX + this.weaponRowLayout.ammoX],
+      ['Delay', mainX + this.weaponRowLayout.delayX]
+    ];
     for (const [t, hx] of headers) {
       const h = new Label(t, 'small');
-      h.x = hx; h.y = 140; h.width = 100; h.height = 20;
+      h.x = hx;
+      h.y = 140;
+      h.width = 110;
+      h.height = 20;
       h.color = 'rgba(255,255,255,0.6)';
       this.addChild(h);
     }
 
-    // Scrollable container for weapon rows
-    this.weaponContainer = new Node();
-    this.weaponContainer.x = 210;
-    this.weaponContainer.y = 165;
-    this.weaponContainer.width = 550;
-    this.weaponContainer.height = 520;
-    this.weaponContainer.interactive = true;
     this.weaponContainer.hitTest = (gx, gy) => {
       const local = this.weaponContainer.globalToLocal(gx, gy);
-      return local.x >= 0 && local.x < this.weaponContainer.width && 
+      return local.x >= 0 && local.x < this.weaponContainer.width &&
              local.y >= 0 && local.y < this.weaponContainer.height;
     };
+
     this.weaponContainer.onMouseDown = (e) => {
       const local = this.weaponContainer.globalToLocal(e.x, e.y);
-      
-      // Check if clicking scrollbar
-      if (local.x >= this.weaponContainer.width - 10) {
-        const totalHeight = this.weaponRows.length * 36;
-        if (totalHeight > this.weaponContainer.height) {
-          this.draggingScrollbar = true;
-          const maxScroll = totalHeight - this.weaponContainer.height;
-          const clickRatio = local.y / this.weaponContainer.height;
-          this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
-        }
+      const m = this._scrollMetrics();
+      if (m.enabled && isPointInTrack(local.x, local.y, m)) {
+        this.draggingScrollbar = true;
+        this.scrollOffset = scrollFromPointerY(local.y, m);
         return;
       }
-      
+
       const adjustedY = local.y + this.scrollOffset;
-      const rowIdx = Math.floor(adjustedY / 36);
+      const rowIdx = Math.floor(adjustedY / this.rowH);
       if (rowIdx >= 0 && rowIdx < this.weaponRows.length) {
         const row = this.weaponRows[rowIdx];
-        row.onMouseDown({ x: local.x, y: adjustedY - rowIdx * 36 });
+        row.onMouseDown({ x: local.x, y: adjustedY - rowIdx * this.rowH });
       }
     };
+
     this.weaponContainer.onMouseMove = (e) => {
-      // If dragging scrollbar
+      const local = this.weaponContainer.globalToLocal(e.x, e.y);
+
       if (this.draggingScrollbar) {
-        const local = this.weaponContainer.globalToLocal(e.x, e.y);
-        const totalHeight = this.weaponRows.length * 36;
-        const maxScroll = totalHeight - this.weaponContainer.height;
-        const clickRatio = local.y / this.weaponContainer.height;
-        this.scrollOffset = Math.max(0, Math.min(maxScroll, clickRatio * maxScroll));
+        const m = this._scrollMetrics();
+        if (m.enabled) this.scrollOffset = scrollFromPointerY(local.y, m);
         return;
       }
-      
-      // If dragging slider, route to the dragging row
+
       for (const row of this.weaponRows) {
         if (row.dragging) {
-          const local = this.weaponContainer.globalToLocal(e.x, e.y);
           row.onMouseMove({ x: local.x, y: 0 });
           return;
         }
       }
     };
+
     this.weaponContainer.onMouseUp = (e) => {
       this.draggingScrollbar = false;
       for (const row of this.weaponRows) {
         if (row.dragging) row.onMouseUp(e);
       }
     };
-    this.scrollOffset = 0;
-    
-    // Override draw to clip and scroll
+
+    // Draw container with clipping + scrollbar.
     this.weaponContainer.draw = (ctx) => {
       ctx.save();
+      ctx.translate(this.weaponContainer.x, this.weaponContainer.y);
+
+      // Panel background
+      ctx.fillStyle = 'rgba(24, 36, 56, 0.78)';
+      ctx.strokeStyle = '#88AADD';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.rect(this.weaponContainer.x, this.weaponContainer.y, this.weaponContainer.width, this.weaponContainer.height);
+      ctx.roundRect(0, 0, this.weaponContainer.width, this.weaponContainer.height, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, this.weaponContainer.width, this.weaponContainer.height);
       ctx.clip();
-      
+
       for (const row of this.weaponRows) {
-        const screenY = this.weaponContainer.y + row.y - this.scrollOffset;
-        if (screenY + 36 < this.weaponContainer.y || screenY > this.weaponContainer.y + this.weaponContainer.height) continue;
-        
+        const screenY = row.y - this.scrollOffset;
+        if (screenY + this.rowH < 0 || screenY > this.weaponContainer.height) continue;
         ctx.save();
-        ctx.translate(this.weaponContainer.x + row.x, screenY);
+        ctx.translate(row.x, screenY);
         row.draw(ctx);
         ctx.restore();
       }
-      
+
       ctx.restore();
-      
-      // Scrollbar
-      const totalHeight = this.weaponRows.length * 36;
-      if (totalHeight > this.weaponContainer.height) {
-        const barHeight = Math.max(20, (this.weaponContainer.height / totalHeight) * this.weaponContainer.height);
-        const barY = (this.scrollOffset / (totalHeight - this.weaponContainer.height)) * (this.weaponContainer.height - barHeight);
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillRect(this.weaponContainer.x + this.weaponContainer.width - 8, this.weaponContainer.y + barY, 6, barHeight);
-      }
+
+      const m = this._scrollMetrics();
+      drawVerticalScrollbar(ctx, m, {
+        trackColor: 'rgba(40,56,84,0.9)',
+        thumbColor: this.draggingScrollbar ? '#FFEE88' : '#FFDD44'
+      });
+
+      ctx.restore();
     };
-    
+
     this.addChild(this.weaponContainer);
 
     // Create weapon rows
+    this.weaponRows = [];
     let y = 0;
-    for (const w of WEAPONS) {
-      const row = new WeaponRow(w,
+    for (let i = 0; i < WEAPONS.length; i++) {
+      const w = WEAPONS[i];
+      const layout = { ...this.weaponRowLayout, striped: (i % 2) === 1 };
+      const row = new WeaponRow(w, layout,
         (v) => { if (this.selectedSet) { this.selectedSet.ammo[w.id] = v; this.dirty = true; } },
         (v) => { if (this.selectedSet) { this.selectedSet.delay[w.id] = v; this.dirty = true; } }
       );
-      row.x = 0; // Relative to container
+      row.x = 0;
       row.y = y;
       this.weaponRows.push(row);
-      y += 36;
+      y += this.rowH;
     }
 
     // Save
     const saveBtn = new Button('Save', () => this._saveSet());
-    saveBtn.x = this.width - saveBtn.width - 30;
+    saveBtn.x = contentX + contentW - saveBtn.width;
     saveBtn.y = this.height - saveBtn.height - 18;
     this.addChild(saveBtn);
 
-    this.addBackButton(() => { if (this.dirty) this._saveSet(); core.popPage(); });
+    const backBtn = this.addBackButton(() => { if (this.dirty) this._saveSet(); core.popPage(); });
+    backBtn.x = contentX;
+  }
+
+  _scrollMetrics() {
+    const trackW = 10;
+    const trackPad = 4;
+    return getVerticalScrollMetrics({
+      scroll: this.scrollOffset,
+      contentSize: this.weaponRows.length * this.rowH,
+      viewSize: this.weaponContainer.height,
+      trackX: this.weaponContainer.width - trackW - trackPad,
+      trackY: trackPad,
+      trackW,
+      trackH: this.weaponContainer.height - trackPad * 2,
+      minThumb: 40
+    });
   }
 
   _selectSet(idx) {
@@ -298,11 +356,17 @@ export class WeaponEditorPage extends BasePage {
   }
 
   onMouseWheel(e) {
-    // Mouse wheel scrolling
-    const delta = e.deltaY || 0;
-    const maxScroll = Math.max(0, this.weaponRows.length * 36 - this.weaponContainer.height);
-    this.scrollOffset = Math.max(0, Math.min(maxScroll, this.scrollOffset + delta * 0.5));
-    if (e.original) e.original.preventDefault();
+    const inContainer =
+      e.x >= this.weaponContainer.x &&
+      e.x <= this.weaponContainer.x + this.weaponContainer.width &&
+      e.y >= this.weaponContainer.y &&
+      e.y <= this.weaponContainer.y + this.weaponContainer.height;
+    if (!inContainer) return;
+
+    const delta = Math.max(-120, Math.min(120, e.deltaY || 0));
+    const maxScroll = Math.max(0, this.weaponRows.length * this.rowH - this.weaponContainer.height);
+    this.scrollOffset = Math.max(0, Math.min(maxScroll, this.scrollOffset + delta * 0.7));
+    e.original?.preventDefault();
   }
 
   onKeyDown(e) {

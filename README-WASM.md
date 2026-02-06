@@ -1,5 +1,5 @@
-WASM Build Environment
-======================
+Wedgewars - The WASM Hedgewars build for in browser gaming
+==========================================================
 
 Status
 ------
@@ -7,6 +7,9 @@ Status
 - WebGL2 engine runs in-browser with packed assets
 - **Canvas-based web frontend** replaces the old shell.html menu
 - Local autostart works via `--webcfg64` config injection
+- Engine quit now returns automatically to `/web-frontend/`
+- Engine launch args include Qt-style audio flags (`--volume`, `--nosound`, `--nomusic`)
+- Web control bindings are exported to engine config using `bind` commands
 
 Required Tools
 --------------
@@ -87,7 +90,7 @@ to match the original Hedgewars look and feel.
 - Team Editor: name, difficulty, hat/flag/grave selection with previews, 8 hog names
 - Scheme Editor: all game settings (sliders/dropdowns) and modifier flags
 - Weapon Editor: weapon icons from sprite sheet, ammo count and delay per weapon
-- Settings: music/SFX volume, fullscreen toggle
+- Settings: in-game master volume + in-game music/sound toggles, frontend music/SFX volume, fullscreen toggle
 - Controls: key binding configuration with conflict detection
 - All data persisted to localStorage
 
@@ -107,8 +110,10 @@ web-frontend/
 2. Frontend builds engine config text (matching IPC protocol)
 3. Config is base64-encoded and stored in `localStorage['hw-wasm-webcfg64']`
 4. Browser navigates to `/hwengine.html`
-5. Engine shell reads config, passes `--webcfg64` chunks to `Module.callMain()`
-6. Engine starts the match
+5. Engine shell reads config and settings from localStorage
+6. Shell builds engine args (`--prefix`, `--user-prefix`, `--webcfg64`, `--volume`, optional `--nosound`, optional `--nomusic`)
+7. Engine starts the match
+8. On engine exit/abort, shell redirects back to `/web-frontend/`
 
 ### Config Builder (`data/config-builder.js`)
 Generates the same line-based config the Qt frontend sends via IPC:
@@ -116,6 +121,7 @@ Generates the same line-based config the Qt frontend sends via IPC:
 - Scheme: `turntime`, `sd_turns`, `damagepct`, `gmflags`, etc.
 - Ammo: `ammloadt`, `ammprob`, `ammdelay`, `ammreinf` (one char per weapon in TAmmoType order)
 - Teams: `addteam`, `grave`, `fort`, `flag`, `voicepack`, `addhh`, `hat`
+- Binds: per-team `bind <key> <command>` lines generated from web Controls settings
 
 Build Scripts
 -------------
@@ -185,9 +191,18 @@ Engine Shell (`project_files/web/shell.html`)
 ---------------------------------------------
 Minimal HTML template used by Emscripten's `--shell-file`. It:
 - Reads config from `localStorage['hw-wasm-webcfg64']`
+- Reads settings from `localStorage['hw.settings']`
 - Auto-launches the game once WASM data is loaded
+- Applies Qt-style audio args:
+  - `--volume floor(engineVolume * 128 / 100)`
+  - `--nosound` when in-game sound is disabled
+  - `--nomusic` when in-game music is disabled
+- Redirects back to `/web-frontend/` when engine exits/aborts
 - Handles SDL audio context unlock on first interaction
 - Contains the `{{{ SCRIPT }}}` placeholder for Emscripten
+
+Important: `shell.html` is baked into generated `hwengine.html`/`hwengine.js` during build.
+Staging frontend files alone does not update it. Rebuild engine output after shell changes.
 
 Technical Notes
 ---------------
@@ -220,7 +235,6 @@ Current Issues
 --------------
 - ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
 - SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
-
 
 
 

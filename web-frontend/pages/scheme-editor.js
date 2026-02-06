@@ -18,6 +18,8 @@ export class SchemeEditorPage extends BasePage {
     this.selectedScheme = null;
     this.dirty = false;
     this.scrollY = 0;
+    this.valueEditInput = null;
+    this.valueEditContext = null;
     this._buildUI();
     if (this.schemes.length > 0) {
       this._selectScheme(0);
@@ -27,12 +29,16 @@ export class SchemeEditorPage extends BasePage {
   _buildUI() {
     this.addTitle('Edit Schemes');
 
+    // Center the editor layout for widescreen.
+    const contentW = 1100;
+    const contentX = Math.round((this.width - contentW) / 2);
+
     // Scheme list (left side)
     this.schemeList = new ScrollList(
       this.schemes.map(s => s.name),
       (idx) => this._selectScheme(idx)
     );
-    this.schemeList.x = 30;
+    this.schemeList.x = contentX;
     this.schemeList.y = 100;
     this.schemeList.width = 200;
     this.schemeList.height = 480;
@@ -40,35 +46,52 @@ export class SchemeEditorPage extends BasePage {
 
     // New/Delete buttons
     const newBtn = new Button('New', () => this._newScheme());
-    newBtn.x = 30;
+    newBtn.x = contentX;
     newBtn.y = 600;
     newBtn.width = 95;
     this.addChild(newBtn);
 
     const delBtn = new Button('Delete', () => this._deleteScheme());
-    delBtn.x = 135;
+    delBtn.x = contentX + 105;
     delBtn.y = 600;
     delBtn.width = 95;
     this.addChild(delBtn);
 
     // Edit panel (right side) - we'll create controls dynamically
     this.editControls = [];
-    this._buildEditPanel();
+    this._buildEditPanel(contentX);
+
+    // Inline numeric editor for slider values (click the number).
+    this.valueEditInput = new TextInput('', (v) => {
+      if (!this.valueEditContext) return;
+      const { slider } = this.valueEditContext;
+      const n = Number.parseInt(v, 10);
+      if (!Number.isFinite(n)) return;
+      slider.value = Math.max(slider.min, Math.min(slider.max, n));
+      if (slider.onChange) slider.onChange(slider.value);
+      this.dirty = true;
+    });
+    this.valueEditInput.visible = false;
+    this.valueEditInput.width = 70;
+    this.valueEditInput.height = 30;
+    this.valueEditInput.maxLength = 4;
+    this.addChild(this.valueEditInput);
 
     // Save button
     const saveBtn = new Button('Save', () => this._saveScheme());
-    saveBtn.x = this.width - saveBtn.width - 30;
+    saveBtn.x = contentX + contentW - saveBtn.width;
     saveBtn.y = this.height - saveBtn.height - 18;
     this.addChild(saveBtn);
 
-    this.addBackButton(() => {
+    const backBtn = this.addBackButton(() => {
       if (this.dirty) this._saveScheme();
       core.popPage();
     });
+    backBtn.x = contentX;
   }
 
-  _buildEditPanel() {
-    const editX = 260;
+  _buildEditPanel(contentX = 0) {
+    const editX = contentX + 230;
     let y = 100;
     const spacing = 38;
 
@@ -135,6 +158,19 @@ export class SchemeEditorPage extends BasePage {
         valLabel.y = y;
         valLabel.width = 50;
         valLabel.height = 24;
+        valLabel.interactive = true;
+        valLabel.onMouseUp = () => {
+          if (!this.selectedScheme) return;
+          this.valueEditContext = { slider, valueLabel: valLabel };
+          this.valueEditInput.x = valLabel.x - 10;
+          this.valueEditInput.y = valLabel.y - 3;
+          this.valueEditInput.text = String(slider.value);
+          this.valueEditInput.cursorPos = this.valueEditInput.text.length;
+          this.valueEditInput.visible = true;
+          this.valueEditInput.focused = true;
+          this.valueEditInput.cursorBlink = 0;
+          this.setFocusedInput(this.valueEditInput);
+        };
         this.addChild(valLabel);
 
         this.editControls.push({ key: setting.key, control: slider, valueLabel: valLabel, type: 'slider' });
@@ -238,6 +274,15 @@ export class SchemeEditorPage extends BasePage {
   }
 
   onKeyDown(e) {
+    if (this.valueEditInput && this.valueEditInput.focused) {
+      this.valueEditInput.handleKey(e);
+      if (!this.valueEditInput.focused) {
+        this.valueEditInput.visible = false;
+        this.valueEditContext = null;
+      }
+      e.original?.preventDefault();
+      return;
+    }
     if (this.nameInput.focused) {
       this.nameInput.handleKey(e);
       e.original?.preventDefault();

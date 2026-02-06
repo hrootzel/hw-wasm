@@ -107,7 +107,12 @@ export class LocalGamePage extends BasePage {
   _buildUI() {
     this.addTitle('Local Game');
 
-    const leftX = 30;
+    // Center content so widescreen layouts don't waste the right side.
+    const contentW = 980;
+    const contentX = Math.round((this.width - contentW) / 2);
+    const leftColW = 340;
+    const colGap = 40;
+    const leftX = contentX;
     let y = 100;
 
     // Map section
@@ -173,18 +178,19 @@ export class LocalGamePage extends BasePage {
     this.teamSelector = new TeamSelector((teams) => {
       this.selectedTeams = teams;
     });
-    this.teamSelector.x = 400;
+    this.teamSelector.x = contentX + leftColW + colGap;
     this.teamSelector.y = 100;
     this.teamSelector.interactive = true;
     this.addChild(this.teamSelector);
 
     // Start button
     const startBtn = new Button('Start Game', () => this._startGame());
-    startBtn.x = this.width - startBtn.width - 30;
+    startBtn.x = contentX + contentW - startBtn.width;
     startBtn.y = this.height - startBtn.height - 18;
     this.addChild(startBtn);
 
-    this.addBackButton(() => core.popPage());
+    const backBtn = this.addBackButton(() => core.popPage());
+    backBtn.x = contentX;
   }
 
   _addLabel(text, x, y) {
@@ -219,7 +225,8 @@ export class LocalGamePage extends BasePage {
 
     const cfgText = buildConfig({
       mapType, theme, seed, scheme, weaponSet,
-      teams: this.selectedTeams
+      teams: this.selectedTeams,
+      bindings: storage.getBindings()
     });
 
     console.log('[local-game] config:\n' + cfgText);

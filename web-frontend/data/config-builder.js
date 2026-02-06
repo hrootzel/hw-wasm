@@ -1,6 +1,7 @@
 // Build webcfg64 config string for the Hedgewars engine
 import { WEAPONS } from './weapons.js';
 import { SCHEME_FLAGS } from './schemes.js';
+import { DEFAULT_BINDINGS } from './defaults.js';
 
 // Scheme flag bit values matching uConsts.pas gf* constants
 const FLAG_BITS = {
@@ -35,6 +36,82 @@ const FLAG_BITS = {
 // Map type name to mapgen integer
 const MAPGEN = { 'Random': 0, 'Maze': 1, 'Drawn': 3, 'Perlin': 2, 'Forts': 4, 'WFC': 5 };
 
+const ACTION_TO_ENGINE_COMMAND = {
+  up: '+up',
+  down: '+down',
+  left: '+left',
+  right: '+right',
+  jump: 'ljump',
+  highjump: 'hjump',
+  attack: '+attack',
+  precise: '+precise',
+  switch: 'switch',
+  timer1: 'timer 1',
+  timer2: 'timer 2',
+  timer3: 'timer 3',
+  timer4: 'timer 4',
+  timer5: 'timer 5',
+  slot1: 'slot 1',
+  slot2: 'slot 2',
+  slot3: 'slot 3',
+  slot4: 'slot 4',
+  slot5: 'slot 5',
+  slot6: 'slot 6',
+  slot7: 'slot 7',
+  slot8: 'slot 8',
+  slot9: 'slot 9',
+  chat: 'chat',
+  pause: 'pause',
+  quit: 'quit',
+};
+
+const CODE_TO_ENGINE_KEY = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  Enter: 'return',
+  Backspace: 'backspace',
+  Space: 'space',
+  Tab: 'tab',
+  Escape: 'escape',
+  ShiftLeft: 'left_shift',
+  ShiftRight: 'right_shift',
+  ControlLeft: 'left_ctrl',
+  ControlRight: 'right_ctrl',
+  AltLeft: 'left_alt',
+  AltRight: 'right_alt',
+  Backquote: '`',
+};
+
+function toEngineKey(code) {
+  if (!code || typeof code !== 'string') return null;
+  if (CODE_TO_ENGINE_KEY[code]) return CODE_TO_ENGINE_KEY[code];
+
+  if (/^Key[A-Z]$/.test(code)) return code.slice(3).toLowerCase();
+  if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+  if (/^F([1-9]|10)$/.test(code)) return code.toLowerCase();
+  if (/^Numpad[0-9]$/.test(code)) return 'keypad_' + code.slice(6);
+  if (code === 'NumpadEnter') return 'enter';
+  if (code === 'NumpadAdd') return 'keypad_plus';
+  if (code === 'NumpadSubtract') return 'keypad_minus';
+  if (code === 'NumpadMultiply') return 'keypad_multiply';
+  if (code === 'NumpadDivide') return 'keypad_divide';
+
+  return null;
+}
+
+function buildBindLines(bindings) {
+  const lines = [];
+  for (const [action, keyCode] of Object.entries(bindings || {})) {
+    const command = ACTION_TO_ENGINE_COMMAND[action];
+    const engineKey = toEngineKey(keyCode);
+    if (!command || !engineKey) continue;
+    lines.push('bind ' + engineKey + ' ' + command);
+  }
+  return lines;
+}
+
 // Build ammo string (one char per weapon in TAmmoType order)
 function buildAmmoString(weaponSet, field) {
   return WEAPONS.map(w => {
@@ -43,12 +120,18 @@ function buildAmmoString(weaponSet, field) {
   }).join('');
 }
 
-export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mission }) {
+export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mission, bindings }) {
   const lines = [];
+  const mergedBindings = bindings ? { ...DEFAULT_BINDINGS, ...bindings } : null;
 
   // Mission script (if provided)
   if (mission) {
     lines.push('setmissteam'); // Initialize mission team
+
+    if (mergedBindings) {
+      lines.push(...buildBindLines(mergedBindings));
+    }
+
     // Mission path is relative to Missions/ directory
     const missionPath = mission.includes('/') ? 'Missions/Campaign/' + mission : 'Missions/Training/' + mission;
     lines.push('script ' + missionPath);
@@ -126,6 +209,12 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mi
         const hog = team.hedgehogs?.[h] || { name: 'Hedgehog ' + (h + 1) };
         lines.push('addhh ' + (team.difficulty || 0) + ' ' + (scheme?.initialHealth ?? 100) + ' ' + hog.name);
         lines.push('hat ' + (team.hat || 'NoHat'));
+      }
+
+      // Controls are team-local in engine config, so apply the selected binds
+      // to each generated team.
+      if (mergedBindings) {
+        lines.push(...buildBindLines(mergedBindings));
       }
     }
   }

@@ -81,21 +81,25 @@ export class TeamEditorPage extends BasePage {
   _buildUI() {
     this.addTitle('Edit Teams');
 
+    // Center the editor layout for widescreen.
+    const contentW = 1120;
+    const contentX = Math.round((this.width - contentW) / 2);
+
     // Team list
     this.teamList = new ScrollList(this.teams.map(t => t.name), (i) => this._selectTeam(i));
-    this.teamList.x = 30; this.teamList.y = 100;
+    this.teamList.x = contentX; this.teamList.y = 100;
     this.teamList.width = 180; this.teamList.height = 480;
     this.addChild(this.teamList);
 
     // New/Delete
     const newBtn = new Button('New', () => this._newTeam());
-    newBtn.x = 30; newBtn.y = 600; newBtn.width = 85;
+    newBtn.x = contentX; newBtn.y = 600; newBtn.width = 85;
     this.addChild(newBtn);
     const delBtn = new Button('Delete', () => this._deleteTeam());
-    delBtn.x = 125; delBtn.y = 600; delBtn.width = 85;
+    delBtn.x = contentX + 95; delBtn.y = 600; delBtn.width = 85;
     this.addChild(delBtn);
 
-    const ex = 240;
+    const ex = contentX + 210;
     let y = 100;
 
     // Team name
@@ -259,11 +263,12 @@ export class TeamEditorPage extends BasePage {
 
     // Save
     const saveBtn = new Button('Save', () => this._saveTeam());
-    saveBtn.x = this.width - saveBtn.width - 30;
+    saveBtn.x = contentX + contentW - saveBtn.width;
     saveBtn.y = this.height - saveBtn.height - 18;
     this.addChild(saveBtn);
 
-    this.addBackButton(() => { if (this.dirty) this._saveTeam(); core.popPage(); });
+    const backBtn = this.addBackButton(() => { if (this.dirty) this._saveTeam(); core.popPage(); });
+    backBtn.x = contentX;
   }
 
   _addLabel(text, x, y) {
