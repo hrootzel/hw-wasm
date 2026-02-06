@@ -10,6 +10,7 @@ import { TeamEditorPage } from './team-editor.js';
 import { SchemeEditorPage } from './scheme-editor.js';
 import { WeaponEditorPage } from './weapon-editor.js';
 import { LocalGamePage } from './local-game.js';
+import { MissionsPage } from './missions.js';
 
 export class MainMenuPage extends Page {
   constructor() {
@@ -35,6 +36,7 @@ export class MainMenuPage extends Page {
 
     const buttons = [
       ['Local Game', () => core.pushPage(new LocalGamePage())],
+      ['Missions', () => core.pushPage(new MissionsPage())],
       ['Settings', () => core.pushPage(new SettingsPage())],
       ['Controls', () => core.pushPage(new ControlsPage())],
       ['Edit Teams', () => core.pushPage(new TeamEditorPage())],

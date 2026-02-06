@@ -102,7 +102,7 @@ export const DEFAULT_TEAMS = [
   },
   {
     name: 'CPU Team',
-    difficulty: 3,
+    difficulty: 4,  // Internal 4 = display "Level 2" (easy-ish bot)
     hat: 'cyborg1',
     flag: 'cpu',
     grave: 'Grave',

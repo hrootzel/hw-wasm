@@ -4,6 +4,7 @@ import { SCHEME_FLAGS } from './schemes.js';
 
 // Scheme flag bit values matching uConsts.pas gf* constants
 const FLAG_BITS = {
+  oneClanMode: 0x00000001, // For missions - game doesn't end with one clan
   fortsMode: 0x00000000, // forts mode is handled via mapgen=4
   dividedTeams: 0x00000010,
   solidLand: 0x00000004,
@@ -42,13 +43,21 @@ function buildAmmoString(weaponSet, field) {
   }).join('');
 }
 
-export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams }) {
+export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams, mission }) {
   const lines = [];
 
-  // Map
-  lines.push('mapgen ' + (MAPGEN[mapType] ?? 0));
-  lines.push('theme ' + (theme || 'Nature'));
-  lines.push('seed ' + (seed || '{' + Math.random().toString(36).slice(2) + '}'));
+  // Mission script (if provided)
+  if (mission) {
+    lines.push('setmissteam'); // Initialize mission team
+    // Mission path is relative to Missions/ directory
+    const missionPath = mission.includes('/') ? 'Missions/Campaign/' + mission : 'Missions/Training/' + mission;
+    lines.push('script ' + missionPath);
+  } else {
+    // Map (only for non-mission games)
+    lines.push('mapgen ' + (MAPGEN[mapType] ?? 0));
+    lines.push('theme ' + (theme || 'Nature'));
+    lines.push('seed ' + (seed || '{' + Math.random().toString(36).slice(2) + '}'));
+  }
 
   // Scheme settings
   if (scheme) {
@@ -76,6 +85,10 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams }) 
         if (scheme.flags[key]) flags |= bit;
       }
     }
+    // Always enable oneClanMode for missions
+    if (mission) {
+      flags |= FLAG_BITS.oneClanMode;
+    }
     lines.push('gmflags ' + flags);
   }
 
@@ -97,21 +110,23 @@ export function buildConfig({ mapType, theme, seed, scheme, weaponSet, teams }) 
   lines.push('ammdelay ' + ammdelay);
   lines.push('ammreinf ' + ammreinf);
 
-  // Teams - one ammstore per team
-  for (let i = 0; i < teams.length; i++) {
-    const team = teams[i];
-    lines.push('ammstore');
-    lines.push('addteam x ' + (team.color ?? i) + ' ' + team.name);
-    lines.push('grave ' + (team.grave || 'Grave'));
-    lines.push('fort ' + (team.fort || 'Castle'));
-    lines.push('flag ' + (team.flag || 'hedgewars'));
-    lines.push('voicepack ' + (team.voice || 'Default'));
+  // Teams - one ammstore per team (skip for missions - they use AddMissionTeam)
+  if (!mission) {
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
+      lines.push('ammstore');
+      lines.push('addteam x ' + (team.color ?? i) + ' ' + team.name);
+      lines.push('grave ' + (team.grave || 'Grave'));
+      lines.push('fort ' + (team.fort || 'Castle'));
+      lines.push('flag ' + (team.flag || 'hedgewars'));
+      lines.push('voicepack ' + (team.voice || 'Default'));
 
-    const hogCount = team.hogCount || (team.hedgehogs ? Math.min(team.hedgehogs.length, 8) : 8);
-    for (let h = 0; h < hogCount; h++) {
-      const hog = team.hedgehogs?.[h] || { name: 'Hedgehog ' + (h + 1) };
-      lines.push('addhh ' + (team.difficulty || 0) + ' ' + (scheme?.initialHealth ?? 100) + ' ' + hog.name);
-      lines.push('hat ' + (team.hat || 'NoHat'));
+      const hogCount = team.hogCount || (team.hedgehogs ? Math.min(team.hedgehogs.length, 8) : 8);
+      for (let h = 0; h < hogCount; h++) {
+        const hog = team.hedgehogs?.[h] || { name: 'Hedgehog ' + (h + 1) };
+        lines.push('addhh ' + (team.difficulty || 0) + ' ' + (scheme?.initialHealth ?? 100) + ' ' + hog.name);
+        lines.push('hat ' + (team.hat || 'NoHat'));
+      }
     }
   }
 

@@ -169,7 +169,7 @@ $cmakeArgs = @(
   "-B", $buildDirFull,
   "-G", "Ninja",
   "-DCMAKE_MAKE_PROGRAM=$ninja",
-  "-DCMAKE_BUILD_TYPE=Release",
+  "-DCMAKE_BUILD_TYPE=$(if ($WasmDebug) { 'RelWithDebInfo' } else { 'Release' })",
   "-DBUILD_ENGINE_C=1",
   "-DBUILD_ENGINE_JS=$($BuildEngineJS.IsPresent.ToString().ToUpper())",
   "-DNOSERVER=ON",

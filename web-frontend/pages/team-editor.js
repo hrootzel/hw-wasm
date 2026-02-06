@@ -11,7 +11,9 @@ import { Node } from '../ui/scene.js';
 import { IconPicker } from '../ui/icon-picker.js';
 import { randomHogNamesSync } from '../util/namegen.js';
 
-const DIFFICULTIES = ['Human', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+// Display labels: Level 1 = easiest, Level 5 = hardest (matches Qt frontend)
+// Internal values: 0 = human, 5 = easiest bot, 1 = hardest bot
+const DIFFICULTIES = ['Human', 'Level 1 (Easy)', 'Level 2', 'Level 3', 'Level 4', 'Level 5 (Hard)'];
 const TEAM_COLORS = [
   { name: 'Red', value: 0xffd12b42 },
   { name: 'Blue', value: 0xff4980c1 },
@@ -108,7 +110,11 @@ export class TeamEditorPage extends BasePage {
     // Difficulty
     this._addLabel('Difficulty', ex, y);
     this.diffDropdown = new Dropdown(DIFFICULTIES, 0, (i) => {
-      if (this.selectedTeam) { this.selectedTeam.difficulty = i; this.dirty = true; }
+      if (this.selectedTeam) {
+        // Convert display index to internal value: 0=human, 1-5 bots where 5=easy, 1=hard
+        this.selectedTeam.difficulty = (i === 0) ? 0 : (6 - i);
+        this.dirty = true;
+      }
     });
     this.diffDropdown.x = ex + 120; this.diffDropdown.y = y; this.diffDropdown.width = 140;
     this.addChild(this.diffDropdown);
@@ -429,7 +435,9 @@ export class TeamEditorPage extends BasePage {
       
       this.nameInput.text = this.selectedTeam.name;
       this.nameInput.cursorPos = this.selectedTeam.name.length;
-      this.diffDropdown.selectedIndex = this.selectedTeam.difficulty || 0;
+      // Convert internal difficulty to display index: 0=human, internal 5=Level 1, internal 1=Level 5
+      const diff = this.selectedTeam.difficulty || 0;
+      this.diffDropdown.selectedIndex = (diff === 0) ? 0 : (6 - diff);
       this.colorDropdown.selectedIndex = this.selectedTeam.color || 0;
       
       // Hat
