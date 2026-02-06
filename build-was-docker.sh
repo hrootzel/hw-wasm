@@ -48,6 +48,17 @@ docker run --rm -t \
     mkdir -p "${build_dir}"
     build_dir_full="$(cd "${build_dir}" && pwd)"
 
+    # If this build dir was configured on the host (for example Windows paths),
+    # CMake will reject it in the container. Drop stale cache metadata only.
+    cache_file="${build_dir_full}/CMakeCache.txt"
+    if [[ -f "${cache_file}" ]]; then
+      if grep -Eq "C:/|[A-Za-z]:\\\\\\\\|C:\\\\Users\\\\" "${cache_file}"; then
+        echo "Detected host-generated CMake cache. Cleaning stale CMake metadata..."
+        rm -f "${build_dir_full}/CMakeCache.txt"
+        rm -rf "${build_dir_full}/CMakeFiles"
+      fi
+    fi
+
     cat > "${build_dir_full}/SDL2Config.cmake" <<'\''EOF'\''
 set(SDL2_INCLUDE_DIRS "${CMAKE_SYSTEM_INCLUDE_PATH}/SDL")
 set(SDL2_LIBRARIES "")

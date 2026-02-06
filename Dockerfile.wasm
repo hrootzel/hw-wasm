@@ -2,29 +2,51 @@ FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG EMSDK_VERSION=5.0.0
+ARG RUST_TOOLCHAIN=1.93.0
+
+# APT version locks captured from a known-good build on Ubuntu 24.04.3.
+ARG VER_BASH=5.2.21-2ubuntu4
+ARG VER_CA_CERTIFICATES=20240203
+ARG VER_CABAL_INSTALL=3.8.1.0-1
+ARG VER_CLANG=1:18.0-59~exp2
+ARG VER_CMAKE=3.28.3-1build7
+ARG VER_CURL=8.5.0-2ubuntu10.6
+ARG VER_GPP=4:13.2.0-7ubuntu1
+ARG VER_GCC=4:13.2.0-7ubuntu1
+ARG VER_GHC=9.4.7-3
+ARG VER_GIT=1:2.43.0-1ubuntu7.3
+ARG VER_LLD=1:18.0-59~exp2
+ARG VER_LLVM=1:18.0-59~exp2
+ARG VER_MAKE=4.3-4.1build2
+ARG VER_NINJA_BUILD=1.11.1-2
+ARG VER_PKG_CONFIG=1.8.1-2build1
+ARG VER_PYTHON3=3.12.3-0ubuntu2.1
+ARG VER_PYTHON3_PIP=24.0+dfsg-1ubuntu1.3
+ARG VER_XZ_UTILS=5.6.1+really5.4.5-1ubuntu0.2
+ARG VER_ZIP=3.0-13ubuntu0.2
+ARG VER_UNZIP=6.0-28ubuntu4.1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash \
-    ca-certificates \
-    cabal-install \
-    clang \
-    cmake \
-    curl \
-    g++ \
-    gcc \
-    ghc \
-    git \
-    lld \
-    llvm \
-    make \
-    ninja-build \
-    pkg-config \
-    python3 \
-    python3-pip \
-    rustup \
-    xz-utils \
-    zip \
-    unzip \
+    bash=${VER_BASH} \
+    ca-certificates=${VER_CA_CERTIFICATES} \
+    cabal-install=${VER_CABAL_INSTALL} \
+    clang=${VER_CLANG} \
+    cmake=${VER_CMAKE} \
+    curl=${VER_CURL} \
+    g++=${VER_GPP} \
+    gcc=${VER_GCC} \
+    ghc=${VER_GHC} \
+    git=${VER_GIT} \
+    lld=${VER_LLD} \
+    llvm=${VER_LLVM} \
+    make=${VER_MAKE} \
+    ninja-build=${VER_NINJA_BUILD} \
+    pkg-config=${VER_PKG_CONFIG} \
+    python3=${VER_PYTHON3} \
+    python3-pip=${VER_PYTHON3_PIP} \
+    xz-utils=${VER_XZ_UTILS} \
+    zip=${VER_ZIP} \
+    unzip=${VER_UNZIP} \
   && rm -rf /var/lib/apt/lists/*
 
 ENV EMSDK=/opt/emsdk
@@ -33,9 +55,9 @@ RUN git clone https://github.com/emscripten-core/emsdk.git "${EMSDK}" \
   && ./emsdk install "${EMSDK_VERSION}" \
   && ./emsdk activate "${EMSDK_VERSION}"
 
-ENV RUSTUP_HOME=/root/.rustup
-ENV CARGO_HOME=/root/.cargo
-RUN rustup default stable \
-  && rustup target add wasm32-unknown-emscripten
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain "${RUST_TOOLCHAIN}" \
+  && /root/.cargo/bin/rustup target add wasm32-unknown-emscripten --toolchain "${RUST_TOOLCHAIN}"
+
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /workspace

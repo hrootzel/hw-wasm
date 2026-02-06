@@ -47,11 +47,17 @@ and sources the environment. The `-StageData` flag copies both
 
 ### 2. Serve and play
 
-```powershell
-.\serve.ps1
+```bat
+serve.bat
 ```
 
 Open **http://localhost:8080/** in your browser (redirects to the frontend).
+
+Linux/macOS:
+
+```bash
+./serve.sh
+```
 
 The serve script auto-detects the best directory:
 - `build/wasm/bin` if engine is built (full experience)
@@ -61,8 +67,8 @@ The serve script auto-detects the best directory:
 
 If you just want to iterate on the frontend without building the engine:
 
-```powershell
-.\serve.ps1 -Dir .
+```bat
+serve.bat 8080 .
 ```
 
 Open **http://localhost:8080/web-frontend/**. The frontend works fully but
@@ -134,8 +140,14 @@ Builds in a Linux container and writes outputs to host `build/`.
 # Build image + configure + compile + stage assets
 ./build-was-docker.sh
 
-# Debug build type
+# Debug CMake build type
 BUILD_TYPE=Debug ./build-was-docker.sh
+
+# Explicit release build type (default)
+BUILD_TYPE=Release ./build-was-docker.sh
+
+# Enable Emscripten debug checks (separate from CMake build type)
+WASM_DEBUG=ON ./build-was-docker.sh
 
 # Reconfigure from a clean build dir
 CLEAN=1 ./build-was-docker.sh
@@ -146,14 +158,27 @@ Container inputs/outputs:
 - Host `build/` mounted at `/workspace/build`
 - Expected output at `build/wasm/bin/hwengine.html`
 
-### `serve.ps1` - Development server
-Serves the build output (or project root in dev mode).
+Key environment toggles:
+- `BUILD_TYPE=Release|Debug|RelWithDebInfo` (default: `Release`)
+- `WASM_DEBUG=ON|OFF` (default: `OFF`)
+- `CLEAN=1` to remove the build dir before configure
 
-```powershell
-.\serve.ps1                    # Auto-detect build dir, port 8080
-.\serve.ps1 -Port 9000        # Custom port
-.\serve.ps1 -Dir .            # Force dev mode (project root)
-.\serve.ps1 -Dir build/wasm/bin  # Explicit directory
+### `serve.bat` - Windows CMD server
+Equivalent launcher for Command Prompt users.
+
+```bat
+serve.bat
+serve.bat 9000
+serve.bat 8080 build\wasm\bin
+```
+
+### `serve.sh` - Linux/macOS server
+Equivalent launcher for Bash environments.
+
+```bash
+./serve.sh
+./serve.sh 9000
+./serve.sh 8080 build/wasm/bin
 ```
 
 Engine Shell (`project_files/web/shell.html`)
@@ -195,9 +220,6 @@ Current Issues
 --------------
 - ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
 - SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
-
-
-
 
 
 
