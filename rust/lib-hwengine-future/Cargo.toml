@@ -16,8 +16,3 @@ lfprng = { path = "../lfprng" }
 [lib]
 name = "hwengine_future"
 crate-type = ["staticlib"]
-
-[profile.release]
-lto = true
-codegen-units = 1
-opt-level = "s"

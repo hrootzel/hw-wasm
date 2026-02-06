@@ -111,7 +111,7 @@ if(BUILD_ENGINE_JS)
 
     if((CMAKE_BUILD_TYPE STREQUAL "Release") OR (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
         add_flag_append(CMAKE_C_FLAGS "-O3 -flto ${HW_WASM_COMMON_FLAGS}")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -flto --closure 1")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -flto --closure 1 -s BINARYEN_EXTRA_PASSES=\"--converge,-O3\"")
     else()
         add_flag_append(CMAKE_C_FLAGS "-O0 -gsource-map -s ASSERTIONS=2 -s GL_UNSAFE_OPTS=0 ${HW_WASM_COMMON_FLAGS}")
     endif()
