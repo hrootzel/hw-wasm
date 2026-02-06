@@ -14,9 +14,10 @@ export class BasePage extends Page {
 
   addTitle(text, y = 30) {
     const label = new Label(text, 'title');
-    label.x = this.width / 2;
+    // Node coordinates are top-left; center the label's box, then center the text within it.
+    label.width = Math.max(320, Math.min(900, this.width - 60));
+    label.x = Math.floor((this.width - label.width) / 2);
     label.y = y;
-    label.width = 600;
     label.height = 50;
     label.align = 'center';
     label.color = '#FFDD44';
