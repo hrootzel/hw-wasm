@@ -26,10 +26,6 @@ HWNetServer::~HWNetServer() { StopServer(); }
 bool HWNetServer::StartServer(quint16 port) {
   ds_port = port;
 
-#ifdef HW_WASM
-  Q_UNUSED(port);
-  return false;
-#else
   QStringList params;
   params << QStringLiteral("--port=%1").arg(port);
   params << QStringLiteral("--dedicated=False");
@@ -38,13 +34,8 @@ bool HWNetServer::StartServer(quint16 port) {
                 params);
 
   return process.waitForStarted(5000);
-#endif
 }
 
-void HWNetServer::StopServer() {
-#ifndef HW_WASM
-  process.close();
-#endif
-}
+void HWNetServer::StopServer() { process.close(); }
 
 quint16 HWNetServer::getRunningPort() const { return ds_port; }

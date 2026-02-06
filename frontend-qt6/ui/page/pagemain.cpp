@@ -152,13 +152,6 @@ void PageMain::connectSignals() {
 PageMain::PageMain(QWidget* parent) : AbstractPage(parent) {
   initPage();
 
-#ifdef HW_WASM
-  BtnNet->setEnabled(false);
-  BtnNet->setIcon(disabledNetworkIcon);
-  BtnNetLocal->setVisible(false);
-  BtnNetOfficial->setVisible(false);
-#endif
-
   if (frontendEffects) setAttribute(Qt::WA_NoSystemBackground, true);
   mainNote->setOpenExternalLinks(true);
 #ifdef QT_DEBUG

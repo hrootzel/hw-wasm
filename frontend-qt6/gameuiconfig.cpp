@@ -30,9 +30,7 @@
 
 #include "DataManager.h"
 #include "HWApplication.h"
-#ifndef HW_WASM
 #include "SDL.h"
-#endif
 #include "fpsedit.h"
 #include "hwconsts.h"
 #include "hwform.h"

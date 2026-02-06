@@ -6,11 +6,7 @@
 #include <QStringList>
 #include <QVariantMap>
 
-#ifdef HW_WASM
-#include <QFile>
-#else
 #include "physfs.h"
-#endif
 
 class PhysFsFile : public QIODevice {
   Q_OBJECT
@@ -33,11 +29,7 @@ class PhysFsFile : public QIODevice {
 
  private:
   QString m_filename;
-#ifdef HW_WASM
-  QFile m_file;
-#else
   PHYSFS_File *m_fileHandle;
-#endif
 
   void _close();
 };

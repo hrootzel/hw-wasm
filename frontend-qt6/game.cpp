@@ -35,16 +35,12 @@
 #include "gameuiconfig.h"
 #include "hwconsts.h"
 #include "hwform.h"
-#include "MessageDialog.h"
 #include "proto.h"
 #include "teamselect.h"
 #include "ui/page/pagecampaign.h"
 #include "ui/page/pageoptions.h"
 #include "ui/page/pagetraining.h"
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten/emscripten.h>
-#endif
 // last game info
 QList<QVariant> lastGameStartArgs = QList<QVariant>();
 GameType lastGameType = gtNone;
@@ -668,74 +664,6 @@ QStringList HWGame::getArguments() {
   return arguments;
 }
 
-QString HWGame::stripWebCfgPrefix(const QString &line) const {
-  if (line.startsWith(QStringLiteral("e$"))) return line.mid(2);
-  if (line.startsWith(QStringLiteral("e"))) return line.mid(1);
-  return line;
-}
-
-QString HWGame::buildWebCfgText() const {
-  QStringList lines;
-
-  if (gamecfg) {
-    lines << gamecfg->buildWebCfgLines();
-  }
-
-  bool hasTheme = false;
-  bool hasSeed = false;
-  for (const auto &line : lines) {
-    if (line.startsWith(QStringLiteral("theme "))) hasTheme = true;
-    if (line.startsWith(QStringLiteral("seed "))) hasSeed = true;
-  }
-  if (!hasTheme) lines << QStringLiteral("theme Nature");
-  if (!hasSeed) lines << QStringLiteral("seed wasm");
-
-  if (ammostr.size() >= 4 * cAmmoNumber) {
-    lines << QStringLiteral("ammloadt %1").arg(ammostr.mid(0, cAmmoNumber));
-    lines << QStringLiteral("ammprob %1")
-                 .arg(ammostr.mid(cAmmoNumber, cAmmoNumber));
-    lines << QStringLiteral("ammdelay %1")
-                 .arg(ammostr.mid(2 * cAmmoNumber, cAmmoNumber));
-    lines << QStringLiteral("ammreinf %1")
-                 .arg(ammostr.mid(3 * cAmmoNumber, cAmmoNumber));
-  }
-
-  bool useAmmoStore = false;
-  if (gamecfg) {
-    useAmmoStore =
-        gamecfg->schemeData(15).toBool() || !gamecfg->schemeData(21).toBool();
-  }
-
-  if (m_pTeamSelWidget) {
-    for (auto &&team : m_pTeamSelWidget->getPlayingTeams()) {
-      if (useAmmoStore) lines << QStringLiteral("ammstore");
-      const auto tlines = team.teamGameConfig(
-          gamecfg ? gamecfg->getInitHealth() : 100);
-      for (const auto &tline : tlines) {
-        lines << stripWebCfgPrefix(tline);
-      }
-    }
-  }
-
-  return lines.join(QStringLiteral("\n"));
-}
-
-void HWGame::StartWasmSinglePlayer() {
-#ifdef __EMSCRIPTEN__
-  const QString cfg = buildWebCfgText();
-  const QString cfg64 = QString::fromLatin1(cfg.toUtf8().toBase64());
-  const QString js = QStringLiteral(
-                         "try{localStorage.setItem('hw-wasm-webcfg64','%1');}"
-                         "catch(e){}"
-                         "if(window.hwStartGameFromQt){window.hwStartGameFromQt('%1');}"
-                         "else{window.location='hwengine.html';}")
-                         .arg(cfg64);
-  emscripten_run_script(js.toUtf8().constData());
-#else
-  Q_UNUSED(buildWebCfgText);
-#endif
-}
-
 void HWGame::PlayDemo(const QString &demofilename, bool isSave) {
   gameType = isSave ? gtSave : gtDemo;
   lastGameType = gameType;
@@ -772,11 +700,6 @@ void HWGame::StartNet() {
 
   gameType = gtNet;
   demo.clear();
-#ifdef HW_WASM
-  MessageDialog::ShowInfoMessage(
-      tr("Network play is not available in the WebAssembly build yet."));
-  return;
-#endif
   Start(false);
   SetGameState(gsStarted);
 }
@@ -787,11 +710,6 @@ void HWGame::StartLocal() {
 
   gameType = gtLocal;
   demo.clear();
-#ifdef HW_WASM
-  StartWasmSinglePlayer();
-  SetGameState(gsStarted);
-  return;
-#endif
   Start(false);
   SetGameState(gsStarted);
 }
@@ -802,11 +720,6 @@ void HWGame::StartQuick() {
 
   gameType = gtQLocal;
   demo.clear();
-#ifdef HW_WASM
-  StartWasmSinglePlayer();
-  SetGameState(gsStarted);
-  return;
-#endif
   Start(false);
   SetGameState(gsStarted);
 }
@@ -826,11 +739,6 @@ void HWGame::StartTraining(const QString &file, const QString &subFolder,
   trainingName = file;
   trainingTeam = trainTeam;
   demo.clear();
-#ifdef HW_WASM
-  MessageDialog::ShowInfoMessage(
-      tr("Training missions are not available in the WebAssembly build yet."));
-  return;
-#endif
   Start(false);
   SetGameState(gsStarted);
 }
@@ -849,11 +757,6 @@ void HWGame::StartCampaign(const QString &camp, const QString &campScript,
                    QStringLiteral("/") + campScript;
   campaignTeam = campTeam;
   demo.clear();
-#ifdef HW_WASM
-  MessageDialog::ShowInfoMessage(
-      tr("Campaigns are not available in the WebAssembly build yet."));
-  return;
-#endif
   Start(false);
   SetGameState(gsStarted);
 }

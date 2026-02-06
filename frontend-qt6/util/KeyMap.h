@@ -27,15 +27,7 @@
 #include <QFile>
 #include <QHash>
 
-#ifndef HW_WASM
 #include "SDL.h"
-#else
-using SDL_Scancode = int;
-using SDL_Keycode = int;
-static constexpr SDL_Scancode SDL_SCANCODE_UNKNOWN = 0;
-inline SDL_Keycode SDL_GetKeyFromScancode(SDL_Scancode sc) { return sc; }
-inline const char *SDL_GetKeyName(SDL_Keycode) { return ""; }
-#endif
 
 class KeyMap {
  public:

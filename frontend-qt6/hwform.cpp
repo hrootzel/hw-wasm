@@ -157,14 +157,6 @@ HWForm::HWForm(QWidget *parent, const QString &styleSheet)
   // setFocusPolicy(Qt::StrongFocus);
   CustomizePalettes();
 
-#ifdef HW_WASM
-  ui.pageNet->setEnabled(false);
-  ui.pageNetGame->setEnabled(false);
-  ui.pageNetServer->setEnabled(false);
-  ui.pageRoomsList->setEnabled(false);
-  ui.pageAdmin->setEnabled(false);
-#endif
-
   ui.pageOptions->CBResolution->addItems(
       SDLInteraction::instance().getResolutions());
 

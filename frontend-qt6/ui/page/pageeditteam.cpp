@@ -39,9 +39,7 @@
 #include "hatbutton.h"
 #include "hwconsts.h"
 #include "keybinder.h"
-#ifndef HW_WASM
 #include "physfs.h"
-#endif
 #include "physfs_integration.h"
 
 QLayout* PageEditTeam::bodyLayoutDefinition() {
@@ -353,13 +351,8 @@ void PageEditTeam::lazyLoad() {
   list = dataMgr.entryList(QStringLiteral("Forts"), QDir::Files,
                            QStringList("*L.png"));
   for (auto&& file : list) {
-#ifndef HW_WASM
     QString fortPath = PHYSFS_getRealDir(
         QStringLiteral("Forts/%1").arg(file).toLocal8Bit().data());
-#else
-    QString fortPath =
-        PhysFsManager::instance().getRealDir(QStringLiteral("Forts/%1").arg(file));
-#endif
 
     QString fort = file.replace(QRegularExpression(QStringLiteral("L\\.png$")),
                                 QLatin1String(""));

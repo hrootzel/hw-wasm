@@ -26,9 +26,7 @@
 #include <QList>
 #include <QObject>
 #include <QPointer>
-#ifndef HW_WASM
 #include <QProcess>
-#endif
 #include <QString>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -76,9 +74,7 @@ class TCPBase : public QObject {
 #ifdef HWLIBRARY
   QThread *thread;
 #else
-#ifndef HW_WASM
   QProcess *process;
-#endif
 #endif
   bool m_isDemoMode;
   bool m_connected;
@@ -90,10 +86,8 @@ class TCPBase : public QObject {
   void NewConnection();
   void ClientDisconnect();
   void ClientRead();
-#ifndef HW_WASM
   void StartProcessError(QProcess::ProcessError error);
   void onEngineDeath(int exitCode, QProcess::ExitStatus exitStatus);
-#endif
 
   void tcpServerReady();
 };

@@ -29,16 +29,12 @@
 #include <QUrl>
 
 #include "HWApplication.h"
-#ifndef HW_WASM
 #include "SDL.h"
 #include "SDL_mixer.h"
 #include "SDL_version.h"
-#endif
 #include "creditsmessages.h"
 #include "hwconsts.h"
-#ifndef HW_WASM
 #include "physfs.h"
-#endif
 
 #ifdef VIDEOREC
 extern "C" {
@@ -333,7 +329,6 @@ About::About(QWidget *parent) : QWidget(parent) {
 #endif
   libinfo.append(QStringLiteral("<br>"));
 
-#ifndef HW_WASM
   const SDL_version *sdl_ver;
   SDL_version sdl_version;
   SDL_GetVersion(&sdl_version);
@@ -410,11 +405,6 @@ About::About(QWidget *parent) : QWidget(parent) {
     }
     SDL_UnloadObject(sdlttf_handle);
   }
-#else
-  libinfo.append(
-      QString(tr("<a href=\"https://www.libsdl.org/\">SDL2</a>: n/a")));
-  libinfo.append(QStringLiteral("<br>"));
-#endif
 
   libinfo.append(
       QString(tr("<a href=\"https://www.qt.io/developers/\">Qt</a>: %1"))
@@ -442,7 +432,6 @@ About::About(QWidget *parent) : QWidget(parent) {
   libinfo.append(QString("<br>"));
 #endif
 
-#ifndef HW_WASM
   libinfo.append(
       QString(
           tr("<a href=\"https://icculus.org/physfs/\">PhysFS</a>: %1.%2.%3"))
@@ -450,7 +439,6 @@ About::About(QWidget *parent) : QWidget(parent) {
           .arg(PHYSFS_VER_MINOR)
           .arg(PHYSFS_VER_PATCH));
   libinfo.append(QStringLiteral("<br>"));
-#endif
 
   // TODO: how to add Lua information?
 
