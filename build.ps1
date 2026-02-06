@@ -17,6 +17,11 @@ param(
   [switch]$SkipPas2c,
   [switch]$WasmDebug,
   [switch]$StageData,
+  [switch]$SplitDataPack,
+  [ValidateRange(1, 500)]
+  [int]$DataPackChunkMB = 50,
+  [switch]$KeepOriginalDataPack,
+  [switch]$CleanupBuild,
   [switch]$Clean,
   [switch]$Build,
   [switch]$Rebuild
@@ -57,6 +62,80 @@ function Resolve-Ninja {
   $cmd = Get-Command ninja -ErrorAction SilentlyContinue
   if ($cmd) { return $cmd.Source }
   throw "ninja.exe not found. Install Ninja (winget install Ninja-build.Ninja)."
+}
+
+function Cleanup-WasmRuntime([string]$BuildDirFull) {
+  if (-not (Test-Path $BuildDirFull)) {
+    throw "Build directory not found: $BuildDirFull"
+  }
+
+  $binDir = Join-Path $BuildDirFull "bin"
+  if (-not (Test-Path $binDir)) {
+    throw "Build bin directory not found: $binDir"
+  }
+
+  # Keep only what is needed to serve/run the web app.
+  $keepDirs = @("Data", "web-frontend", "frontend-qt6")
+  $keepFiles = @("index.html")
+
+  # First, delete non-bin build products (CMake metadata, intermediates, etc).
+  Get-ChildItem -Force -LiteralPath $BuildDirFull | ForEach-Object {
+    if ($_.Name -ieq "bin") { return }
+    Remove-Item -Recurse -Force -LiteralPath $_.FullName
+  }
+
+  # Then, prune bin/ to runtime essentials.
+  Get-ChildItem -Force -LiteralPath $binDir | ForEach-Object {
+    if ($_.PSIsContainer) {
+      if ($keepDirs -icontains $_.Name) { return }
+      Remove-Item -Recurse -Force -LiteralPath $_.FullName
+      return
+    }
+
+    $name = $_.Name
+    if ($keepFiles -icontains $name) { return }
+    if ($name -ilike "hwengine.*") { return } # engine html/js/wasm + data or data parts
+
+    Remove-Item -Force -LiteralPath $_.FullName
+  }
+}
+
+# Allow a fast cleanup-only run without emsdk/cmake overhead.
+if ($CleanupBuild -and -not $Build -and -not $StageData -and -not $SplitDataPack -and -not $Clean -and -not $Rebuild) {
+  $buildDirFull = (Resolve-Path $BuildDir).Path
+  Cleanup-WasmRuntime $buildDirFull
+  Write-Host "CleanupBuild complete: kept runtime files in $buildDirFull\\bin"
+  exit 0
+}
+
+function Invoke-PythonScript([string[]]$PyArgs) {
+  & python @PyArgs
+  if ($LASTEXITCODE -eq 0) { return }
+  & py -3 @PyArgs
+  if ($LASTEXITCODE -ne 0) { throw "Python script failed: $($PyArgs -join ' ')" }
+}
+
+function Split-WasmDataPacks([string]$BuildDirFull) {
+  $binDir = Join-Path $BuildDirFull "bin"
+  if (-not (Test-Path $binDir)) { return }
+
+  $splitter = Join-Path $PSScriptRoot "tools\\split_wasm_data_pack.py"
+  if (-not (Test-Path $splitter)) {
+    throw "Missing splitter script: $splitter"
+  }
+
+  $dataFiles = Get-ChildItem -Path $binDir -File -Filter "*.data" |
+    Where-Object { $_.Name -like "hwengine*.data" }
+
+  foreach ($f in $dataFiles) {
+    $part0 = $f.FullName + ".part0"
+    if (Test-Path $part0) { continue }
+
+    Write-Host "Splitting data pack: $($f.FullName) -> $DataPackChunkMB MB parts"
+    $pyArgs = @($splitter, "--input", $f.FullName, "--chunk-mb", "$DataPackChunkMB")
+    if (-not $KeepOriginalDataPack) { $pyArgs += "--delete-original" }
+    Invoke-PythonScript -PyArgs $pyArgs
+  }
 }
 
 $emsdk = Resolve-EmsdkRoot
@@ -284,6 +363,15 @@ if ($StageData) {
       Copy-Item $rootIndexSrc -Destination $rootIndexDst -Force
       Write-Host "Staged index.html to $rootIndexDst"
     }
+
+    if ($SplitDataPack) {
+      Split-WasmDataPacks $buildDirFull
+    }
+    # Important: cleanup is destructive to incremental builds (removes CMakeCache.txt).
+    # Only run it here when we're not going to build in the same invocation.
+    if ($CleanupBuild -and -not $Build) {
+      Cleanup-WasmRuntime $buildDirFull
+    }
   } else {
     Write-Warning "Build bin directory not found yet: $binDir (run build first)"
   }
@@ -292,6 +380,12 @@ if ($StageData) {
 if ($Build) {
   Write-Host "Building in $BuildDir..."
   emmake cmake --build $BuildDir -j
+  if ($SplitDataPack) {
+    Split-WasmDataPacks $buildDirFull
+  }
+  if ($CleanupBuild) {
+    Cleanup-WasmRuntime $buildDirFull
+  }
 } else {
   Write-Host "Configured in $BuildDir. Next: emmake cmake --build $BuildDir -j"
 }

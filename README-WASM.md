@@ -133,6 +133,7 @@ Key flags:
 - `-StageData` - Copy `Data/` and `web-frontend/` into `build/wasm/bin/`
 - `-Build` - Build immediately after configure
 - `-Rebuild` - Clean + configure + build
+- `-CleanupBuild` - Delete non-runtime build outputs (keep only files needed to serve/run from `build/wasm/bin/`)
 - `-Debug` / `-Release` - Set build type
 - `-WasmDebug` - Enable SAFE_HEAP + stack overflow checks
 - `-Clean` - Remove build dir before configuring
@@ -157,6 +158,9 @@ WASM_DEBUG=ON ./build-was-docker.sh
 
 # Reconfigure from a clean build dir
 CLEAN=1 ./build-was-docker.sh
+
+# Keep only runtime files under build output (deployment cleanup)
+CLEANUP_BUILD=1 ./build-was-docker.sh
 ```
 
 Container inputs/outputs:
@@ -210,6 +214,41 @@ Technical Notes
 ### Emscripten Version
 - Engine build: current/latest emsdk (5.0.0 default in build.ps1)
 
+### Data Pack And Static Hosting Limits
+The WASM engine build uses Emscripten `--preload-file` to bundle `share/hedgewars/Data`
+into a single data package (typically `hwengine.data`). Some static hosts have per-file
+size limits, which can make a single large `.data` file impractical.
+
+This fork supports splitting the `.data` package into smaller chunks (for example 50 MB)
+so hosting can store multiple smaller files instead of one huge file.
+
+How it works:
+- Build step splits `hwengine.data` into `hwengine.data.part0`, `hwengine.data.part1`, ...
+- Runtime loader hook in `project_files/web/pre.js` makes Emscripten fetch all parts and
+  concatenate them in-memory before mounting `/Data`.
+
+Notes:
+- The engine still needs the full pack before starting. Splitting helps with hosting
+  limits, not startup time or total download size.
+- The split-pack loader is defined in `project_files/web/shell.html` (so it runs before
+  `hwengine.js`), and also in `project_files/web/pre.js` (as a fallback for non-shell uses).
+  Changing either requires rebuilding engine output (staging alone is not enough).
+
+#### Split Pack (Windows PowerShell)
+```powershell
+# Configure + build + split data pack into 50 MB parts (deletes the original .data by default)
+.\build.ps1 -Build -SplitDataPack -DataPackChunkMB 50
+
+# Keep the original .data as well (not recommended for size-limited hosts)
+.\build.ps1 -Build -SplitDataPack -DataPackChunkMB 50 -KeepOriginalDataPack
+```
+
+#### Split Pack (Docker build)
+```bash
+# Split the engine data pack after build (deletes the original .data)
+SPLIT_DATA_PACK=1 DATA_CHUNK_MB=50 ./build-was-docker.sh
+```
+
 ### PhysFS
 Built as a minimal static library from `misc/libphysfs` using Emscripten.
 Automated in `build.ps1`. Excludes Windows/LZMA code paths.
@@ -235,6 +274,3 @@ Current Issues
 --------------
 - ABI mismatch between Pascal and Rust AI functions (`ai_add_team_hedgehog` f64 vs f32)
 - SDL2 signature mismatches (`SDL_DestroyWindow`, `SDL_SetWindowFullscreen` return types)
-
-
-
