@@ -23,8 +23,9 @@
       (function () {
         if (!('serviceWorker' in navigator)) return;
         try {
-          var swUrl = new URL('sw.js', window.location.href).pathname;
-          navigator.serviceWorker.register(swUrl, { scope: '/' }).catch(function () {});
+          var swUrl = new URL('sw.js', window.location.href).href;
+          var scopeUrl = new URL('./', window.location.href).pathname;
+          navigator.serviceWorker.register(swUrl, { scope: scopeUrl }).catch(function () {});
         } catch (e) {}
       })();
 
