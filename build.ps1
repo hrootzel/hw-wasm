@@ -83,7 +83,7 @@ function Cleanup-WasmRuntime([string]$BuildDirFull) {
 
   # Keep only what is needed to serve/run the web app.
   $keepDirs = @("Data", "web-frontend", "frontend-qt6")
-  $keepFiles = @("index.html")
+  $keepFiles = @("index.html", "sw.js")
 
   # First, delete non-bin build products (CMake metadata, intermediates, etc).
   Get-ChildItem -Force -LiteralPath $BuildDirFull | ForEach-Object {
@@ -372,6 +372,14 @@ if ($StageData) {
     if (Test-Path $rootIndexSrc) {
       Copy-Item $rootIndexSrc -Destination $rootIndexDst -Force
       Write-Host "Staged index.html to $rootIndexDst"
+    }
+
+    # Stage service worker (enables client-side caching of wasm + data pack parts).
+    $swSrc = Join-Path $PSScriptRoot "project_files\\web\\sw.js"
+    $swDst = Join-Path $binDir "sw.js"
+    if (Test-Path $swSrc) {
+      Copy-Item $swSrc -Destination $swDst -Force
+      Write-Host "Staged sw.js to $swDst"
     }
 
     if ($SplitDataPack) {
