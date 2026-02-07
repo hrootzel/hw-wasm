@@ -1,5 +1,6 @@
 Wedgewars - The WASM Hedgewars build for in browser gaming
 ==========================================================
+Try it on <https://hrootzel.github.io/hw-wasm/>
 
 Status
 ------
@@ -260,6 +261,15 @@ STAGE_DATA=1 ./build-was-docker.sh
 # Note: requires STAGE_DATA=1, since it operates on build/wasm/bin/Data and build/wasm/bin/frontend-qt6/res
 STAGE_DATA=1 CLEANUP_BUILD=1 ./build-was-docker.sh
 ```
+
+### Client-Side Caching (Service Worker)
+Browsers should cache `hwengine.wasm` and `hwengine.data.partN` automatically when the host sets good cache headers.
+For hosts that don’t (or for reliable offline-ish behavior), this repo ships a simple service worker:
+- Source: `project_files/web/sw.js`
+- Staged to build output root as: `sw.js`
+- Registered from: `web-frontend/index.html` and the engine page (`shell.html`)
+
+To invalidate caches after updating engine/data parts, bump `CACHE_VERSION` in `project_files/web/sw.js` and rebuild/stage.
 
 ### PhysFS
 Built as a minimal static library from `misc/libphysfs` using Emscripten.

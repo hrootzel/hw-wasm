@@ -1,7 +1,10 @@
 Hedgewars - a turn-based strategy game
 ======================================
 
-This repository is **Wedgewars - The WASM Hedgewars build for in browser gaming**.  
+This repository is **Wedgewars - The WASM Hedgewars build for in browser gaming**.
+
+Try it on <https://hrootzel.github.io/hw-wasm/>
+
 For fork-specific WebAssembly/browser details, read [README-WASM.md](./README-WASM.md).
 
 Description
