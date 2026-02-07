@@ -205,6 +205,32 @@ EOF
       if [[ -f "index.html" ]]; then
         cp "index.html" "${bin_dir}/index.html"
       fi
+      if [[ -f "project_files/web/sw.js" ]]; then
+        cp "project_files/web/sw.js" "${bin_dir}/sw.js"
+      fi
+    fi
+
+    if [[ "${cleanup_build}" == "1" ]]; then
+      bin_dir="${build_dir_full}/bin"
+      echo "Cleaning build outputs (keep runtime only) in ${build_dir_full}"
+      # Remove everything but bin/
+      find "${build_dir_full}" -mindepth 1 -maxdepth 1 ! -name "bin" -exec rm -rf {} +
+      # In bin/, keep only runtime essentials
+      find "${bin_dir}" -mindepth 1 -maxdepth 1 \
+        ! -name "Data" \
+        ! -name "web-frontend" \
+        ! -name "frontend-qt6" \
+        ! -name "index.html" \
+        ! -name "hwengine*" \
+        -exec rm -rf {} +
+
+      # Trim staged UI assets to deployment-friendly size.
+      trim_script="/workspace/tools/trim_wasm_web_runtime_assets.py"
+      if [[ -f "${trim_script}" ]]; then
+        "${py_exec}" "${trim_script}" --bin-dir "${bin_dir}" --repo-root /workspace
+      else
+        echo "Warning: missing trim script (${trim_script}); skipping UI asset trim."
+      fi
     fi
 
     if [[ "${cleanup_build}" == "1" ]]; then
