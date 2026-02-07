@@ -5,7 +5,7 @@
  */
 
 const CACHE_PREFIX = 'wedgewars-cache-';
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 function isSameOrigin(requestUrl) {
@@ -19,11 +19,11 @@ function isSameOrigin(requestUrl) {
 
 function isEngineAsset(pathname) {
   return (
-    pathname === '/hwengine.html' ||
-    pathname === '/hwengine.js' ||
-    pathname === '/hwengine.wasm' ||
-    pathname === '/hwengine.data' ||
-    /^\/hwengine\.data\.part[0-9]+$/.test(pathname)
+    pathname.endsWith('/hwengine.html') ||
+    pathname.endsWith('/hwengine.js') ||
+    pathname.endsWith('/hwengine.wasm') ||
+    pathname.endsWith('/hwengine.data') ||
+    /\/hwengine\.data\.part[0-9]+$/.test(pathname)
   );
 }
 
@@ -86,4 +86,3 @@ self.addEventListener('fetch', (event) => {
     return fresh || new Response('Offline', { status: 503, statusText: 'Offline' });
   })());
 });
-
