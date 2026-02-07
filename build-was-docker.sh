@@ -205,6 +205,9 @@ EOF
       if [[ -f "index.html" ]]; then
         cp "index.html" "${bin_dir}/index.html"
       fi
+      if [[ -f "project_files/web/sw.js" ]]; then
+        cp "project_files/web/sw.js" "${bin_dir}/sw.js"
+      fi
     fi
 
     if [[ "${cleanup_build}" == "1" ]]; then

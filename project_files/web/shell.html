@@ -19,6 +19,15 @@
     <script>
       var statusEl = document.getElementById('status');
 
+      // Cache engine + data pack parts via service worker (works on https and localhost).
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+          var swUrl = new URL('sw.js', window.location.href).pathname;
+          navigator.serviceWorker.register(swUrl, { scope: '/' }).catch(function () {});
+        } catch (e) {}
+      })();
+
       // Read config from URL param or localStorage
       var cfgParam = new URLSearchParams(window.location.search).get('cfg');
       var cfgB64 = cfgParam || localStorage.getItem('hw-wasm-webcfg64') || '';

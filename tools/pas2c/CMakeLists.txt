@@ -13,6 +13,7 @@ set(pas2c_main ${CMAKE_SOURCE_DIR}/tools/pas2c/Main.hs)
 
 set(ghc_flags
         --make ${pas2c_main}
+        -w
         -i${CMAKE_SOURCE_DIR}/tools/pas2c/
         -o ${EXECUTABLE_OUTPUT_PATH}/pas2c${CMAKE_EXECUTABLE_SUFFIX}
         -odir ${CMAKE_CURRENT_BINARY_DIR}
@@ -28,4 +29,3 @@ add_custom_command(OUTPUT "${EXECUTABLE_OUTPUT_PATH}/pas2c${CMAKE_EXECUTABLE_SUF
         )
 
 add_custom_target(pas2c ALL DEPENDS "${EXECUTABLE_OUTPUT_PATH}/pas2c${CMAKE_EXECUTABLE_SUFFIX}")
-
