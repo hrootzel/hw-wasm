@@ -33,7 +33,11 @@
       try {
         var swUrl = new URL('../sw.js', window.location.href).href;
         var scopeUrl = new URL('../', window.location.href).pathname;
-        navigator.serviceWorker.register(swUrl, { scope: scopeUrl }).catch(function () {});
+        navigator.serviceWorker.register(swUrl, { scope: scopeUrl }).then(function (reg) {
+          console.log('[sw] registered from frontend page:', reg.scope);
+        }).catch(function (err) {
+          console.error('[sw] frontend-page registration failed:', err);
+        });
       } catch (e) {}
     })();
   </script>
