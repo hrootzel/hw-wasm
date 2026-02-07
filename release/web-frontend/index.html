@@ -26,6 +26,17 @@
     <canvas id="game-canvas"></canvas>
   </div>
   <div id="loading">Loading...</div>
+  <script>
+    // Register cache worker from /release/web-frontend/ -> /release/sw.js
+    (function () {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        var swUrl = new URL('../sw.js', window.location.href).href;
+        var scopeUrl = new URL('../', window.location.href).pathname;
+        navigator.serviceWorker.register(swUrl, { scope: scopeUrl }).catch(function () {});
+      } catch (e) {}
+    })();
+  </script>
   <script type="module" src="main.js"></script>
 </body>
 </html>
