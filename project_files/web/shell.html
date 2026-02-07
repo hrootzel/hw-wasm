@@ -154,9 +154,15 @@
           return /(^|\/)hwengine\.data([?#].*)?$/.test(s);
         }
 
+        function showPartStatus(partIndex) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'Downloading data part ' + (partIndex + 1) + '...';
+        }
+
         async function makeSplitDataResponse(baseUrl) {
           // Probe part0; if missing, treat as "not split" and let normal fetch handle it.
           var part0Url = baseUrl + '.part0';
+          showPartStatus(0);
           var r0 = await originalFetch(part0Url);
           if (!r0.ok) {
             if (r0.status === 404 || r0.status === 410) return null;
@@ -184,6 +190,7 @@
                 await pumpResponseBody(r0, controller);
                 for (var i = 1; ; i++) {
                   var partUrl = baseUrl + '.part' + i;
+                  showPartStatus(i);
                   var r = await originalFetch(partUrl);
                   if (!r.ok) {
                     if (r.status === 404 || r.status === 410) break;
@@ -191,6 +198,7 @@
                   }
                   await pumpResponseBody(r, controller);
                 }
+                statusEl.textContent = 'Finalizing data...';
                 controller.close();
               } catch (e) {
                 controller.error(e);
